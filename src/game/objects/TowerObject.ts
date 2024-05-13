@@ -1,10 +1,12 @@
-import { GameOptions, allCollision, defaultCategory } from '../options/gameOptions'
+import { Entity } from '../components/Entity'
+import { GameOptions } from '../options/gameOptions'
 
 export class TowerObject extends Phaser.Physics.Matter.Sprite {
   key = 'tower'
   ecsId: number
   level: number = 0
   weaponRefreshEvent: Phaser.Time.TimerEvent
+  gerbImage: Phaser.GameObjects.Image
 
   constructor(
     ecsId: number,
@@ -28,11 +30,20 @@ export class TowerObject extends Phaser.Physics.Matter.Sprite {
     // this.setFrictionAir(0)
     // this.setFixedRotation()
     this.world.remove(this.body, true)
-    this.setActive(false)
+    this.setScale(1.1)
+    // this.setActive(false)
+    this.gerbImage = this.scene.add
+      .image(x, y, 'gerb', Entity.gerbId[this.ecsId])
+      .setDepth(3)
+      .setAlpha(0.9)
+      .setScale(0.3)
 
     // if (this.scene.configRound.night) {
     //   this.setPipeline('Light2D')
     // }
+    if (this.scene.configRound.night) {
+      this.setPipeline('Light2D')
+    }
 
     this.scene.add.existing(this)
 
@@ -155,17 +166,6 @@ export class TowerObject extends Phaser.Physics.Matter.Sprite {
   //   this.lifespan = 1000
   // }
 
-  // preUpdate(time, delta) {
-  //   super.preUpdate(time, delta)
-
-  //   this.lifespan -= delta
-
-  //   if (this.lifespan <= 0) {
-  //     this.setActive(false)
-  //     this.setVisible(false)
-  //     this.world.remove(this.body, true)
-  //   }
-  // }
   fire(timeRefresh: number) {
     if (timeRefresh < 500) timeRefresh = 500
     this.weaponRefreshEvent = this.scene.time.delayedCall(
@@ -180,8 +180,15 @@ export class TowerObject extends Phaser.Physics.Matter.Sprite {
 
   removeTower() {
     this.weaponRefreshEvent?.destroy()
+    this.gerbImage.destroy()
     // this.setStatic(true)
     // this.world.remove(this.body, true)
     // this.destroy(true)
   }
+  // preUpdate(time, delta) {
+  //   super.preUpdate(time, delta)
+
+  //   this.gerbImage.setPosition(this.x, this.y)
+  //   this.gerbImage.setAngle(this.angle)
+  // }
 }

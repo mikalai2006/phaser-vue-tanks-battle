@@ -2,10 +2,12 @@ import RexUIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin.js'
 
 import { EventBus } from '../EventBus'
 import { Scene } from 'phaser'
-import { BonusType, GameOptions } from '../options/gameOptions'
+import { BonusType, GameOptions, WeaponType } from '../options/gameOptions'
 import { Button } from '../objects/ui/Button'
-import { IComplexConfig, IGameData, TLang } from '../types'
-import { getMaxOptionValue } from '../utils/utils'
+import { IComplexConfig, IGameData, IWeaponObject, TLang } from '../types'
+import { getEnumStringKey, getMaxOptionValue, getRank, getTankImage } from '../utils/utils'
+import { debounce } from 'lodash'
+import { getLocalStorage, setLocalStorage } from '../utils/storageUtils'
 
 export class WorkShop extends Scene {
   constructor() {
@@ -32,17 +34,13 @@ export class WorkShop extends Scene {
   // textUpdateButton: Phaser.GameObjects.Text
   // textScoreValue: Phaser.GameObjects.Text
   textNamePlayer: Phaser.GameObjects.Text
-  rankContainer: Phaser.GameObjects.Container
 
   bg: Phaser.GameObjects.Container
-  startButtonBg: Phaser.GameObjects.NineSlice
-  startButtonText: Phaser.GameObjects.Text
-  startButtonSprite: Phaser.GameObjects.Sprite
   textTitleScene: Phaser.GameObjects.Text
 
   click: Phaser.Sound.HTML5AudioSound | Phaser.Sound.NoAudioSound | Phaser.Sound.WebAudioSound
 
-  create() {
+  create({ lang, gameData }: { lang: TLang; gameData: IGameData }) {
     this.click = this.sound.add('click')
 
     this.generalContainer = this.add.container(0, 0, [])
@@ -132,38 +130,6 @@ export class WorkShop extends Scene {
       .setOrigin(0.5)
     this.generalContainer.add(this.textShopTitle)
 
-    // start game button.
-    // this.startButtonBg = this.add
-    //   .nineslice(0, 0, 'button', 0, 250, 150, 50, 50, 50, 50)
-    //   // .setTint(0xffffff)
-    //   .setAlpha(1)
-    //   .setOrigin(0.5)
-    //   .setInteractive({ useHandCursor: true })
-    // this.startButtonText = this.add
-    //   .text(0, 50, '#startGame', {
-    //     fontFamily: 'Arial',
-    //     fontStyle: 'bold',
-    //     fontSize: 50,
-    //     color: '#ffff00',
-    //     // stroke: '#000000',
-    //     // strokeThickness: 2,
-    //     align: 'center'
-    //   })
-    //   .setDepth(1000)
-    //   .setOrigin(0.5)
-
-    // this.startButtonBg.on('pointerup', (pointer) => this.startGame(pointer))
-    // this.startButtonBg.on('pointerover', (pointer) => {
-    //   this.startButtonBg.setAlpha(0.8)
-    // })
-    // this.startButtonBg.on('pointerout', (pointer) => {
-    //   this.startButtonBg.setAlpha(1)
-    // })
-
-    // const buttonGaraz = new Button(this, -100, 350, 300, 120, 0x333333, '', {}, (pointer) =>
-    //   this.startGame(pointer)
-    // )
-
     // events.
     this.events.on('pause', () => {
       this.click.pause()
@@ -175,6 +141,7 @@ export class WorkShop extends Scene {
     this.tooglePanel(false)
 
     EventBus.emit('current-scene-ready', this)
+    this.onSync(gameData, lang)
   }
 
   drawPlayerInfo() {
@@ -183,8 +150,8 @@ export class WorkShop extends Scene {
 
     this.buttonReturn = new Button(
       this,
-      GameOptions.workshop.sideWidth / 2,
-      GameOptions.screen.height - 100,
+      -160,
+      GameOptions.screen.height - 70,
       300,
       120,
       GameOptions.ui.panelBgColor,
@@ -210,8 +177,8 @@ export class WorkShop extends Scene {
     if (GameOptions.isBank) {
       this.buttonBank = new Button(
         this,
-        350,
-        -15,
+        -GameOptions.screen.width / 2 - 380,
+        -65,
         200,
         100,
         GameOptions.ui.primaryColor,
@@ -226,7 +193,7 @@ export class WorkShop extends Scene {
 
     // score and rank
     const rank = this.add
-      .image(-GameOptions.workshop.sideWidth / 2 + 60, 0, 'rank', this.gameData.rank)
+      .image(-GameOptions.workshop.sideWidth / 2 + 60, 0, 'rank', getRank(this.gameData.score))
       .setTint(GameOptions.ui.accent.replace('#', '0x'))
       .setScale(2)
     // this.textScoreValue = this.add
@@ -254,12 +221,17 @@ export class WorkShop extends Scene {
       .setOrigin(0)
       .setDepth(100)
     this.textRank = this.add
-      .text(-GameOptions.workshop.sideWidth / 2 + 120, -12, this.lang?.rank[this.gameData?.rank], {
-        fontFamily: 'Arial',
-        fontSize: 20,
-        color: '#999999',
-        align: 'left'
-      })
+      .text(
+        -GameOptions.workshop.sideWidth / 2 + 120,
+        -12,
+        this.lang?.rank[getRank(this.gameData?.score)],
+        {
+          fontFamily: 'Arial',
+          fontSize: 20,
+          color: '#999999',
+          align: 'left'
+        }
+      )
       .setAlpha(0.8)
       .setOrigin(0)
       .setDepth(100)
@@ -272,6 +244,11 @@ export class WorkShop extends Scene {
     ])
 
     this.infoContainer.add([walletContainer, rankContainer]) //.setInteractive()
+  }
+
+  changeGerb(index: number) {
+    this.gameData.gerbId = index
+    EventBus.emit('save-data', this.gameData)
   }
 
   drawWorkShopContainer() {
@@ -299,13 +276,7 @@ export class WorkShop extends Scene {
       const progressBg = this.add
         .rectangle(0, 55, 300, 10, GameOptions.ui.progressBgColor)
         .setOrigin(0)
-
-      const maximumOptionValue = getMaxOptionValue(
-        option,
-        tankData.levelTank,
-        tankData.levelTower,
-        tankData.levelMuzzle
-      )
+      const maximumOptionValue = getMaxOptionValue(option, tankData.id)
       // console.log(option, maximumOptionValue, optionValue)
 
       // Math.max.apply(
@@ -359,17 +330,7 @@ export class WorkShop extends Scene {
         currentProgress
       ])
 
-      const activeTankData = this.gameData.tanks[this.gameData.activeTankIndex]
-
-      if (
-        optionValue <
-        getMaxOptionValue(
-          option,
-          activeTankData.levelTank,
-          activeTankData.levelTower,
-          activeTankData.levelMuzzle
-        )
-      ) {
+      if (optionValue < getMaxOptionValue(option, tankData.id)) {
         const updateButton = new Button(
           this,
           GameOptions.workshop.updateSideWidth - 130,
@@ -437,7 +398,7 @@ export class WorkShop extends Scene {
       cellWidth: 300,
       cellHeight: 90,
       x: 20,
-      y: 180
+      y: 150
     })
     this.updateContainer.add(gridOptions)
 
@@ -471,10 +432,12 @@ export class WorkShop extends Scene {
       activeTankOptionsValue += optionValue
     }
 
+    const configComplexTank = GameOptions.complexTanks.find((x) => x.id == tankData.id)
+
     const progressBg = this.add
       .rectangle(
         GameOptions.workshop.updateSideWidth / 2,
-        110,
+        90,
         300,
         20,
         GameOptions.ui.progressBgColor
@@ -486,7 +449,7 @@ export class WorkShop extends Scene {
     const currentProgress = this.add
       .rectangle(
         GameOptions.workshop.updateSideWidth / 2,
-        110,
+        90,
         currentValueProgress * 300 * 0.01,
         20,
         GameOptions.workshop.colorValueProgress
@@ -496,11 +459,11 @@ export class WorkShop extends Scene {
     const textStretch = this.add
       .text(
         GameOptions.workshop.updateSideWidth / 2 - 20,
-        140,
+        120,
         `${this.lang?.stretch} - ${currentValueProgress.toFixed(1)}%`,
         {
           fontFamily: 'Arial',
-          fontSize: 35,
+          fontSize: 30,
           fontStyle: 'bold',
           color: GameOptions.ui.primaryColor, //GameOptions.ui.accent,
           align: 'right',
@@ -511,7 +474,7 @@ export class WorkShop extends Scene {
     const textNameTank = this.add.text(
       GameOptions.workshop.updateSideWidth / 2 + 100,
       35,
-      GameOptions.complexTanks[tankData.level].name,
+      GameOptions.complexTanks[configComplexTank.tank].name,
       {
         fontFamily: 'Arial',
         fontSize: 35,
@@ -553,19 +516,26 @@ export class WorkShop extends Scene {
       },
       space: {
         left: 30,
-        top: 150
+        top: 100
       },
       orientation: 'y',
 
-      keys: ['tanks', 'artefact']
+      keys: ['tanksPage', 'weaponsPage'],
+
+      keyScroll: 'scrollS'
     }
     this.shopPanel = this.CreateMainPanel(this, config).layout()
+
+    const storageSettings = getLocalStorage(GameOptions.localStorageSettingsName, {})
+    for (const page of this.shopPanel.childrenMap.pages.children) {
+      page.t = storageSettings[page.keey] || 0
+    }
   }
 
   CreateMainPanel(scene, config) {
     var keys = config.keys
-    var buttons = CreateButtons(scene, keys)
-    var pages = CreatePages(scene, keys)
+    var buttons = CreateButtons(scene, config, keys)
+    var pages = CreatePages(scene, config, keys)
     var mainPanel = scene.rexUI.add
       .sizer(config)
       .add(
@@ -612,7 +582,7 @@ export class WorkShop extends Scene {
       x: 0,
       y: 0,
       width: GameOptions.workshop.sideWidth - 20,
-      height: GameOptions.screen.height - 200,
+      height: GameOptions.screen.height - 20,
       anchor: {
         top: 'top',
         left: 'left'
@@ -623,71 +593,27 @@ export class WorkShop extends Scene {
       },
       orientation: 'y',
 
-      keys: ['tanks', 'artefact']
+      keys: ['tanksPage'],
+      garaz: true,
+      workshop: true,
+
+      keyScroll: 'scrollGM'
     }
     this.garazPanel = CreateGarazPanel(this, configPlayer).layout()
-    // this.shopContainer.add(mainPanel)
+
+    const storageSettings = getLocalStorage(GameOptions.localStorageSettingsName, {})
+    for (const page of this.garazPanel.childrenMap.pages.children) {
+      page.t = storageSettings[page.keey] || 0
+    }
   }
-
-  // createTank() {
-  //   const scale = 1.7
-  //   const caterpillar1 = this.add
-  //     .sprite(
-  //       0,
-  //       -GameOptions.tanks.items[this.gameData.tanks[this.gameData.activeTankIndex].levelTank]
-  //         .catYOffset -
-  //         10 * scale,
-  //       'caterpillar',
-  //       0
-  //     )
-  //     .setScale(scale)
-  //     .setTint(GameOptions.colors.caterpillar)
-  //   const caterpillar2 = this.add
-  //     .sprite(
-  //       0,
-  //       GameOptions.tanks.items[this.gameData.tanks[this.gameData.activeTankIndex].levelTank]
-  //         .catYOffset +
-  //         10 * scale,
-  //       'caterpillar',
-  //       0
-  //     )
-  //     .setScale(scale)
-  //     .setTint(GameOptions.colors.caterpillar)
-  //   const tank = this.add
-  //     .sprite(0, 0, 'tank', this.gameData.tanks[this.gameData.activeTankIndex].levelTank)
-  //     .setScale(scale)
-  //   const tower = this.add
-  //     .sprite(0, 0, 'tower', this.gameData.tanks[this.gameData.activeTankIndex].levelTower)
-  //     .setScale(scale)
-  //   const muzzle = this.add
-  //     .sprite(
-  //       -GameOptions.muzzles.items[0].offset.xOffset *
-  //         GameOptions.muzzles.items[0].vert[0].x *
-  //         scale,
-  //       0,
-  //       'muzzle',
-  //       this.gameData.tanks[this.gameData.activeTankIndex].levelMuzzle
-  //     )
-  //     .setTint(0x111111)
-  //     .setScale(scale)
-  //   const tankContainer = this.add
-  //     .container(GameOptions.workshop.sideWidth / 2, GameOptions.screen.height / 2, [
-  //       caterpillar1,
-  //       caterpillar2,
-  //       tank,
-  //       tower,
-  //       muzzle
-  //     ])
-  //     .setAngle(-90)
-
-  //   this.infoContainer.add(tankContainer)
-  // }
 
   tooglePanel(status: boolean) {
     if (status) {
+      this.scene.moveDown('Control')
       this.createShopTanks()
       this.createGarazTabs()
     } else {
+      this.scene.moveUp('Control')
       this.shopPanel?.removeAll(true)
       this.garazPanel?.removeAll(true)
     }
@@ -704,21 +630,6 @@ export class WorkShop extends Scene {
     // window.getLB && window.getLB()
   }
 
-  // startGame(pointer: any) {
-  //   this.tooglePanel(false)
-
-  //   this.click.play()
-  //   // this.scene.start('Game')
-  //   const sceneGame = this.game.scene.getScene('Game')
-  //   sceneGame?.scene.start()
-
-  //   if (window && window.onGamePlayStart) {
-  //     window.onGamePlayStart()
-  //   }
-  //   // const sceneGame = this.game.scene.getScene('Game')
-  //   // sceneGame?.onSetGameData(this.gameData)
-  //   // EventBus.emit('toggle-lang-list')
-  // }
   onUpdateOption(option: string, value: number) {
     if (this.gameData.coin < GameOptions.costUpdate[option] * value) return
     console.log('onUpdateOption: ', option, value)
@@ -726,28 +637,20 @@ export class WorkShop extends Scene {
     this.gameData.coin -= Math.round(GameOptions.costUpdate[option] * value)
 
     const activeTankData = this.gameData.tanks[this.gameData.activeTankIndex]
-
     this.gameData.tanks[this.gameData.activeTankIndex][option] = Phaser.Math.Clamp(
       this.gameData.tanks[this.gameData.activeTankIndex][option] + value,
       this.gameData.tanks[this.gameData.activeTankIndex][option],
-      getMaxOptionValue(
-        option,
-        activeTankData.levelTank,
-        activeTankData.levelTower,
-        activeTankData.levelMuzzle
-      )
+      getMaxOptionValue(option, activeTankData.id)
       // GameOptions.maximum[option]
     )
-    console.log(
-      option,
-      getMaxOptionValue(
-        option,
-        activeTankData.levelTank,
-        activeTankData.levelTower,
-        activeTankData.levelMuzzle
-      ),
-      this.gameData.tanks[this.gameData.activeTankIndex][option]
-    )
+    // console.log(
+    //   option,
+    //   getMaxOptionValue(
+    //     option,
+    //     configComplexTank
+    //   ),
+    //   this.gameData.tanks[this.gameData.activeTankIndex][option]
+    // )
 
     // console.log(
     //   'Update',
@@ -772,18 +675,44 @@ export class WorkShop extends Scene {
     // }
   }
   onCartTank(config: IComplexConfig, index: number) {
-    if (this.gameData.coin < config.cost) return
+    if (this.gameData.coin < config.cost) {
+      this.rexUI.add
+        .toast({
+          x: GameOptions.screen.width / 2,
+          y: GameOptions.screen.height / 2,
+
+          background: this.rexUI.add.roundRectangle(0, 0, 2, 2, 20, GameOptions.ui.accentNumber),
+          text: this.add.text(0, 0, '', {
+            fontFamily: 'Arial',
+            fontSize: 35,
+            color: '#000000',
+            fontStyle: 'bold'
+          }),
+          space: {
+            left: 50,
+            right: 50,
+            top: 50,
+            bottom: 50
+          },
+          duration: {
+            in: 200,
+            hold: 2000,
+            out: 200
+          }
+        })
+        .setDepth(999999)
+        .showMessage(this.lang.notMany)
+      return
+    }
 
     this.gameData.coin -= config.cost
 
     this.gameData.tanks.push({
-      level: index,
-      levelTank: config.tank,
       ...GameOptions.tanks.items[config.tank].game,
-      levelTower: config.tower,
       ...GameOptions.towers.items[config.tower].game,
-      levelMuzzle: config.muzzle,
-      ...GameOptions.muzzles.items[config.muzzle].game
+      ...GameOptions.muzzles.items[config.muzzle].game,
+      cb: 0,
+      id: config.id
     })
 
     EventBus.emit('save-data', this.gameData)
@@ -804,6 +733,53 @@ export class WorkShop extends Scene {
     // }
   }
 
+  onCartWeapon(config: IWeaponObject, value: number) {
+    if (this.gameData.coin < config.cost * value) {
+      this.rexUI.add
+        .toast({
+          x: GameOptions.screen.width / 2,
+          y: GameOptions.screen.height / 2,
+
+          background: this.rexUI.add.roundRectangle(0, 0, 2, 2, 20, GameOptions.ui.accentNumber),
+          text: this.add.text(0, 0, '', {
+            fontFamily: 'Arial',
+            fontSize: 35,
+            color: '#000000',
+            fontStyle: 'bold'
+          }),
+          space: {
+            left: 50,
+            right: 50,
+            top: 50,
+            bottom: 50
+          },
+          duration: {
+            in: 200,
+            hold: 2000,
+            out: 200
+          }
+        })
+        .setDepth(999999)
+        .showMessage(this.lang.notMany)
+      return
+    }
+
+    this.gameData.coin -= config.cost * value
+
+    const existWeaponIndex = this.gameData.weapons[config.type]
+    if (existWeaponIndex) {
+      this.gameData.weapons[config.type] += value
+    } else {
+      this.gameData.weapons[config.type] = value
+    }
+
+    EventBus.emit('save-data', this.gameData)
+    this.drawWorkShopContainer()
+    this.createGarazTabs()
+    this.createShopTanks()
+    this.drawPlayerInfo()
+  }
+
   onCheckTank(index: number) {
     this.gameData.activeTankIndex = index
     EventBus.emit('save-data', this.gameData)
@@ -812,21 +788,29 @@ export class WorkShop extends Scene {
     this.createShopTanks()
   }
 
-  stopGame() {
-    EventBus.emit('show-lb', true)
-    this.tooglePanel(true)
-
-    const sceneGame = this.game.scene.getScene('Game')
-    this.click.play()
-    sceneGame?.scene.stop()
-
-    if (window && window.onGameplayStop) {
-      window.onGameplayStop()
+  onSellTank(id: string, cost: number) {
+    const tankSellIndex = this.gameData.tanks.findIndex((x) => x.id == id)
+    if (tankSellIndex == -1) {
+      return
     }
+
+    this.gameData.tanks = this.gameData.tanks.filter((x) => x.id != id)
+
+    if (this.gameData.activeTankIndex == tankSellIndex) {
+      this.gameData.activeTankIndex = 0
+    }
+
+    this.gameData.coin += cost
+    EventBus.emit('save-data', this.gameData)
+
+    this.drawWorkShopContainer()
+    this.createGarazTabs()
+    this.createShopTanks()
   }
 
-  onSetGameData(data: IGameData) {
-    this.gameData = JSON.parse(JSON.stringify(data))
+  onSync(gameData: IGameData, lang: TLang) {
+    this.gameData = JSON.parse(JSON.stringify(gameData))
+    this.lang = lang
 
     this.drawPlayerInfo()
 
@@ -835,10 +819,6 @@ export class WorkShop extends Scene {
 
     // this.createTank()
     this.drawWorkShopContainer()
-  }
-
-  setLocale(lang: TLang) {
-    this.lang = lang
 
     this.changeLocale()
   }
@@ -847,54 +827,38 @@ export class WorkShop extends Scene {
     this.drawWorkShopContainer()
     this.textTitleScene?.setText(this.lang.workShopTitle || '#workShopTitle')
     this.textShopTitle?.setText(this.lang.shopTitle || '#shopTitle')
-    // if (this.gameData.bestScore) {
-    //   this.startButtonText.setText(lang.btn_continue || '#btn_continue')
-    // } else {
-    //   this.startButtonText.setText(lang.btn_startgame || '#btn_startgame')
-    // }
-    // this.textUpdateButton?.setText(this.lang.update || '#textUpdate')
-    this.textRank?.setText(this.lang?.rank[this.gameData?.rank])
+    this.textRank?.setText(this.lang?.rank[getRank(this.gameData?.score)])
     this.buttonReturn?.setText(this.lang.return || '#return')
     this.buttonBank?.setText(this.lang.bank || '#bank')
   }
 }
 
-export const CreateTankPage = (scene: Phaser.Scene) => {
-  // var GetItems = function (count) {
-  //   var data = []
-  //   for (var i = 0; i < GameOptions.tanks.items.length; i++) {
-  //     data.push({
-  //       id: i,
-  //       color: 0xffffff
-  //     })
-  //   }
-  //   return data
-  // }
-  // const fullOptionsValue = new Map()
-  // for (let i = 0; i < GameOptions.complexTanks.length; i++) {
-  //   const item = GameOptions.complexTanks[i]
-  //   const tankItem = GameOptions.tanks.items[item.tank]
-  //   let value = 0
-  //   for (const option in tankItem.game) {
-  //     value += tankItem.game[option]
-  //   }
-  //   const towerItem = GameOptions.towers.items[item.tower]
-  //   for (const option in towerItem.game) {
-  //     // if (['timeRefreshWeapon'].includes(option)) {
-  //     //   // value -= towerItem.game[option]
-  //     // } else {
-  //     // }
-  //     value += towerItem.game[option]
-  //   }
-  //   const muzzleItem = GameOptions.muzzles.items[item.muzzle]
-  //   for (const option in muzzleItem.game) {
-  //     value += muzzleItem.game[option]
-  //   }
+const updateScrollFn = (scene: Phaser.Scene, key: string, value: number) => {
+  const uiSettings = getLocalStorage(GameOptions.localStorageSettingsName, {})
+  uiSettings[key] = value
+  setLocalStorage(GameOptions.localStorageSettingsName, uiSettings)
+}
 
-  //   fullOptionsValue.set(i, value)
-  // }
+const debounceUpdateScrollFn = debounce(updateScrollFn, 300)
 
-  return scene.rexUI.add.gridTable({
+export const CreateTankPage = (scene: Phaser.Scene, config: any) => {
+  const keyT = config.keyScroll + 'T'
+  const items = GameOptions.complexTanks.sort((a, b) => {
+    const currentOptionsA = {
+      ...GameOptions.tanks.items[a.tank].game,
+      ...GameOptions.towers.items[a.tower].game,
+      ...GameOptions.muzzles.items[a.muzzle].game
+    }
+    const currentValueA = Object.values(currentOptionsA).reduce((a, b) => a + b, 0)
+    const currentOptionsB = {
+      ...GameOptions.tanks.items[b.tank].game,
+      ...GameOptions.towers.items[b.tower].game,
+      ...GameOptions.muzzles.items[b.muzzle].game
+    }
+    const currentValueB = Object.values(currentOptionsB).reduce((a, b) => a + b, 0)
+    return currentValueA - currentValueB
+  })
+  const t = scene.rexUI.add.gridTable({
     table: {
       cellHeight: 250,
       columns: 1,
@@ -903,9 +867,14 @@ export const CreateTankPage = (scene: Phaser.Scene) => {
       }
     },
 
+    // clamplTableOXY: false,
+
     slider: {
       track: scene.rexUI.add.roundRectangle(0, 0, 20, 10, 10, GameOptions.ui.panelBgColor),
-      thumb: scene.rexUI.add.roundRectangle(0, 0, 30, 60, 0, GameOptions.ui.primaryColorNumber)
+      thumb: scene.rexUI.add.roundRectangle(0, 0, 30, 60, 0, GameOptions.ui.primaryColorNumber),
+      valuechangeCallback: function (newValue) {
+        debounceUpdateScrollFn(scene, keyT, newValue)
+      }
     },
 
     space: {
@@ -913,33 +882,16 @@ export const CreateTankPage = (scene: Phaser.Scene) => {
     },
 
     createCellContainerCallback: (cell) => {
-      const item = GameOptions.complexTanks[cell.index]
-      const tankConfig = GameOptions.tanks.items[item.tank]
-      const towerConfig = GameOptions.towers.items[item.tower]
-      const muzzleConfig = GameOptions.muzzles.items[item.muzzle]
+      const item = items[cell.index]
       var scene = cell.scene,
         width = cell.width,
         height = cell.height,
         // item = cell.item,
         index = cell.index
 
-      const scale = 1.3
-      const towerSprite = scene.add.image(0, 0, 'tower', towerConfig.frame).setScale(scale)
-      const muzzleSprite = scene.add
-        .sprite(
-          -GameOptions.muzzles.items[0].offset.xOffset *
-            GameOptions.muzzles.items[0].vert[0].x *
-            scale,
-          0,
-          'muzzle',
-          muzzleConfig.frame
-        )
-        .setTint(0x111111)
-        .setScale(scale)
-      const tankSprite = scene.add.image(0, 0, 'tank', tankConfig.frame).setScale(scale)
-      const tankContainer = scene.add
-        .container(80, 20, [tankSprite, towerSprite, muzzleSprite])
-        .setAngle(-90)
+      const configTank = GameOptions.complexTanks.find((x) => x.id == item.id)
+      const tankContainer = getTankImage(scene, configTank.id).setAngle(-90).setScale(1.2)
+      tankContainer.setPosition(80, 20)
 
       const bgPanel = scene.add
         .nineslice(
@@ -980,15 +932,6 @@ export const CreateTankPage = (scene: Phaser.Scene) => {
         .setAlpha(0.9)
         .setOrigin(0)
       const containerImage = scene.add.container(0, 0, [bgLb, bgPanel, tankContainer])
-      const priceImage = scene.add.image(20, 160, 'coin', 0)
-      const priceText = scene.add.text(50, 140, item.cost, {
-        fontFamily: 'Arial',
-        fontSize: 35,
-        color: '#ffffff', //GameOptions.ui.accent,
-        align: 'left',
-        fontStyle: 'bold',
-        lineSpacing: -25
-      })
       const progressBg = scene.add
         .rectangle(0, 45, 300, 10, GameOptions.ui.progressBgColor)
         .setOrigin(0)
@@ -1033,12 +976,23 @@ export const CreateTankPage = (scene: Phaser.Scene) => {
         progressBg,
         textNameOptions,
         textNameTank,
-        currentProgress,
-        priceImage,
-        priceText
+        currentProgress
       ])
 
-      if (scene.gameData.tanks.find((x) => x.level === cell.index)) {
+      if (item.cost > 0) {
+        const priceImage = scene.add.image(20, 160, 'coin', 0)
+        const priceText = scene.add.text(50, 140, item.cost, {
+          fontFamily: 'Arial',
+          fontSize: 35,
+          color: '#ffffff', //GameOptions.ui.accent,
+          align: 'left',
+          fontStyle: 'bold',
+          lineSpacing: -25
+        })
+        containerOptions.add([priceImage, priceText])
+      }
+
+      if (scene.gameData.tanks.find((x) => x.id === item.id)) {
         const textInGaraz = scene.add
           .text(340, 170, scene.lang.inGaraz, {
             fontFamily: 'Arial',
@@ -1049,7 +1003,7 @@ export const CreateTankPage = (scene: Phaser.Scene) => {
           })
           .setOrigin(1)
         containerOptions.add(textInGaraz)
-      } else if (item.rank <= scene.gameData.rank) {
+      } else if (item.rank <= getRank(scene.gameData.score)) {
         const buttonCart = new Button(
           scene,
           280,
@@ -1070,7 +1024,7 @@ export const CreateTankPage = (scene: Phaser.Scene) => {
         containerOptions.add(buttonCart)
       }
 
-      if (item.rank > scene.gameData.rank) {
+      if (item.rank > getRank(scene.gameData.score)) {
         const lockImage = scene.add
           .image(-50, 70, 'rank', item.rank)
           .setTint(GameOptions.ui.accentNumber)
@@ -1130,11 +1084,164 @@ export const CreateTankPage = (scene: Phaser.Scene) => {
         })
         .setOrigin(0)
     },
-    items: GameOptions.complexTanks
+    items: items
   })
+  t.keey = keyT
+  return t
 }
 
-export const CreatePages = (scene: Phaser.Scene, keys) => {
+export const CreateWeaponsPage = (scene, config) => {
+  const keyT = config.keyScroll + 'W'
+  const t = scene.rexUI.add.gridTable({
+    table: {
+      cellHeight: 250,
+      columns: 1,
+      mask: {
+        padding: 2
+      }
+    },
+
+    slider: {
+      track: scene.rexUI.add.roundRectangle(0, 0, 20, 10, 10, GameOptions.ui.panelBgColor),
+      thumb: scene.rexUI.add.roundRectangle(0, 0, 30, 60, 0, GameOptions.ui.primaryColorNumber),
+      valuechangeCallback: function (newValue) {
+        debounceUpdateScrollFn(scene, keyT, newValue)
+      }
+    },
+
+    space: {
+      table: 10
+    },
+
+    createCellContainerCallback: (cell) => {
+      const item: IWeaponObject = config.garaz
+        ? GameOptions.weaponObjects.find((x) => x.type == cell.item.type)
+        : cell.item
+      var scene = cell.scene,
+        width = cell.width,
+        height = cell.height,
+        index = cell.index
+
+      const scale = 1.3
+      const image = scene.add.image(70, 30, 'weapon', item.frame).setScale(scale)
+
+      const bgPanel = scene.add
+        .nineslice(0, -120, 'shopPanel2', 0, width, 250, 50, 50, 50, 50)
+        .setOrigin(0)
+        .setScale(1)
+
+      const bgLb = scene.add
+        .nineslice(0, -115, 'buttons', 1, width, 250, 50, 50, 50, 50)
+        .setTint(GameOptions.ui.panelBgColorLight)
+        .setAlpha(0.9)
+        .setOrigin(0)
+      const containerImage = scene.add.container(0, 0, [bgLb, bgPanel, image])
+      const textNameTank = scene.add.text(
+        -80,
+        0,
+        `${scene.lang.weapons[getEnumStringKey(WeaponType, item.type)]} ${scene.lang.weapon}`,
+        {
+          fontFamily: 'Arial',
+          fontSize: 30,
+          fontStyle: 'bold',
+          color: GameOptions.ui.primaryColor, //GameOptions.ui.accent,
+          align: 'left',
+          lineSpacing: -25
+        }
+      )
+      const containerOptions = scene.add.container(0, 0, [textNameTank])
+
+      if (!config.garaz) {
+        const textDamage = scene.add.text(0, 60, `${scene.lang.damage} - ${item.damage}HP`, {
+          fontFamily: 'Arial',
+          fontSize: 30,
+          color: GameOptions.ui.primaryColor, //GameOptions.ui.accent,
+          align: 'left',
+          lineSpacing: -25
+        })
+        const priceImage = scene.add.image(20, 140, 'coin', 0)
+        const priceText = scene.add.text(50, 120, item.cost, {
+          fontFamily: 'Arial',
+          fontSize: 35,
+          color: '#ffffff', //GameOptions.ui.accent,
+          align: 'left',
+          fontStyle: 'bold',
+          lineSpacing: -25
+        })
+        const buttonCart = new Button(
+          scene,
+          width - 230,
+          140,
+          180,
+          100,
+          GameOptions.ui.panelBgColor,
+          scene.lang.cart,
+          {
+            color: GameOptions.ui.primaryColor
+          },
+          () => {
+            scene.scene.get('Message').showCartWeapon(item, cell.index)
+          }
+        )
+        containerOptions.add([buttonCart, priceImage, priceText, textDamage])
+      } else {
+        const countTitle = scene.add
+          .text(width - 160, 110, scene.lang.exist, {
+            fontFamily: 'Arial',
+            fontSize: 35,
+            color: GameOptions.ui.primaryColor,
+            align: 'right',
+            lineSpacing: -25
+          })
+          .setOrigin(1)
+        const countText = scene.add
+          .text(width - 160, 170, cell.item.count, {
+            fontFamily: 'Arial',
+            fontSize: 60,
+            color: GameOptions.ui.accent,
+            align: 'left',
+            fontStyle: 'bold',
+            lineSpacing: -25
+          })
+          .setOrigin(1)
+        containerOptions.add([countText, countTitle])
+      }
+
+      const gridOptions = Phaser.Actions.GridAlign([containerOptions], {
+        width: 1,
+        height: 10,
+        cellWidth: width,
+        cellHeight: 37,
+        x: 120,
+        y: -80
+      })
+
+      return scene.rexUI.add
+        .label({
+          width: width,
+          height: height,
+
+          // background: scene.rexUI.add
+          //   .roundRectangle(0, 0, 20, 20, 0)
+          //   .setStrokeStyle(2, COLOR_LIGHT),
+          icon: containerImage, //scene.rexUI.add.imageBox(0, 0, 'tank', 0).setAngle(-90),
+          text: scene.add.container(0, 0, [...gridOptions]), //scene.add.text(0, 0, item.id),
+
+          space: {
+            left: 0
+          }
+        })
+        .setOrigin(0)
+    },
+    items: config.garaz
+      ? scene.gameData.weapons
+      : GameOptions.weaponObjects.filter((x) => x.cost > 0)
+  })
+  t.keey = keyT
+  return t
+}
+
+export const CreatePages = (scene: Phaser.Scene, config, keys) => {
   var pages = scene.rexUI.add.pages({
     space: { left: 0, right: 0, top: 10, bottom: 10 }
   })
@@ -1143,34 +1250,35 @@ export const CreatePages = (scene: Phaser.Scene, keys) => {
   // )
 
   var createPageCallback = {
-    tanks: CreateTankPage,
-    artefact: CreateArtefactPage
+    tanksPage: CreateTankPage,
+    weaponsPage: CreateWeaponsPage
   }
   var key
   for (var i = 0, cnt = keys.length; i < cnt; i++) {
     key = keys[i]
     pages.addPage(
-      createPageCallback[key](scene), // game object
+      createPageCallback[key](scene, config), // game object
       key // key
     )
   }
   return pages
 }
 
-export const CreateArtefactPage = (scene) => {
-  return scene.rexUI.add.gridTable()
-}
-
-export const CreateButtons = (scene, keys) => {
+export const CreateButtons = (scene, config, keys) => {
   var buttons = []
   for (var i = 0, cnt = keys.length; i < cnt; i++) {
     buttons.push(
       scene.rexUI.add.label({
         background: scene.rexUI.add.roundRectangle(0, 0, 10, 10, 0, GameOptions.ui.panelBgColor, 0),
-        text: scene.add.text(0, 0, scene.lang ? scene.lang[keys[i]] : keys[i], {
-          fontFamily: 'Arial',
-          fontSize: 35
-        }),
+        text: scene.add.text(
+          0,
+          0,
+          `${config.garaz ? scene.lang.my : ''} ${scene.lang ? (config.garaz ? scene.lang[keys[i]].toLowerCase() : scene.lang[keys[i]]) : keys[i]}`,
+          {
+            fontFamily: 'Arial',
+            fontSize: 35
+          }
+        ),
         name: keys[i],
         space: {
           top: 15,
@@ -1181,16 +1289,18 @@ export const CreateButtons = (scene, keys) => {
       })
     )
   }
-  const btns = scene.rexUI.add.buttons({
-    buttons: buttons,
-    orientation: 'x' // Left-right
-  })
+  const btns = scene.rexUI.add
+    .buttons({
+      buttons: buttons,
+      orientation: 'x' // Left-right
+    })
+    .setDepth(999999)
   return btns
 }
 
 export const CreateGarazPanel = (scene, config) => {
   var keys = config.keys
-  var buttons = CreateButtons(scene, keys)
+  var buttons = CreateButtons(scene, config, keys)
   var pages = CreateGarazPages(scene, config, keys)
   var mainPanel = scene.rexUI.add
     .sizer(config)
@@ -1239,48 +1349,23 @@ export const CreateGarazPages = (scene: Phaser.Scene, config, keys) => {
   // )
 
   var createPageCallback = {
-    tanks: CreateGarazTankPage,
-    artefact: CreateArtefactPage
+    tanksPage: CreateGarazTankPage,
+    weaponsPage: CreateWeaponsPage
   }
   var key
   for (var i = 0, cnt = keys.length; i < cnt; i++) {
     key = keys[i]
     pages.addPage(
-      createPageCallback[key](scene), // game object
+      createPageCallback[key](scene, config), // game object
       key // key
     )
   }
   return pages
 }
 
-export const CreateGarazTankPage = (scene: Phaser.Scene) => {
-  // const fullOptionsValue = new Map()
-  // for (let i = 0; i < GameOptions.complexTanks.length; i++) {
-  //   const item = GameOptions.complexTanks[i]
-  //   const tankItem = GameOptions.tanks.items[item.tank]
-  //   let value = 0
-  //   for (const option in tankItem.game) {
-  //     value += tankItem.game[option]
-  //   }
-  //   const towerItem = GameOptions.towers.items[item.tower]
-  //   for (const option in towerItem.game) {
-  //     // if (['timeRefreshWeapon'].includes(option)) {
-  //     //   // value -= towerItem.game[option]
-  //     // } else {
-  //     // }
-  //     value += towerItem.game[option]
-  //   }
-  //   const muzzleItem = GameOptions.muzzles.items[item.muzzle]
-  //   for (const option in muzzleItem.game) {
-  //     value += muzzleItem.game[option]
-  //   }
-
-  //   fullOptionsValue.set(i, value)
-  // }
-
-  // const gameData = scene.gameData
-
-  return scene.rexUI.add.gridTable({
+export const CreateGarazTankPage = (scene: Phaser.Scene, config: any) => {
+  const keyT = config.keyScroll + 'T'
+  const t = scene.rexUI.add.gridTable({
     table: {
       cellHeight: 250,
       columns: 1,
@@ -1291,7 +1376,10 @@ export const CreateGarazTankPage = (scene: Phaser.Scene) => {
 
     slider: {
       track: scene.rexUI.add.roundRectangle(0, 0, 20, 10, 10, GameOptions.ui.panelBgColor),
-      thumb: scene.rexUI.add.roundRectangle(0, 0, 30, 60, 0, GameOptions.ui.primaryColorNumber)
+      thumb: scene.rexUI.add.roundRectangle(0, 0, 30, 60, 0, GameOptions.ui.primaryColorNumber),
+      valuechangeCallback: function (newValue) {
+        debounceUpdateScrollFn(scene, keyT, newValue)
+      }
     },
 
     space: {
@@ -1306,62 +1394,17 @@ export const CreateGarazTankPage = (scene: Phaser.Scene) => {
         index = cell.index
       const item = scene.gameData.tanks[cell.index]
 
-      const tankConfig = GameOptions.tanks.items[item.levelTank]
-      const towerConfig = GameOptions.towers.items[item.levelTower]
-      const muzzleConfig = GameOptions.muzzles.items[item.levelMuzzle]
+      const configTank = GameOptions.complexTanks.find((x) => x.id == item.id)
 
-      const scale = 1.3
-      const towerSprite = scene.add.image(0, 0, 'tower', towerConfig.frame).setScale(scale)
-      const muzzleSprite = scene.add
-        .sprite(
-          -GameOptions.muzzles.items[0].offset.xOffset *
-            GameOptions.muzzles.items[0].vert[0].x *
-            scale,
-          0,
-          'muzzle',
-          muzzleConfig.frame
-        )
-        .setTint(0x111111)
-        .setScale(scale)
-      const tankSprite = scene.add.image(0, 0, 'tank', tankConfig.frame).setScale(scale)
-      const tankContainer = scene.add
-        .container(80, 20, [tankSprite, towerSprite, muzzleSprite])
-        .setAngle(-90)
+      const tankContainer = getTankImage(scene, configTank.id).setAngle(-90).setScale(1.2)
+      tankContainer.setPosition(80, 20)
 
       const bgBorder = scene.add
-        .nineslice(
-          0,
-          -120,
-          'shopPanel2',
-          0,
-          GameOptions.screen.width -
-            GameOptions.workshop.sideWidth -
-            GameOptions.workshop.updateSideWidth -
-            80,
-          250,
-          50,
-          50,
-          50,
-          50
-        )
+        .nineslice(0, -120, 'shopPanel2', 0, width, height, 50, 50, 50, 50)
         .setOrigin(0)
         .setScale(1)
       const bgPanel = scene.add
-        .nineslice(
-          0,
-          -115,
-          'buttons',
-          1,
-          GameOptions.screen.width -
-            GameOptions.workshop.sideWidth -
-            GameOptions.workshop.updateSideWidth -
-            80,
-          250,
-          50,
-          50,
-          50,
-          50
-        )
+        .nineslice(0, -115, 'buttons', 1, width, 250, 50, 50, 50, 50)
         .setTint(
           cell.index === scene.gameData.activeTankIndex
             ? GameOptions.ui.accentNumber
@@ -1373,21 +1416,22 @@ export const CreateGarazTankPage = (scene: Phaser.Scene) => {
 
       const buttonCheck = new Button(
         scene,
-        280,
+        width - 260,
         140,
         180,
         100,
         GameOptions.ui.panelBgColor,
         scene.lang?.check,
         {
-          color: GameOptions.ui.primaryColor
+          color: GameOptions.ui.primaryColor,
+          fontSize: 25
         },
         () => {
           scene.onCheckTank(cell.index)
         }
       )
       const progressBg = scene.add
-        .rectangle(0, 45, 300, 10, GameOptions.ui.progressBgColor)
+        .rectangle(0, 45, width / 2, 10, GameOptions.ui.progressBgColor)
         .setOrigin(0)
       const maximumOptionValue = Object.values(GameOptions.maximum).reduce((a, b) => a + b, 0)
       //Math.max(...fullOptionsValue.values())
@@ -1405,12 +1449,12 @@ export const CreateGarazTankPage = (scene: Phaser.Scene) => {
         .rectangle(
           0,
           45,
-          currentValueProgress * 300 * 0.01,
+          currentValueProgress * progressBg.width * 0.01,
           10,
           GameOptions.workshop.colorValueProgress
         )
         .setOrigin(0)
-      const textNameTank = scene.add.text(0, 0, GameOptions.complexTanks[item.level].name, {
+      const textNameTank = scene.add.text(0, 0, configTank.name, {
         fontFamily: 'Arial',
         fontSize: 35,
         fontStyle: 'bold',
@@ -1437,6 +1481,27 @@ export const CreateGarazTankPage = (scene: Phaser.Scene) => {
         currentProgress,
         buttonCheck
       ])
+
+      if (config.workshop && configTank.cost > 0) {
+        const buttonSell = new Button(
+          scene,
+          width - 420,
+          140,
+          180,
+          100,
+          GameOptions.ui.panelBgColor,
+          scene.lang?.sell,
+          {
+            color: GameOptions.ui.primaryColor,
+            fontSize: 25
+          },
+          () => {
+            // scene.onSellTank(cell.index)
+            scene.scene.get('Message').showSellTank(item.id)
+          }
+        )
+        containerOptions.add(buttonSell)
+      }
 
       const gridOptions = Phaser.Actions.GridAlign([containerOptions], {
         width: 1,
@@ -1469,4 +1534,110 @@ export const CreateGarazTankPage = (scene: Phaser.Scene) => {
     },
     items: scene.gameData.tanks
   })
+  t.keey = keyT
+  return t
+}
+
+export function createTableGerb(scene: Phaser.Scene, callback: () => void) {
+  const items = Array.from(Array(GameOptions.countGerb).keys())
+
+  const table = scene.rexUI.add.gridTable({
+    table: {
+      cellHeight: 125,
+      cellWidth: 125,
+      columns: 6,
+      rows: 10,
+      mask: {
+        padding: {
+          top: 25,
+          bottom: 25
+        }
+      }
+      // cellInvisibleCallback: (cell) => {
+      //   console.log(cell)
+      // }
+    },
+
+    slider: {
+      track: scene.rexUI.add.roundRectangle(0, 0, 20, 10, 10, GameOptions.ui.panelBgColor),
+      thumb: scene.rexUI.add.roundRectangle(0, 0, 60, 60, 0, GameOptions.ui.primaryColorNumber),
+      valuechangeCallback: function (newValue) {
+        // debounceUpdateScrollFn(scene, keyT, newValue)
+      }
+    },
+
+    // space: {
+    //   table: 0
+    // },
+
+    createCellContainerCallback: (cell) => {
+      const item = items[cell.index]
+      var scene = cell.scene,
+        width = cell.width,
+        height = cell.height,
+        // item = cell.item,
+        index = cell.index
+
+      const container = scene.add.container(0, 0, [])
+
+      if (scene.gameData.gerbId == item) {
+        const bg = scene.add.rectangle(0, 0, width, height, GameOptions.ui.accentNumber, 0.3)
+        container.add(bg)
+      }
+
+      const image = scene.add
+        .image(0, 0, 'gerb', item)
+        .setInteractive({ useHandCursor: true })
+        .on('pointerdown', () => {
+          scene.scene.get('WorkShop').changeGerb(item)
+          callback && callback()
+        })
+      container.add(image)
+
+      return scene.rexUI.add
+        .label({
+          width: width,
+          height: height,
+
+          // background: scene.rexUI.add
+          //   .roundRectangle(0, 0, 20, 20, 0)
+          //   .setStrokeStyle(2, COLOR_LIGHT),
+          icon: container, //scene.rexUI.add.imageBox(0, 0, 'tank', 0).setAngle(-90),
+          text: null, //scene.add.container(0, 0, [...gridOptions]), //scene.add.text(0, 0, item.id),
+
+          space: {
+            left: width,
+            top: 0
+          }
+        })
+        .setOrigin(0)
+    },
+    items
+  })
+
+  return (
+    scene.rexUI.add
+      .sizer({
+        x: 0,
+        y: 0,
+        width: 900,
+        height: 300,
+        orientation: 'y',
+        // enableLayer: true,
+        space: { left: 5, right: 5, top: 25, bottom: 25, item: 0 },
+        anchor: {
+          top: 'top',
+          left: 'left'
+        }
+      })
+      // .addBackground(scene.rexUI.add.roundRectangle(0, 0, 0, 0, 0, 0x000000))
+      .add(
+        table,
+        1, // proportion
+        'center', // align
+        0, // paddingConfig
+        true // expand)
+      )
+      .layout()
+  )
 }

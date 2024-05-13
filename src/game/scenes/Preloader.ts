@@ -1,13 +1,19 @@
 import { Scene } from 'phaser'
 import { GameOptions } from '../options/gameOptions'
 import { EventBus } from '../EventBus'
+import { TLang } from '../types'
+import { toRaw } from 'vue'
 
 export class Preloader extends Scene {
   constructor() {
     super('Preloader')
   }
 
+  textStatus: Phaser.GameObjects.Text
+  lang: TLang
+
   init() {
+    this.lang = window.game.currentLang
     //  We loaded this image in our Boot Scene, so we can display it here
     //this.add.image(512, 384, 'background')
     // this.cameras.main.setBackgroundColor(0x050505)
@@ -19,6 +25,20 @@ export class Preloader extends Scene {
       .sprite(GameOptions.screen.width / 2, GameOptions.screen.height / 2 - 100, 'brand')
       .setScale(0.5)
       .setTint(0xffffff)
+      .setOrigin(0.5)
+
+    this.textStatus = this.add
+      .text(
+        GameOptions.screen.width / 2,
+        GameOptions.screen.height / 2 + 50,
+        `${this.lang.loading} ...`,
+        {
+          fontSize: 25,
+          fontFamily: 'Arial',
+          color: GameOptions.ui.primaryColor,
+          align: 'center'
+        }
+      )
       .setOrigin(0.5)
     // bg.
     // this.add
@@ -47,9 +67,12 @@ export class Preloader extends Scene {
   }
 
   preload() {
+    this.textStatus.setText(`${this.lang.loadingAssets} ...`)
+
     if (window && window.onSdkGameLoadingStart) {
       window.onSdkGameLoadingStart()
     }
+
     this.load.setPath('assets')
 
     this.load.atlas('flares', 'particles/flares.png', 'particles/flares.json')
@@ -145,11 +168,20 @@ export class Preloader extends Scene {
       url: 'sprite/ui/sound.png',
       frameConfig: { frameWidth: 256, frameHeight: 256 }
     })
+    this.load.spritesheet({
+      key: 'mobButtons',
+      url: 'sprite/ui/mobButtons.png',
+      frameConfig: { frameWidth: 128, frameHeight: 128 }
+    })
 
     this.load.audio('click', ['audio/click.mp3'])
     this.load.audio('boom', ['audio/vystrel-tanka-2.mp3'])
-    this.load.image('bullet', 'sprite/bullet.png')
+    this.load.audio('explode_build', ['audio/explode_build.mp3'])
+    this.load.audio('motor_run', ['audio/motor_run.mp3'])
+    this.load.audio('get_bonus', ['audio/get_bonus.mp3'])
 
+    this.load.image('bullet', 'sprite/bullet.png')
+    this.load.image('placeholder', 'sprite/ui/placeholder.png')
     this.load.image('smoke-puff', 'sprite/smoke-puff.png')
     this.load.image('white', 'sprite/ui/white.png')
     this.load.image('weaponPlace', 'sprite/weaponPlace.png')
@@ -166,9 +198,9 @@ export class Preloader extends Scene {
     // this.load.image('tank_bar', 'sprite/tank_bar.png')
     // this.load.image('tank_bar_bg', 'sprite/tank_bar_bg.png')
     this.load.image('tiles', 'tiles/tiles0.png')
-    this.load.tilemapTiledJSON('map', 'map0.json')
-
-    console.log('Preload')
+    this.load.tilemapTiledJSON('map1', 'map1.json')
+    this.load.tilemapTiledJSON('map2', 'map2.json')
+    this.load.tilemapTiledJSON('map3', 'map3_40x40.json')
   }
 
   create() {
@@ -209,26 +241,87 @@ export class Preloader extends Scene {
       repeat: 0
     })
 
-    this.scene.start('Message')
-    // // this.scene.start('Lang')
-    // this.scene.start('GameOver')
-    this.scene.start('Control')
-    // this.scene.start('NextLevel')
-    // this.scene.start('Game')
-    // this.scene.start('Help')
-    this.scene.start('Bank')
-    this.scene.start('WorkShop')
-    this.scene.start('Home')
-    // this.scene.start('Record')
-    console.log('Created game!')
+    this.onCreateGame()
+  }
 
-    // Init SDK
-    if (window && window.initSDK) {
-      window?.initSDK()
-    }
+  async onCreateGame() {
+    try {
+      // Init SDK.
+      this.textStatus.setText(`${this.lang.init} ...`)
+      if (window && window.initSDK) {
+        await window
+          .initSDK()
+          .then(async () => {
+            console.log('init SDK successfully')
+          })
+          .catch((e) => e)
+      }
 
-    if (window && window.onSdkGameLoadingStop) {
-      window.onSdkGameLoadingStop()
+      // Init player.
+      this.textStatus.setText(`Init player ...`)
+      if (window && window.initPlayer) {
+        await window
+          .initPlayer()
+          .then(() => {
+            console.log('init player successfully')
+          })
+          .catch((e) => e)
+      }
+
+      // Init leaderboard.
+      this.textStatus.setText(`Init leaderboard ...`)
+      if (window && window.initLB) {
+        await window
+          .initLB()
+          .then(() => {
+            console.log('init leaderboard successfully')
+          })
+          .catch((e) => e)
+      }
+
+      // Load game data.
+      this.textStatus.setText(`${this.lang.loadingData} ...`)
+      if (window && window.loadGameData) {
+        await window
+          .loadGameData()
+          .then((data) => {
+            EventBus.emit('set-data', data)
+            return data
+          })
+          .catch((e) => e)
+      } else {
+        EventBus.emit('set-data', null)
+      }
+
+      // Load player data.
+      this.textStatus.setText('Load player data ...')
+      if (window && window.getPlayerData) {
+        await window
+          .getPlayerData()
+          .then((data) => {
+            EventBus.emit('set-player-data', data)
+            return data
+          })
+          .catch((e) => e)
+      }
+
+      // Load scenes.
+      const data = {
+        lang: toRaw(window.game.currentLang),
+        gameData: toRaw(window.game.gameData)
+      }
+      this.textStatus.setText('Create scenes ...')
+      this.scene.start('Message', data)
+      this.scene.start('Control', data)
+      this.scene.start('Bank', data)
+      this.scene.start('WorkShop', data)
+      this.scene.start('Home', data)
+
+      if (window && window.onSdkGameLoadingStop) {
+        window.onSdkGameLoadingStop()
+      }
+    } catch (e) {
+      console.error('Error init game: ', e)
     }
   }
 }

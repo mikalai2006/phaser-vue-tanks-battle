@@ -3,7 +3,7 @@ import Phaser from 'phaser'
 import { defineSystem, defineQuery, enterQuery, exitQuery } from 'bitecs'
 
 import { Position } from '../components/Position'
-import { GameOptions, allCollision } from '../options/gameOptions'
+import { GameOptions, tankAmunition, tankCategory, weaponCategory } from '../options/gameOptions'
 import { Weapon } from '../components/Weapon'
 import { WeaponMapObject } from '../objects/WeaponMapObject'
 
@@ -29,7 +29,8 @@ export function createWeaponSystem(scene: Phaser.Scene) {
         isStatic: true,
         density: 1000,
         collisionFilter: {
-          category: allCollision
+          category: weaponCategory,
+          mask: tankCategory | tankAmunition
         }
       })
 
@@ -39,6 +40,7 @@ export function createWeaponSystem(scene: Phaser.Scene) {
     const exitEntities = onQueryExit(world)
     for (const id of exitEntities) {
       weaponById.delete(id)
+      // console.log('Delete weapon', id)
     }
 
     // const entities = query(world)
@@ -50,44 +52,3 @@ export function createWeaponSystem(scene: Phaser.Scene) {
     return world
   })
 }
-
-// export function createMatterStaticSpriteSystem() {
-//   // create query
-//   const query = defineQuery([MatterSprite, MatterStaticSprite])
-
-//   // create enter query
-//   const onQueryEnter = enterQuery(query)
-//   const onQueryExit = exitQuery(query)
-
-//   return defineSystem((world) => {
-//     // loop through enter query entities
-//     const enterEntities = onQueryEnter(world)
-//     for (const id of enterEntities) {
-//       const sprite = matterSpritesById.get(id)
-
-//       if (!sprite) {
-//         continue
-//       }
-
-//       const { tank, tower } = sprite
-
-//       tank.setStatic(true)
-//       // tower.setStatic(true)
-//     }
-
-//     const exitEntities = onQueryExit(world)
-//     for (const id of exitEntities) {
-//       const sprite = matterSpritesById.get(id)
-
-//       if (!sprite) {
-//         continue
-//       }
-
-//       const { tank } = sprite
-
-//       tank.setStatic(false)
-//     }
-
-//     return world
-//   })
-// }

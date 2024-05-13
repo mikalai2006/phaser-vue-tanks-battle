@@ -10,11 +10,11 @@ export class TankObject extends Phaser.Physics.Matter.Sprite {
   detectorCollision: MatterJS.BodyType
   detectorBonus: MatterJS.BodyType
   damageImage: Phaser.GameObjects.Image
-  // areol: Phaser.GameObjects.Container
+  areol: Phaser.GameObjects.Container
   arrow: Phaser.GameObjects.Image
   smoke: Phaser.GameObjects.Particles.ParticleEmitter
   smokeConfig: any
-  // emitterPath: Phaser.GameObjects.Particles.ParticleEmitter
+  moveSound: Phaser.Sound.HTML5AudioSound | Phaser.Sound.NoAudioSound | Phaser.Sound.WebAudioSound
 
   constructor(
     ecsId: number,
@@ -36,27 +36,34 @@ export class TankObject extends Phaser.Physics.Matter.Sprite {
     // this.setFrictionAir(0)
     // this.setFixedRotation()
     this.setActive(true)
+    this.moveSound = this.scene.sound.add('motor_run', {
+      loop: true,
+      volume: 0
+    })
+    this.moveSound.play()
 
+    // if this is player.
+    // if (this.ecsId != this.scene.idPlayer) {
     this.detectorCollision = this.scene.matter.bodies.circle(this.x, this.y, 100, {
       isSensor: true
       // collisionFilter: {
+      //   group:0,
       //   category: sensorCategory,
       //   mask: defaultCategory & allCollision
       // }
     })
+    this.detectorCollision.key = 'detector'
     this.detectorCollision.onCollideCallback = (d) => {
       if (d.bodyA !== this.detectorCollision && d.bodyB !== this.detectorCollision) {
         return
       }
 
-      const target =
-        d.bodyA.gameObject !== this.detectorCollision ? d.bodyA.gameObject : d.bodyB.gameObject
+      const target = d.bodyA !== this.detectorCollision ? d.bodyA.gameObject : d.bodyB.gameObject
 
-      if (['destroyObject', 'bonus', 'weaponMap'].includes(target?.ecsId)) {
+      if (['destroyObject', 'bonus', 'weaponMap'].includes(target?.key)) {
         return
       }
 
-      // console.log(d.bodyA, d.bodyB)
       const angleToPointer = Phaser.Math.RadToDeg(
         Phaser.Math.Angle.Between(
           d.bodyA.position.x,
@@ -69,12 +76,27 @@ export class TankObject extends Phaser.Physics.Matter.Sprite {
       const angleDelta = Math.abs(
         Phaser.Math.Angle.ShortestBetween(angleToPointer, Rotation.angle[this.ecsId])
       )
+      // console.log(
+      //   target?.key,
+      //   ['destroyObject', 'bonus', 'weaponMap'].includes(target?.key),
+      //   d.bodyA,
+      //   d.bodyB,
+      //   angleDelta
+      // )
 
       if (
-        (angleDelta < 60 || angleDelta > 120) &&
-        (d.bodyA.gameObject?.ecsId || d.bodyB.gameObject?.ecsId)
+        angleDelta < 40 ||
+        angleDelta > 140
+        // &&
+        // (d.bodyA.gameObject?.ecsId || d.bodyB.gameObject?.ecsId)
       ) {
         Input.obstacle[this.ecsId] = 1
+        // console.log(
+        //   'obstacle: isPlayer=',
+        //   this.ecsId == this.scene.idPlayer,
+        //   ' this.ecsId=',
+        //   this.ecsId
+        // )
       }
     }
     this.scene.matter.add.constraint(this.body, this.detectorCollision, 0, 0)
@@ -86,7 +108,13 @@ export class TankObject extends Phaser.Physics.Matter.Sprite {
       //   mask: defaultCategory & allCollision
       // }
     })
+    this.detectorBonus.key = 'detector'
     this.detectorBonus.onCollideCallback = (d) => {
+      // if this is player.
+      if (this.ecsId == this.scene.idPlayer) {
+        return
+      }
+
       if (d.bodyA !== this.detectorBonus && d.bodyB !== this.detectorBonus) {
         return
       }
@@ -111,6 +139,7 @@ export class TankObject extends Phaser.Physics.Matter.Sprite {
     }
     this.scene.matter.add.constraint(this.body, this.detectorBonus, 0, 0)
     this.world.add(this.detectorBonus)
+    // }
 
     this.damageImage = this.scene.add.image(this.x, this.y, 'tank', 36).setDepth(5)
     this.damageImage.setVisible(false)
@@ -120,9 +149,14 @@ export class TankObject extends Phaser.Physics.Matter.Sprite {
       this.damageImage.setPipeline('Light2D')
     }
 
-    this.arrow = this.scene.add.image(0, 0, 'arrow').setTint(0xadff2f).setScale(1.5).setDepth(10)
-    // const areolImage = this.scene.add.image(0, 0, 'areol').setTint(0xadff2f).setScale(1.1)
-    // this.areol = this.scene.add.container(x, y, [areolImage]).setVisible(false)
+    this.arrow = this.scene.add
+      .image(0, 0, 'arrow')
+      .setTint(0xadff2f)
+      .setScale(1.5)
+      .setDepth(10)
+      .setVisible(false)
+    const areolImage = this.scene.add.image(0, 0, 'areol').setTint(0xadff2f).setScale(1.1)
+    this.areol = this.scene.add.container(x, y, [areolImage]).setDepth(1).setVisible(false)
 
     this.scene.add.existing(this)
 
@@ -260,6 +294,14 @@ export class TankObject extends Phaser.Physics.Matter.Sprite {
     // })
 
     // this.world.remove(this.body, true)
+
+    // events.
+    this.scene.events.on('pause', () => {
+      this.moveSound.pause()
+    })
+    this.scene.events.on('resume', () => {
+      this.moveSound.resume()
+    })
   }
 
   // fire(x, y, angle, speed) {
@@ -275,6 +317,28 @@ export class TankObject extends Phaser.Physics.Matter.Sprite {
 
   //   this.lifespan = 1000
   // }
+  startMove() {
+    const isFollower = this.ecsId == this.scene.idFollower
+    if (this.scene.cameras.main.cull([this]).length) {
+      // !this.moveSound.isPlaying && this.moveSound.setVolume(isFollower ? 0.1 : 0.03).play()
+      if (!this.moveSound.isPlaying && this.scene.isMute) {
+        this.moveSound.play()
+      }
+      this.moveSound.setVolume(isFollower ? 0.5 : 0.1)
+    } else {
+      this.moveSound.stop()
+    }
+  }
+
+  stopMove() {
+    const isFollower = this.ecsId == this.scene.idFollower
+    // this.moveSound.stop()
+    if (!this.moveSound.isPlaying && this.scene.isMute) {
+      this.moveSound.play()
+    }
+    this.moveSound.setVolume(isFollower ? 0.2 : 0.005)
+  }
+
   createSmoke() {
     if (!this.smoke) {
       return
@@ -314,7 +378,7 @@ export class TankObject extends Phaser.Physics.Matter.Sprite {
 
   removeTank() {
     this.createSmoke()
-
+    this.moveSound.stop()
     this.setActive(true)
     this.key = 'tankDestroy'
     this.removeAllListeners()
@@ -328,19 +392,35 @@ export class TankObject extends Phaser.Physics.Matter.Sprite {
 
   preUpdate(time, delta) {
     super.preUpdate(time, delta)
+
+    if (!this.scene.isMute) {
+      this.moveSound.stop()
+    }
+
     this.damageImage.setPosition(this.x, this.y)
     this.damageImage.setAngle(this.angle)
 
-    // this.areol.setPosition(this.x, this.y)
+    this.areol.setPosition(this.x, this.y)
     this.arrow.setPosition(this.x, this.y)
     this.arrow.setAngle(this.angle)
 
-    if (this.ecsId === this.scene.idFollower) {
-      // this.areol.setVisible(true)
-      this.arrow.setVisible(true)
-    } else {
-      // this.areol.setVisible(false)
-      this.arrow.setVisible(false)
+    if (this.ecsId != this.scene.idFollower) {
+      return
     }
+
+    if (this.scene.gameData.settings.showAreol) {
+      this.areol.setVisible(true)
+    }
+
+    if (this.scene.gameData.settings.showArrow) {
+      this.arrow.setVisible(true)
+    }
+  }
+
+  destroy(fromScene?: boolean): void {
+    super.destroy(fromScene)
+
+    this.moveSound?.destroy()
+    this.smoke?.destroy()
   }
 }

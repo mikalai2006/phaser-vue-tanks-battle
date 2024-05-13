@@ -30,6 +30,10 @@ export function createTeamBarSystem(scene: Phaser.Scene) {
   const onQueryExit = exitQuery(query)
 
   return defineSystem((world) => {
+    if (scene.configRound.config.countTeams < 2) {
+      return
+    }
+
     const enterEntities = onQueryEnter(world)
 
     const teams: ITeamBarData[] = enterEntities.reduce((ac: ITeamBarData[], el: number) => {
@@ -88,6 +92,20 @@ export function createTeamBarSystem(scene: Phaser.Scene) {
       if (id === 0) {
         imageGerb.scaleX = -0.5
       }
+      const textName = scene.add
+        .text(150, -30, id === 0 ? scene.lang.yourTeam : scene.lang.enemyTeam, {
+          fontFamily: 'Arial',
+          fontStyle: 'bold',
+          fontSize: 20,
+          color: GameOptions.ui.white,
+          stroke: '#000000',
+          strokeThickness: 2,
+          align: 'left'
+        })
+        .setOrigin(id === 0 ? 0 : 1, 0.5)
+      if (id === 0) {
+        textName.scaleX = -1
+      }
       const healthImage = scene.add
         .rectangle(x3 + 25, -10, WIDTH_BAR, 20, GameOptions.colors.health)
         .setOrigin(0)
@@ -95,12 +113,13 @@ export function createTeamBarSystem(scene: Phaser.Scene) {
         .rectangle(x3 + 25, -10, WIDTH_BAR, 20, 0x444444, 1)
         .setOrigin(0)
 
-      const containerGerb = scene.add.container(-x3, 30, [
+      const containerGerb = scene.add.container(-420, 35, [
         imageGerbBgOverlay,
         imageGerbBgOverlay2,
         healthImageBg,
         healthImage,
         imageGerbBg,
+        textName,
         imageGerb
       ])
 
@@ -189,9 +208,9 @@ export function createTeamBarSyncSystem(scene) {
       // if (tower.weaponRefreshEvent) {
       //   const progress = tower.weaponRefreshEvent.getProgress()
       //   if (progress < 1) {
-      //     EntityBar.weapon[id] = 0
+      //     Entity.weapon[id] = 0
       //   } else if (progress == 1) {
-      //     EntityBar.weapon[id] = 1
+      //     Entity.weapon[id] = 1
       //   }
       // }
     }

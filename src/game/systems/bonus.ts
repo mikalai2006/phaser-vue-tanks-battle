@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import { defineSystem, defineQuery, enterQuery, exitQuery, addEntity, addComponent } from 'bitecs'
-import { GameOptions, twoCategory } from '../options/gameOptions'
+import { GameOptions, bonusCategory, tankAmunition, tankCategory } from '../options/gameOptions'
 import { Bonus } from '../components/Bonus'
 import Position from '../components/Position'
 import { BonusObject } from '../objects/BonusObject'
@@ -31,7 +31,8 @@ export function createBonusSystem(scene: Phaser.Scene) {
         frictionAir: 0.2,
         density: 100,
         collisionFilter: {
-          category: twoCategory
+          category: bonusCategory,
+          mask: tankCategory | tankAmunition
         }
       })
 
@@ -46,7 +47,7 @@ export function createBonusSystem(scene: Phaser.Scene) {
 
     const exitEntities = onQueryExit(world)
     for (const id of exitEntities) {
-      console.log('remove bonus: ', id)
+      // console.log('remove bonus: ', id)
       // const tank = bonusesById.get(id)
       // const tower = towersById.get(id)
       // const caterpillars = caterpillarsById.get(id)

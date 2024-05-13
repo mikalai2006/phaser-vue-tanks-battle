@@ -11,9 +11,14 @@ export default function createAIMoveRandomSystem(scene: Phaser.Scene) {
   const cpuQuery = defineQuery([AI, Velocity, Rotation, Input])
 
   return defineSystem((world) => {
+    if (scene.isPauseAI) {
+      return
+    }
+
     const entities = cpuQuery(world)
 
     const dt = scene.game.loop.delta
+
     for (let i = 0; i < entities.length; ++i) {
       const id = entities[i]
       if (AI.status[id] !== StatusAI.MoveRandom) {
@@ -24,7 +29,12 @@ export default function createAIMoveRandomSystem(scene: Phaser.Scene) {
 
       if (Input.obstacle[id]) {
         AI.accumulatedTime[id] += AI.timeBetweenActions[id]
-        Input.obstacle[id] = 0
+
+        Input.left[id] = 0
+        Input.right[id] = 0
+        Input.up[id] = 0
+        Input.down[id] = 0
+        // Input.obstacle[id] = 0
       }
       // // check collisions.
       // const vec = new Phaser.Math.Vector2(Position.x[id], Position.y[id])
@@ -50,6 +60,7 @@ export default function createAIMoveRandomSystem(scene: Phaser.Scene) {
       if (AI.accumulatedTime[id] < AI.timeBetweenActions[id]) {
         continue
       }
+      Input.obstacle[id] = 0
 
       Input.left[id] = 0
       Input.right[id] = 0
@@ -63,7 +74,7 @@ export default function createAIMoveRandomSystem(scene: Phaser.Scene) {
       AI.accumulatedTime[id] = 0
       Input.countRandom[id] += 1
 
-      switch (Phaser.Math.Between(0, 10)) {
+      switch (Phaser.Math.Between(0, 15)) {
         // left
         case 0: {
           Input.left[id] = 1 //.direction[id] = Direction.Left

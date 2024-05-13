@@ -7,7 +7,15 @@ import { Rotation } from '../components/Rotation'
 import { Velocity } from '../components/Velocity'
 import RotationTower from '../components/RotationTower'
 import { TankObject } from '../objects/TankObject'
-import { GameOptions, allCollision, defaultCategory, twoCategory } from '../options/gameOptions'
+import {
+  GameOptions,
+  mapObjectCategory,
+  tankCategory,
+  tankAmunition,
+  weaponCategory,
+  bonusCategory,
+  caterpillarCategory
+} from '../options/gameOptions'
 import { Entity } from '../components/Entity'
 import { TowerObject } from '../objects/TowerObject'
 import { Caterpillar } from '../objects/Caterpillar'
@@ -54,12 +62,16 @@ export function createMatterSpriteSystem(scene: Phaser.Scene) {
       const x = Position.x[id]
       const y = Position.y[id]
 
-      const tank = new TankObject(id, scene.matter.world, x, y, Tank.level[id], {
+      const configComplexTank = GameOptions.complexTanks[Tank.index[id]]
+      const configTank = GameOptions.tanks.items[configComplexTank.tank]
+
+      const tank = new TankObject(id, scene.matter.world, x, y, configComplexTank.tank, {
         friction: 0,
         frictionAir: 0.2,
         density: 100,
         collisionFilter: {
-          category: twoCategory
+          category: tankCategory,
+          mask: mapObjectCategory | weaponCategory | bonusCategory | tankCategory
         }
       })
       // tank.detectorCollision.onCollideCallback = (d) => {
@@ -72,23 +84,32 @@ export function createMatterSpriteSystem(scene: Phaser.Scene) {
         scene.setFollower(id)
       }
 
-      const muzzle = new MuzzleObject(id, world, scene.matter.world, x, y, Tank.levelMuzzle[id], {
-        friction: 0,
-        frictionAir: 0.2,
-        density: 100,
-        collisionFilter: {
-          mask: defaultCategory & allCollision
+      const muzzle = new MuzzleObject(
+        id,
+        world,
+        scene.matter.world,
+        x,
+        y,
+        configComplexTank.muzzle,
+        {
+          friction: 0,
+          frictionAir: 0.2,
+          density: 100,
+          collisionFilter: {
+            category: tankAmunition,
+            mask: mapObjectCategory | weaponCategory | bonusCategory
+          }
         }
-      })
+      )
       muzzlesById.set(id, muzzle)
 
-      const tower = new TowerObject(id, scene.matter.world, x, y, Tank.levelTower[id], {
+      const tower = new TowerObject(id, scene.matter.world, x, y, configComplexTank.tower, {
         friction: 0,
         frictionAir: 0.2,
-        density: 10,
-        collisionFilter: {
-          mask: defaultCategory & allCollision
-        }
+        density: 10
+        // collisionFilter: {
+        //   mask: mapObjectCategory | tankAmunition
+        // }
       })
       towersById.set(id, tower)
 
@@ -97,8 +118,8 @@ export function createMatterSpriteSystem(scene: Phaser.Scene) {
         frictionAir: 0.2,
         density: 10,
         collisionFilter: {
-          category: twoCategory,
-          mask: defaultCategory & allCollision
+          category: caterpillarCategory,
+          mask: 0
         }
       })
       const caterpillarRight = new Caterpillar(id, scene.matter.world, x, y + 50, 0, {
@@ -106,8 +127,8 @@ export function createMatterSpriteSystem(scene: Phaser.Scene) {
         frictionAir: 0.2,
         density: 10,
         collisionFilter: {
-          category: twoCategory,
-          mask: defaultCategory & allCollision
+          category: caterpillarCategory,
+          mask: 0
         }
       })
       caterpillarsById.set(id, {
@@ -119,29 +140,29 @@ export function createMatterSpriteSystem(scene: Phaser.Scene) {
 
       caterpillarLeft.setTint(GameOptions.colors.caterpillar)
       caterpillarRight.setTint(GameOptions.colors.caterpillar)
-      tank.setTint(0xf0e68c) //0xf0e68c
-      tower.setTint(0xf0e68c) //0x5a7733)
-      muzzle.setTint(0x111111)
+      tank.setTint(configComplexTank.color.replace('#', '0x')) //0xf0e68c
+      tower.setTint(configComplexTank.color.replace('#', '0x')) //0x5a7733)
+      muzzle.setTint(GameOptions.colors.caterpillar)
 
       scene.matter.add.constraint(tank.body, caterpillarLeft.body, 0, 0, {
-        pointA: { x: 0, y: -GameOptions.tanks.items[Tank.level[id]].catYOffset }
+        pointA: { x: 0, y: -configTank.catYOffset }
       })
       scene.matter.add.constraint(tank.body, caterpillarRight.body, 0, 0, {
-        pointA: { x: 0, y: GameOptions.tanks.items[Tank.level[id]].catYOffset }
+        pointA: { x: 0, y: configTank.catYOffset }
       })
       scene.matter.add.constraint(tank.body, tower.body, 0, 0)
 
       scene.matter.body.setCentre(
         muzzle.body,
-        GameOptions.muzzles.items[Tank.levelMuzzle[id]].center,
+        GameOptions.muzzles.items[configComplexTank.muzzle].center,
         true
       )
       scene.matter.add.constraint(tank.body, muzzle.body, 0, 0, {
         pointA: JSON.parse(
-          JSON.stringify(GameOptions.muzzles.items[Tank.levelMuzzle[id]].centerConstraint)
+          JSON.stringify(GameOptions.muzzles.items[configComplexTank.muzzle].centerConstraint)
         ),
         pointB: JSON.parse(
-          JSON.stringify(GameOptions.muzzles.items[Tank.levelMuzzle[id]].centerConstraint)
+          JSON.stringify(GameOptions.muzzles.items[configComplexTank.muzzle].centerConstraint)
         )
       })
     }
@@ -284,8 +305,21 @@ export function createMatterPhysicsSystem(scene) {
 
       // set angle for tower.
       tower.setAngle(muzzle.angle)
+      tower.gerbImage.setPosition(tower.x, tower.y)
+      tower.gerbImage.setAngle(muzzle.angle)
 
-      // if (!!Input.fire[id] && !!EntityBar.weapon[id]) {
+      const isMove = !!Input.down[id] || !!Input.left[id] || !!Input.right[id] || !!Input.up[id]
+      if (isMove) {
+        tank.startMove()
+        caterpillar.left.toggleEmitter(true, !!Input.up[id])
+        caterpillar.right.toggleEmitter(true, !!Input.up[id])
+      } else {
+        tank.stopMove()
+        caterpillar.left.toggleEmitter(false, !!Input.up[id])
+        caterpillar.right.toggleEmitter(false, !!Input.up[id])
+      }
+
+      // if (!!Input.fire[id] && !!Entity.weapon[id]) {
       //   Input.fire[id] = 0
       //   const time = Tank.timeBeforeShoot[id]
       //   Tank.timeBeforeShoot[id] = 0

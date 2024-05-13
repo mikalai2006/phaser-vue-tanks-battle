@@ -3,7 +3,10 @@ import { Types, defineComponent } from 'bitecs'
 export const Entity = defineComponent({
   gridX: Types.i32,
   gridY: Types.i32,
-  // weapon: Types.f32,
+  /**
+   * статус перезарядки
+   */
+  weapon: Types.f32,
   // health: Types.f32,
   roundCoin: Types.i32,
   rank: Types.i32,

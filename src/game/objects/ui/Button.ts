@@ -46,7 +46,7 @@ export class Button extends Phaser.GameObjects.Container {
       .setDepth(1000)
       .setOrigin(0.5)
 
-    bg.on('pointerup', (pointer: any) => this.callback(pointer))
+    bg.on('pointerdown', (pointer: any) => this.callback(pointer))
     bg.on('pointerover', (pointer) => {
       bg.setAlpha(0.8)
     })

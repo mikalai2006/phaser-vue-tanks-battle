@@ -1,10 +1,12 @@
 import { EventBus } from '../EventBus'
 import { Scene } from 'phaser'
-import { GameOptions } from '../options/gameOptions'
+import { GameOptions, WeaponType } from '../options/gameOptions'
 import { Button } from '../objects/ui/Button'
 import { IGameData, ILeaderBoard, TLang } from '../types'
 import { CreateGarazPanel } from './WorkShop'
 import Game from './Game'
+import { getRank, getTankImage } from '../utils/utils'
+import { getLocalStorage } from '../utils/storageUtils'
 
 export class Home extends Scene {
   constructor() {
@@ -26,7 +28,6 @@ export class Home extends Scene {
   buttonBank: Button
 
   lbData: ILeaderBoard
-  leaderBoardTitle: Phaser.GameObjects.Text
   leaderBoardList: Phaser.GameObjects.Container
 
   bg: Phaser.GameObjects.Container
@@ -38,7 +39,7 @@ export class Home extends Scene {
 
   click: Phaser.Sound.HTML5AudioSound | Phaser.Sound.NoAudioSound | Phaser.Sound.WebAudioSound
 
-  create() {
+  create({ lang, gameData }: { lang: TLang; gameData: IGameData }) {
     this.click = this.sound.add('click')
 
     // bg.
@@ -58,19 +59,7 @@ export class Home extends Scene {
     this.bg = this.add.container(0, 0, [bg, bgOverlay])
 
     if (GameOptions.isLeaderBoard) {
-      this.leaderBoardList = this.add.container(200, 370, [])
-      this.leaderBoardTitle = this.add
-        .text(300, 320, 'Leader board', {
-          fontFamily: 'Arial',
-          fontStyle: 'bold',
-          fontSize: 40,
-          color: GameOptions.ui.primaryColor,
-          stroke: '#000000',
-          strokeThickness: 0,
-          align: 'center'
-        })
-        .setOrigin(0)
-        .setDepth(100)
+      this.leaderBoardList = this.add.container(150, 370, [])
     }
 
     // panel.
@@ -114,12 +103,12 @@ export class Home extends Scene {
     //   this.startButtonBg.setAlpha(1)
     // })
     this.generalContainer = this.add.container(
-      this.leaderBoardList ? GameOptions.screen.width / 2 + 230 : GameOptions.screen.width / 2 - 20,
+      this.leaderBoardList ? GameOptions.screen.width / 2 + 50 : GameOptions.screen.width / 2 - 150,
       600,
       []
     )
     this.rankContainer = this.add.container(
-      this.leaderBoardList ? GameOptions.screen.width / 2 + 150 : GameOptions.screen.width / 2 - 80,
+      this.leaderBoardList ? GameOptions.screen.width / 2 - 50 : GameOptions.screen.width / 2 - 210,
       220,
       []
     )
@@ -134,18 +123,29 @@ export class Home extends Scene {
     this.tooglePanel(true)
 
     EventBus.emit('current-scene-ready', this)
-    EventBus.emit('start-create', null)
+    // EventBus.emit('start-game', null)
+
+    this.onSync(gameData, lang)
+    // this.scene
+    //   .get('Control')
+    //   .onGameOverPlayer(
+    //     this.lang?.gameOverTitle,
+    //     this.lang?.gameOverPlayer,
+    //     GameOptions.ui.dangerText,
+    //     12345
+    //   )
+    EventBus.emit('get-lb')
   }
 
   createPlayerUI() {
-    this.generalContainer.removeAll(true)
-    this.rankContainer.removeAll(true)
+    this.generalContainer?.removeAll(true)
+    this.rankContainer?.removeAll(true)
 
     this.buttonBattle = new Button(
       this,
-      200,
-      350,
-      300,
+      550,
+      400,
+      400,
       120,
       GameOptions.ui.accent.replace('#', '0x'),
       '',
@@ -155,11 +155,11 @@ export class Home extends Scene {
 
     this.buttonWorkShop = new Button(
       this,
-      -100,
+      -80,
+      this.buttonBattle.y,
       350,
-      300,
       120,
-      GameOptions.ui.primaryColor,
+      GameOptions.ui.panelBgColor,
       '',
       {},
       (pointer) => this.toggleWorkShop(pointer, true)
@@ -174,28 +174,12 @@ export class Home extends Scene {
       align: 'left'
     })
     const walletContainer = this.add.container(-30, 50, [coinImage, this.textCoinValue])
-    if (GameOptions.isBank) {
-      this.buttonBank = new Button(
-        this,
-        350,
-        -15,
-        200,
-        100,
-        GameOptions.ui.primaryColor,
-        '',
-        {},
-        (pointer) => {
-          this.openBank()
-        }
-      )
-      walletContainer.add(this.buttonBank)
-    }
 
     // score and rank
     const rank = this.add
-      .image(-105, 0, 'rank', this.gameData.rank)
+      .image(-105, 0, 'rank', getRank(this.gameData.score))
       .setTint(GameOptions.ui.accent.replace('#', '0x'))
-      .setScale(2)
+      .setScale(1.5)
     this.textScoreValue = this.add
       .text(-50, 10, '', {
         fontFamily: 'Arial',
@@ -210,7 +194,7 @@ export class Home extends Scene {
       .setDepth(100)
       .setVisible(false)
     this.textNamePlayer = this.add
-      .text(-50, -55, 'Mikalai Parakhnevich', {
+      .text(-50, -55, this.gameData.name, {
         fontFamily: 'Arial',
         fontStyle: 'bold',
         fontSize: 40,
@@ -240,7 +224,25 @@ export class Home extends Scene {
       walletContainer
     ])
 
-    this.generalContainer.add([this.buttonBattle, this.buttonWorkShop])
+    const bgPanel = this.add.rectangle(-280, -440, 1050, 900, 0xffffff, 0.1).setOrigin(0)
+    this.generalContainer.add([bgPanel, this.buttonBattle, this.buttonWorkShop])
+
+    if (GameOptions.isBank) {
+      this.buttonBank = new Button(
+        this,
+        220,
+        this.buttonBattle.y,
+        250,
+        120,
+        GameOptions.ui.panelBgColor,
+        '',
+        {},
+        (pointer) => {
+          this.openBank()
+        }
+      )
+      this.generalContainer.add(this.buttonBank)
+    }
   }
 
   // update() {
@@ -261,63 +263,94 @@ export class Home extends Scene {
     var configPlayer = {
       x: 0,
       y: 0,
-      width: GameOptions.workshop.sideWidth - 20,
-      height: GameOptions.screen.height - 200,
+      width: GameOptions.workshop.sideWidth - 120,
+      height: GameOptions.screen.height - 140,
       anchor: {
         top: 'top',
         left: 'left'
       },
       space: {
-        left: this.leaderBoardList ? 950 : 700,
+        left: this.leaderBoardList ? 760 : 560,
         top: 320
       },
       orientation: 'y',
 
-      keys: ['tanks', 'artefact']
+      keys: ['tanksPage'], //  'weaponsPage'
+      keyScroll: 'scrollG',
+      garaz: true
     }
     this.garazPanel = CreateGarazPanel(this, configPlayer).layout()
     // const garazContainer = this.add.container(-200, -400, [garazPanel])
     // this.generalContainer.add(garazContainer)
     // this.shopContainer.add(mainPanel)
+
+    const storageSettings = getLocalStorage(GameOptions.localStorageSettingsName, {})
+    for (const page of this.garazPanel.childrenMap.pages.children) {
+      page.t = storageSettings[page.keey] || 0
+    }
   }
 
   createTank() {
-    const activeTankData = this.gameData.tanks[this.gameData.activeTankIndex]
-    const scale = 1
-    const caterpillar1 = this.add
-      .sprite(0, -GameOptions.tanks.items[activeTankData.levelTank].catYOffset, 'caterpillar', 0)
-      .setScale(scale)
-      .setTint(GameOptions.colors.caterpillar)
-    const caterpillar2 = this.add
-      .sprite(0, GameOptions.tanks.items[activeTankData.levelTank].catYOffset, 'caterpillar', 0)
-      .setScale(scale)
-      .setTint(GameOptions.colors.caterpillar)
-    const tank = this.add
-      .sprite(0, 0, 'tank', GameOptions.tanks.items[activeTankData.levelTank].frame)
-      .setScale(scale)
-    const tower = this.add
-      .sprite(0, 0, 'tower', GameOptions.towers.items[activeTankData.levelTower].frame)
-      .setScale(scale)
-    const muzzle = this.add
-      .sprite(
-        -GameOptions.muzzles.items[0].offset.xOffset *
-          GameOptions.muzzles.items[0].vert[0].x *
-          scale,
-        0,
-        'muzzle',
-        GameOptions.muzzles.items[activeTankData.levelMuzzle].frame
-      )
-      .setTint(0x111111)
-      .setScale(scale)
-    const tankContainer = this.add
-      .container(0, 100, [caterpillar1, caterpillar2, tank, tower, muzzle])
+    const containerTank = getTankImage(this, this.gameData.tanks[this.gameData.activeTankIndex].id)
       .setAngle(-90)
+      .setScale(1.5)
 
-    this.generalContainer.add(tankContainer)
+    const gridItems = []
+
+    for (const weaponConfig of GameOptions.weaponObjects) {
+      const myWeapon = this.gameData.weapons[weaponConfig.type]
+      const image = this.add.image(150, 0, 'weapon', weaponConfig.frame).setScale(1.4)
+      const countText = this.add
+        .text(
+          120,
+          45,
+          myWeapon ? myWeapon.toString() : weaponConfig.type == WeaponType.default ? '∞' : '0',
+          {
+            fontFamily: 'Arial',
+            fontStyle: 'bold',
+            fontSize: 40,
+            color: GameOptions.ui.white,
+            stroke: '#000000',
+            strokeThickness: 0,
+            align: 'right'
+          }
+        )
+        .setOrigin(1)
+      const containerWeapon = this.add.container(0, 0, [image, countText])
+
+      gridItems.push(containerWeapon)
+    }
+
+    const gridWeapons = Phaser.Actions.GridAlign(gridItems, {
+      width: 1,
+      height: 10,
+      cellWidth: 100,
+      cellHeight: 100,
+      x: 550,
+      y: -150
+    })
+
+    const gerbImage = this.add.image(0, -530, 'gerb', this.gameData.gerbId).setScale(1.2)
+    const buttonEditGerb = new Button(
+      this,
+      210,
+      -530,
+      300,
+      100,
+      GameOptions.ui.panelBgColor,
+      this.lang.gerbEdit,
+      {},
+      () => {
+        this.scene.get('Message').showGerbs()
+      }
+    )
+
+    const tankContainer = this.add.container(400, 150, [containerTank, gerbImage, buttonEditGerb])
+
+    this.generalContainer.add([tankContainer, ...gridWeapons])
   }
 
   tooglePanel(status: boolean) {
-    this.leaderBoardTitle?.setVisible(status)
     this.leaderBoardList?.setVisible(status)
     this.textNameGame?.setVisible(status)
     this.bg.setVisible(status)
@@ -332,6 +365,7 @@ export class Home extends Scene {
   }
 
   toggleWorkShop(pointer: Phaser.Input.Pointer, hideHomeScene: boolean) {
+    this.scene.bringToTop('Message')
     this.tooglePanel(!hideHomeScene)
 
     this.click.play()
@@ -342,7 +376,7 @@ export class Home extends Scene {
 
   startGame(pointer: any) {
     this.tooglePanel(false)
-    this.garazPanel?.destroy()
+    this.garazPanel?.removeAll(true)
 
     this.click.play()
     // this.scene.start('Game')
@@ -353,19 +387,19 @@ export class Home extends Scene {
     // const sceneGame = this.game.scene.getScene('Game')
     // this.scene.start('Game')
     // sceneGame?.scene.start()
-    // sceneGame?.onSetGameData()
-    // sceneGame?.setLocale(this.lang)
 
     if (window && window.onGamePlayStart) {
       window.onGamePlayStart()
     }
     const sceneControl = this.game.scene.getScene('Control')
     sceneControl?.tooglePanel(false)
+    // sceneControl?.createHelloMessage()
     // EventBus.emit('toggle-lang-list')
   }
 
   stopGame() {
-    EventBus.emit('show-lb', true)
+    EventBus.emit('get-lb')
+
     this.tooglePanel(true)
     this.createGarazTabs()
 
@@ -380,52 +414,63 @@ export class Home extends Scene {
 
   openBank() {
     // this.tooglePanel(false)
+    this.scene.bringToTop('Bank')
     this.game.scene.getScene('Bank').toggle(true)
   }
-  onSetLeaderBoard(data: Ilb) {
+
+  onSetLeaderBoard(data: ILeaderBoard) {
     this.lbData = JSON.parse(JSON.stringify(data))
     this.drawLeaderBoard()
   }
 
   drawLeaderBoard() {
-    // if (!this.leaderBoardList) {
-    //   return
-    // }
-    // console.log('drawLeaderBoard: ', this.lbData)
     this.leaderBoardList?.removeAll(true)
-    const bgLb = this.add
-      .nineslice(30, -110, 'buttons', 0, 650, 750, 50, 50, 50, 50)
-      .setTint(GameOptions.ui.panelBgColorLight)
-      .setAlpha(0.9)
-      .setOrigin(0)
+    const title =
+      this.lbData.leaderboard.title.find((x) => x.lang == this.gameData.lang)?.value ||
+      this.lang.leaderboard_title
 
-    const bgLb2 = this.add
-      .nineslice(30, -110, 'buttons', 1, 650, 750, 50, 50, 50, 50)
-      .setTint(GameOptions.ui.panelBgColor)
-      .setAlpha(0.9)
+    const leaderBoardTitle = this.add
+      .text(50, -195, title, {
+        fontFamily: 'Arial',
+        fontStyle: 'bold',
+        fontSize: 40,
+        color: GameOptions.ui.white,
+        stroke: '#000000',
+        strokeThickness: 0,
+        align: 'center'
+      })
       .setOrigin(0)
-    this.leaderBoardList.add([bgLb2, bgLb])
+      .setDepth(100)
 
-    for (let i = 0; i < 5; i++) {
+    const bgLb2 = this.add.rectangle(0, -210, 550, 900, 0x000000, 0.4).setOrigin(0)
+
+    this.leaderBoardList.add([bgLb2, leaderBoardTitle])
+    const gridItems = []
+
+    for (
+      let i = 0;
+      i < Phaser.Math.Clamp(this.lbData.entries.length, this.lbData.entries.length, 10);
+      i++
+    ) {
       const itemData = this.lbData.entries[i]
-      if (!itemData) return
-      // const bg = this.add
-      //   .nineslice(350, 0, 'panel', 0, 600, 150, 33, 33, 33, 33)
-      //   .setTint(GameOptions.ui.panelBgColor)
-      //   .setAlpha(0.8)
-      //   .setOrigin(0.5, 0)
-      //   .setInteractive({ useHandCursor: true })
+      if (!itemData) {
+        return
+      }
+
+      const rankImage = this.add
+        .image(40, 0, 'rank', getRank(itemData.score))
+        .setTint(GameOptions.ui.accentNumber)
       const text = this.add
-        .text(200, 40, itemData.name, {
+        .text(170, -32, itemData.name, {
           fontFamily: 'Arial',
-          fontSize: 30,
-          color: GameOptions.ui.primaryColor,
+          fontSize: 26,
+          color: GameOptions.ui.white,
           align: 'center'
         })
         .setDepth(111)
         .setOrigin(0)
       const score = this.add
-        .text(200, 90, itemData.score.toString(), {
+        .text(170, 0, itemData.score.toString(), {
           fontFamily: 'Arial',
           fontSize: 30,
           fontStyle: 'bold',
@@ -440,7 +485,7 @@ export class Home extends Scene {
         this.textures.remove(nameImage)
       }
 
-      const img = this.add.image(120, 80, 'placeholder').setScale(1)
+      const img = this.add.image(120, 0, 'placeholder').setScale(0.8)
       this.load.image(
         nameImage,
         itemData.photo
@@ -468,10 +513,19 @@ export class Home extends Scene {
       //     })
       //   }
       // )
-      const item = this.add.container(0, i * 120, [text, img, score]).setDepth(100)
-
-      this.leaderBoardList.add([item])
+      const item = this.add.container(0, i * 120, [rankImage, text, img, score]).setDepth(100)
+      gridItems.push(item)
     }
+
+    const gridOptions = Phaser.Actions.GridAlign(gridItems, {
+      width: 1,
+      height: 10,
+      cellWidth: 500,
+      cellHeight: 80,
+      x: 30,
+      y: -90
+    })
+    this.leaderBoardList.add(gridOptions)
   }
 
   toDataUrl(url, callback) {
@@ -494,21 +548,20 @@ export class Home extends Scene {
     this.createGarazTabs()
   }
 
-  onSetGameData(data: IGameData) {
-    this.gameData = JSON.parse(JSON.stringify(data))
+  onSync(gameData: IGameData, lang: TLang) {
+    this.lang = lang
+    this.gameData = JSON.parse(JSON.stringify(gameData))
+
+    this.input.enabled = !!this.gameData.name
 
     this.createPlayerUI()
 
     this.textScoreValue.setText(this.gameData.score.toString())
     this.textCoinValue.setText(this.gameData.coin.toString())
 
-    // this.createTank()
+    this.createTank()
     this.createGarazTabs()
     this.changeLocale()
-  }
-
-  setLocale(lang: TLang) {
-    this.lang = lang
 
     this.changeLocale()
   }
@@ -516,8 +569,7 @@ export class Home extends Scene {
   changeLocale() {
     if (!this.lang) return
 
-    this.textRank.setText(this.lang.rank[this.gameData.rank] || '#rank')
-    this.leaderBoardTitle?.setText(this.lang.leaderboard_title || '#leaderboard')
+    this.textRank.setText(this.lang.rank[getRank(this.gameData.score)] || '#rank')
     this.textNameGame.setText(this.lang.name_game || '#name_game')
     // if (this.gameData.bestScore) {
     //   this.startButtonText.setText(lang.btn_continue || '#btn_continue')

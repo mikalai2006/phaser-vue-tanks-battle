@@ -27,10 +27,15 @@ export function createMarkersSystem(scene: Phaser.Scene) {
     const entities = onQueryEnter(world)
 
     for (const id of entities) {
+      const colorTeam =
+        Entity.teamIndex[id] >= GameOptions.configTeams.length
+          ? GameOptions.configTeams[1].color
+          : GameOptions.configTeams[Entity.teamIndex[id]].color
+
       const img = scene.add
         .sprite(0, 0, 'marker', 0) //Entity.teamId[id] === Entity.teamId[players[0]] ? 1 : 0
         .setScale(1.2)
-        .setTint(GameOptions.configTeams[Entity.teamIndex[id]].color)
+        .setTint(colorTeam)
       const progressBg = scene.add
         .rectangle(-HEIGHT_BAR / 2, -15, HEIGHT_BAR, 5, 0x333333)
         .setOrigin(0)
@@ -125,8 +130,7 @@ export function createMarkersSyncSystem(scene) {
         //   container.mask.setPosition(intersects[0].x, intersects[0].y)
         // }
 
-        const currentHealth =
-          (HEIGHT_BAR / GameOptions.tanks.items[Tank.level[id]].game.health) * Tank.health[id]
+        const currentHealth = (HEIGHT_BAR / Tank.maxHealth[id]) * Tank.health[id]
         // console.log(Tank.health[tankId], currentHealth)
 
         container.progress.displayWidth = currentHealth

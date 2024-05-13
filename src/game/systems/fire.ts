@@ -6,13 +6,11 @@ import { Rotation } from '../components/Rotation'
 import { Velocity } from '../components/Velocity'
 import { GameOptions, WeaponType } from '../options/gameOptions'
 import { Entity } from '../components/Entity'
-import { EntityBar } from '../components/EntityBar'
 import Input from '../components/Input'
 import { Tank } from '../components/Tank'
 import { Player } from '../components/Player'
 import { Weapon } from '../components/Weapon'
 import { muzzlesById, tanksById, towersById } from './matter'
-import { replaceRegexByArray } from '../utils/utils'
 
 export function createFireSystem(scene) {
   const query = defineQuery([Rotation, Velocity, Tank])
@@ -34,19 +32,36 @@ export function createFireSystem(scene) {
         continue
       }
 
-      const keyWeapon = Object.keys(WeaponType).find(
-        (key) => WeaponType[key] === Tank.activeWeaponType[id]
-      )
+      // const keyWeapon = Object.keys(WeaponType).find(
+      //   (key) => WeaponType[key] === Tank.activeWeaponType[id]
+      // )
       const weaponByIdAndType = weapons.filter(
         (x) => Weapon.entityId[x] == id && Weapon.type[x] == Tank.activeWeaponType[id]
       )
       let totalWeapons = weaponByIdAndType.reduce((ac, el) => ac + Weapon.count[el], 0)
       if (totalWeapons <= 0) {
-        Tank.activeWeaponType[id] = 0
+        if (weaponByIdAndType[0] != 0) {
+          removeEntity(world, weaponByIdAndType[0])
+        }
+        // console.log('totalWeapons < 0', id, Tank.activeWeaponType[id])
+
+        Tank.activeWeaponType[id] = WeaponType.default
+      }
+
+      if (scene.idPlayer == id && scene.gameData.settings.autoCheckWeapon) {
+        const weaponsIds = weapons
+          .filter((x) => Weapon.entityId[x] == id)
+          .sort((a, b) => Weapon.type[a] - Weapon.type[b])
+
+        if (weaponsIds.length > 0) {
+          Tank.activeWeaponType[id] = Weapon.type[weaponsIds[weaponsIds.length - 1]]
+        } else {
+          Tank.activeWeaponType[id] = WeaponType.default
+        }
       }
       // console.log(weaponByIdAndType)
 
-      if (!!Input.fire[id] && !!EntityBar.weapon[id]) {
+      if (!!Input.fire[id] && !!Entity.weapon[id]) {
         Input.fire[id] = 0
         const time = Tank.timeBeforeShoot[id]
         Tank.timeBeforeShoot[id] = 0
@@ -55,11 +70,12 @@ export function createFireSystem(scene) {
           !players.includes(id) ? time : 0,
           () => {
             Tank.timeBeforeShoot[id] = Phaser.Math.FloatBetween(
-              GameOptions.towers.items[Tank.levelTower[id]].maxTimeBeforeShoot.min,
-              GameOptions.towers.items[Tank.levelTower[id]].maxTimeBeforeShoot.max
+              GameOptions.complexTanks[Tank.index[id]].maxTimeBeforeShoot.min,
+              GameOptions.complexTanks[Tank.index[id]].maxTimeBeforeShoot.max
             )
 
-            const muzzleConfig = GameOptions.muzzles.items[Tank.levelMuzzle[id]]
+            const configComplexTank = GameOptions.complexTanks[Tank.index[id]]
+            const muzzleConfig = GameOptions.muzzles.items[configComplexTank.muzzle]
             muzzleConfig.game.distanceShot = Tank.distanceShot[id]
             muzzleConfig.game.speedShot = Tank.speedShot[id]
 
@@ -82,6 +98,15 @@ export function createFireSystem(scene) {
             muzzle.fire(x, y, muzzle.rotation, muzzleConfig, 1)
             if (Tank.activeWeaponType[id] != 0) {
               Weapon.count[weaponByIdAndType[0]] -= 1
+              const existWeaponValue = scene.gameData.weapons[Tank.activeWeaponType[id]]
+              if (id == scene.idPlayer && existWeaponValue) {
+                scene.gameData.weapons[Tank.activeWeaponType[id]] = Phaser.Math.Clamp(
+                  existWeaponValue - 1,
+                  0,
+                  existWeaponValue
+                )
+              }
+
               if (Weapon.count[weaponByIdAndType[0]] == 0) {
                 // if (players.includes(id)) {
                 //   scene.showToast(
@@ -108,6 +133,15 @@ export function createFireSystem(scene) {
                   muzzle.fire(muzzle.x, muzzle.y, muzzle.rotation, muzzleConfig, 2)
                   if (Tank.activeWeaponType[id] != 0) {
                     Weapon.count[weaponByIdAndType[0]] -= 1
+                    const existWeaponValue = scene.gameData.weapons[Tank.activeWeaponType[id]]
+                    if (id == scene.idPlayer && existWeaponValue) {
+                      scene.gameData.weapons[Tank.activeWeaponType[id]] = Phaser.Math.Clamp(
+                        existWeaponValue - 1,
+                        0,
+                        existWeaponValue
+                      )
+                    }
+
                     if (Weapon.count[weaponByIdAndType[0]] == 0) {
                       removeEntity(world, weaponByIdAndType[0])
                     }

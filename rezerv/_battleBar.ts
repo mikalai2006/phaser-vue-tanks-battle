@@ -98,9 +98,9 @@ export function createBattleBarSyncSystem(scene) {
       if (tower.weaponRefreshEvent) {
         const progress = tower.weaponRefreshEvent.getProgress()
         if (progress < 1) {
-          EntityBar.weapon[id] = 0
+          Entity.weapon[id] = 0
         } else if (progress == 1) {
-          EntityBar.weapon[id] = 1
+          Entity.weapon[id] = 1
         }
         object.weaponImage.displayWidth = WIDTH_BAR * progress
       }

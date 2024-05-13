@@ -1,9 +1,11 @@
+import { bulletCategory, mapObjectCategory } from '../options/gameOptions'
 import { IMuzzleConfigItem, IWeaponObject } from '../types'
 
 export class WeaponObject extends Phaser.Physics.Matter.Sprite {
   isPlay: boolean
   startPoint: Phaser.Math.Vector2 = new Phaser.Math.Vector2()
   distance
+  ecsId: number
   key = 'weapon'
   lifespan: number = 0
   weaponConfig: IWeaponObject
@@ -20,7 +22,15 @@ export class WeaponObject extends Phaser.Physics.Matter.Sprite {
     weaponConfig: IWeaponObject,
     bodyOptions: Phaser.Types.Physics.Matter.MatterBodyConfig
   ) {
-    super(world, x, y, texture, null, { plugin: bodyOptions, restitution: 0.2 })
+    super(world, x, y, texture, null, {
+      plugin: bodyOptions,
+      restitution: 0.2,
+      // isSensor: true,
+      collisionFilter: {
+        category: bulletCategory
+        // mask: mapObjectCategory
+      }
+    })
     this.setFrictionAir(0)
     this.setFriction(1)
     this.setFixedRotation()
@@ -103,6 +113,10 @@ export class WeaponObject extends Phaser.Physics.Matter.Sprite {
 
     // this.emitter.setConfig({ ...this.defaultConfig, ...this.weaponConfig.configParticlesBoom })
     // .stop(true)
+  }
+
+  setEcsId(ecsId: number) {
+    this.ecsId = ecsId
   }
 
   boom() {

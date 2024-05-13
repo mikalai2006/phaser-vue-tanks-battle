@@ -81,7 +81,7 @@ export function createPlayerBarSystem(scene: Phaser.Scene) {
       0x444444
     )
     .setOrigin(0, 0.5)
-  const coinImage = scene.add.image(-700, 0, 'clipart', 3).setScale(1)
+  const coinImage = scene.add.image(670, 0, 'clipart', 3).setScale(1)
   const textCoin = scene.add.text(coinImage.x + 40, -20, '234234234', {
     fontFamily: 'Arial',
     fontStyle: 'bold',
@@ -143,12 +143,17 @@ export function createPlayerBarSyncSystem(scene) {
     const entities = query(world)
     const id = scene.idFollower
 
+    const colorTeam =
+      Entity.teamIndex[id] >= GameOptions.configTeams.length
+        ? GameOptions.configTeams[1].color
+        : GameOptions.configTeams[Entity.teamIndex[id]].color
+
     const object = playerBarById.get(0)
 
     const currentHealth = (WIDTH_PROGRESS / Tank.maxHealth[id]) * Tank.health[id]
 
     object.healthImage.displayWidth = currentHealth
-    object.bg.setFillStyle(GameOptions.configTeams[Entity.teamIndex[id]].color, 1)
+    object.bg.setFillStyle(colorTeam, 1)
     // object.imageBrandBg.setFillStyle(GameOptions.configTeams[Entity.teamIndex[id]].color, 1)
     object.imageGerb.setTexture('gerb', Entity.gerbId[id])
     scene.names.get(id) &&
@@ -160,9 +165,9 @@ export function createPlayerBarSyncSystem(scene) {
     if (tower?.weaponRefreshEvent) {
       const progress = tower.weaponRefreshEvent.getProgress()
       if (progress < 1) {
-        EntityBar.weapon[id] = 0
+        Entity.weapon[id] = 0
       } else if (progress == 1) {
-        EntityBar.weapon[id] = 1
+        Entity.weapon[id] = 1
       }
       object.weaponImage.displayWidth = WIDTH_PROGRESS * progress
     }

@@ -1,9 +1,9 @@
 import { EventBus } from '../EventBus'
 import { Scene } from 'phaser'
 import { GameOptions } from '../options/gameOptions'
-import { IComplexConfig, IGameData, PacketPaymentsType, TLang } from '../types'
+import { IGameData, PacketPaymentsType, TLang } from '../types'
 import { Button } from '../objects/ui/Button'
-import { getMaxOptionValue, replaceRegexByArray } from '../utils/utils'
+import { replaceRegexByArray } from '../utils/utils'
 
 export class Bank extends Scene {
   constructor() {
@@ -21,7 +21,7 @@ export class Bank extends Scene {
 
   click: Phaser.Sound.HTML5AudioSound | Phaser.Sound.NoAudioSound | Phaser.Sound.WebAudioSound
 
-  create() {
+  create({ lang, gameData }: { lang: TLang; gameData: IGameData }) {
     this.click = this.sound.add('click')
 
     // message box.
@@ -70,6 +70,8 @@ export class Bank extends Scene {
       () => {
         this.click.play()
         this.wrapperContainer.setVisible(false)
+
+        this.scene.sendToBack('Bank')
         // const sceneGame = this.game.scene.getScene('Game')
         // sceneGame?.scene.resume()
       }
@@ -87,6 +89,8 @@ export class Bank extends Scene {
       .setVisible(false)
 
     EventBus.emit('current-scene-ready', this)
+
+    this.onSync(gameData, lang)
   }
 
   createGridPacket() {
@@ -274,11 +278,8 @@ export class Bank extends Scene {
     this.wrapperContainer.setVisible(status)
   }
 
-  onSetGameData(data: IGameData) {
-    this.gameData = JSON.parse(JSON.stringify(data))
-  }
-
-  setLocale(lang: TLang) {
+  onSync(gameData: IGameData, lang: TLang) {
+    this.gameData = JSON.parse(JSON.stringify(gameData))
     this.lang = lang
 
     this.changeLocale()

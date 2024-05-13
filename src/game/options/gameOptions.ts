@@ -1,4 +1,4 @@
-import { IGameOptions, PacketPaymentsType } from '../types'
+import { IGameOptions, PacketPaymentsType, TypeRound } from '../types'
 
 export enum BonusType {
   health = 1,
@@ -15,49 +15,67 @@ export enum BonusType {
 
 export enum WeaponType {
   default = 0,
-  fire = 1,
-  armour = 2,
-  fosfor = 3,
-  energy = 4
+  armor = 1,
+  cumulative = 2,
+  subcaliber = 3,
+  energy = 4,
+  explosive = 5
 }
 
-export const defaultCategory = 0x0001,
-  twoCategory = 0x0002,
-  allCollision = 0x0003
-// sensorCategory = 0x0004
+export const mapObjectCategory = 0x0001,
+  tankCategory = 0x0002,
+  tankAmunition = 0x0003,
+  weaponCategory = 0x0004,
+  bonusCategory = 0x0005,
+  caterpillarCategory = 0x0006,
+  bulletCategory = 0x0007,
+  sensorCategory = 0x0008
 
 export const GameOptions: IGameOptions = {
-  // local storage name
+  localStorageName: 'com.mikalai2006.tanksbattle.4',
+  localStorageSettingsName: 'uiSettings',
+  complexity: 1,
   lang: 'ru',
-  localStorageName: 'com.mikalai2006.tanksbattle',
+  typesRound: [
+    {
+      type: TypeRound.alone,
+      countPlayers: 20,
+      countTeams: 1
+    },
+    {
+      type: TypeRound.teams,
+      countTeams: 2,
+      countPlayers: 13
+    }
+  ],
+  configTeams: [
+    {
+      name: 'First',
+      color: 0x708090,
+      colorAttackZone: 0xffffff,
+      colorDistanceView: 0xff8c00
+    },
+    {
+      name: 'Second',
+      color: 0xf5deb3,
+      colorAttackZone: 0xff0000,
+      colorDistanceView: 0xff1493
+    }
+  ],
   colors: {
     health: 0x84cc16,
 
     caterpillar: 0x1f2937
   },
   maxNameUser: 25,
-  countGerb: 20,
+  countGerb: 60,
   marginMarker: 23,
-  countTeams: 2,
-  countTeamPlayers: 10,
   teamBarSize: {
     height: 34,
     width: 300,
-    offsetX: 350,
+    offsetX: 580,
     offsetY: 0
   },
-  configTeams: [
-    {
-      name: 'First',
-      color: 0x708090,
-      colorAttackZone: 0xff8c00
-    },
-    {
-      name: 'Second',
-      color: 0xf5deb3,
-      colorAttackZone: 0xff0000
-    }
-  ],
   ai: {
     timeActions: {
       max: 2000,
@@ -156,17 +174,17 @@ export const GameOptions: IGameOptions = {
         frame: 0,
         keyAnimation: 'muzzle1',
         centerConstraint: { x: 0, y: 0 },
-        offset: { xOffset: -0.85 },
+        offset: { xOffset: -0.8 },
         center: { x: -35, y: 0 },
         game: {
           speedShot: 10,
           distanceShot: 150
         },
         vert: [
-          { x: 70, y: 30 },
-          { x: 70, y: 64 },
-          { x: 0, y: 64 },
-          { x: 0, y: 30 }
+          { x: 70, y: 40 },
+          { x: 70, y: 54 },
+          { x: 0, y: 54 },
+          { x: 0, y: 40 }
         ],
         countShot: 1
       },
@@ -181,10 +199,10 @@ export const GameOptions: IGameOptions = {
           distanceShot: 300
         },
         vert: [
-          { x: 90, y: 30 },
-          { x: 90, y: 64 },
-          { x: 0, y: 64 },
-          { x: 0, y: 30 }
+          { x: 90, y: 40 },
+          { x: 90, y: 54 },
+          { x: 0, y: 54 },
+          { x: 0, y: 40 }
         ],
         countShot: 1
       },
@@ -199,10 +217,10 @@ export const GameOptions: IGameOptions = {
           distanceShot: 400
         },
         vert: [
-          { x: 90, y: 30 },
-          { x: 90, y: 64 },
-          { x: 0, y: 64 },
-          { x: 0, y: 30 }
+          { x: 90, y: 40 },
+          { x: 90, y: 54 },
+          { x: 0, y: 54 },
+          { x: 0, y: 40 }
         ],
         countShot: 1
       },
@@ -217,28 +235,10 @@ export const GameOptions: IGameOptions = {
           distanceShot: 400
         },
         vert: [
-          { x: 90, y: 30 },
-          { x: 90, y: 64 },
-          { x: 0, y: 64 },
-          { x: 0, y: 30 }
-        ],
-        countShot: 1
-      },
-      {
-        frame: 18,
-        keyAnimation: 'muzzle4',
-        centerConstraint: { x: 0, y: 0 },
-        offset: { xOffset: -0.85 },
-        center: { x: -40, y: 0 },
-        game: {
-          speedShot: 20,
-          distanceShot: 400
-        },
-        vert: [
-          { x: 90, y: 30 },
-          { x: 90, y: 64 },
-          { x: 0, y: 64 },
-          { x: 0, y: 30 }
+          { x: 90, y: 40 },
+          { x: 90, y: 54 },
+          { x: 0, y: 54 },
+          { x: 0, y: 40 }
         ],
         countShot: 1
       },
@@ -272,11 +272,7 @@ export const GameOptions: IGameOptions = {
           speedRotateTower: 90,
           accuracy: 40,
           timeRefreshWeapon: 1000,
-          distanceView: 200
-        },
-        maxTimeBeforeShoot: {
-          min: 500,
-          max: 1000
+          distanceView: 300
         }
       },
       {
@@ -285,143 +281,117 @@ export const GameOptions: IGameOptions = {
           speedRotateTower: 100,
           accuracy: 40,
           timeRefreshWeapon: 1050,
-          distanceView: 210
-        },
-        maxTimeBeforeShoot: {
-          min: 450,
-          max: 950
+          distanceView: 310
+        }
+      },
+      {
+        frame: 2,
+        game: {
+          speedRotateTower: 110,
+          accuracy: 40,
+          timeRefreshWeapon: 1100,
+          distanceView: 320
         }
       },
       {
         frame: 3,
         game: {
-          speedRotateTower: 110,
-          accuracy: 40,
-          timeRefreshWeapon: 1100,
-          distanceView: 220
-        },
-        maxTimeBeforeShoot: {
-          min: 400,
-          max: 900
+          speedRotateTower: 120,
+          accuracy: 42,
+          timeRefreshWeapon: 1150,
+          distanceView: 350
         }
       },
       {
         frame: 4,
         game: {
-          speedRotateTower: 120,
-          accuracy: 42,
-          timeRefreshWeapon: 1150,
-          distanceView: 250
-        },
-        maxTimeBeforeShoot: {
-          min: 350,
-          max: 850
+          speedRotateTower: 130,
+          accuracy: 44,
+          timeRefreshWeapon: 1200,
+          distanceView: 380
         }
       },
       {
         frame: 5,
         game: {
-          speedRotateTower: 130,
-          accuracy: 44,
-          timeRefreshWeapon: 1200,
-          distanceView: 280
-        },
-        maxTimeBeforeShoot: {
-          min: 300,
-          max: 800
+          speedRotateTower: 140,
+          accuracy: 46,
+          timeRefreshWeapon: 1300,
+          distanceView: 390
+        }
+      },
+      {
+        frame: 6,
+        game: {
+          speedRotateTower: 150,
+          accuracy: 48,
+          timeRefreshWeapon: 1400,
+          distanceView: 400
         }
       },
       {
         frame: 7,
         game: {
-          speedRotateTower: 140,
-          accuracy: 46,
-          timeRefreshWeapon: 1300,
-          distanceView: 290
-        },
-        maxTimeBeforeShoot: {
-          min: 250,
-          max: 750
+          speedRotateTower: 160,
+          accuracy: 51,
+          timeRefreshWeapon: 1500,
+          distanceView: 410
         }
       },
       {
         frame: 8,
         game: {
-          speedRotateTower: 150,
-          accuracy: 48,
-          timeRefreshWeapon: 1400,
-          distanceView: 300
-        },
-        maxTimeBeforeShoot: {
-          min: 200,
-          max: 700
+          speedRotateTower: 170,
+          accuracy: 54,
+          timeRefreshWeapon: 1600,
+          distanceView: 420
         }
       },
       {
         frame: 9,
         game: {
-          speedRotateTower: 160,
-          accuracy: 51,
-          timeRefreshWeapon: 1500,
-          distanceView: 320
-        },
-        maxTimeBeforeShoot: {
-          min: 150,
-          max: 650
+          speedRotateTower: 180,
+          accuracy: 57,
+          timeRefreshWeapon: 1700,
+          distanceView: 430
         }
       },
       {
         frame: 10,
         game: {
-          speedRotateTower: 170,
-          accuracy: 54,
-          timeRefreshWeapon: 1600,
-          distanceView: 340
-        },
-        maxTimeBeforeShoot: {
-          min: 150,
-          max: 600
+          speedRotateTower: 190,
+          accuracy: 58,
+          timeRefreshWeapon: 1800,
+          distanceView: 440
         }
       },
       {
         frame: 11,
         game: {
-          speedRotateTower: 180,
-          accuracy: 57,
-          timeRefreshWeapon: 1700,
-          distanceView: 360
-        },
-        maxTimeBeforeShoot: {
-          min: 150,
-          max: 550
-        }
-      },
-      {
-        frame: 13,
-        game: {
-          speedRotateTower: 190,
-          accuracy: 60,
-          timeRefreshWeapon: 1800,
-          distanceView: 380
-        },
-        maxTimeBeforeShoot: {
-          min: 100,
-          max: 500
-        }
-      },
-      {
-        frame: 14,
-        game: {
           speedRotateTower: 200,
-          accuracy: 60,
+          accuracy: 58,
           timeRefreshWeapon: 2100,
           distanceView: 500
-        },
-        maxTimeBeforeShoot: {
-          min: 100,
-          max: 300
+        }
+      },
+      {
+        frame: 12,
+        game: {
+          speedRotateTower: 250,
+          accuracy: 70,
+          timeRefreshWeapon: 2500,
+          distanceView: 550
         }
       }
+      // {
+      //   frame: 14,
+      //   game: {
+      //     speedRotateTower: 200,
+      //     accuracy: 65,
+      //     timeRefreshWeapon: 2100,
+      //     distanceView: 500
+      //   }
+      // }
     ]
   },
   tanks: {
@@ -606,67 +576,127 @@ export const GameOptions: IGameOptions = {
           { x: 0, y: 20 },
           { x: 20, y: 0 }
         ]
-      },
-      {
-        frame: 9,
-        game: {
-          speedRotate: 100,
-          speed: 280,
-          health: 500
-        },
-        catYOffset: 27,
-        offset: { yOffset: 0, xOffset: 0 },
-        vert: [
-          { x: 108, y: 0 },
-          { x: 128, y: 20 },
-          { x: 128, y: 50 },
-          { x: 108, y: 70 },
-          { x: 20, y: 70 },
-          { x: 0, y: 50 },
-          { x: 0, y: 20 },
-          { x: 20, y: 0 }
-        ]
-      },
-      {
-        frame: 10,
-        game: {
-          speedRotate: 110,
-          speed: 290,
-          health: 550
-        },
-        catYOffset: 35,
-        offset: { yOffset: 0, xOffset: 0 },
-        vert: [
-          { x: 108, y: 0 },
-          { x: 128, y: 20 },
-          { x: 128, y: 65 },
-          { x: 108, y: 85 },
-          { x: 20, y: 85 },
-          { x: 0, y: 65 },
-          { x: 0, y: 20 },
-          { x: 20, y: 0 }
-        ]
-      },
-      {
-        frame: 11,
-        game: {
-          speedRotate: 120,
-          speed: 300,
-          health: 600
-        },
-        catYOffset: 30,
-        offset: { yOffset: 0, xOffset: 0 },
-        vert: [
-          { x: 108, y: 0 },
-          { x: 128, y: 20 },
-          { x: 128, y: 65 },
-          { x: 108, y: 85 },
-          { x: 20, y: 85 },
-          { x: 0, y: 65 },
-          { x: 0, y: 20 },
-          { x: 20, y: 0 }
-        ]
       }
+      // {
+      //   frame: 9,
+      //   game: {
+      //     speedRotate: 100,
+      //     speed: 280,
+      //     health: 500
+      //   },
+      //   catYOffset: 27,
+      //   offset: { yOffset: 0, xOffset: 0 },
+      //   vert: [
+      //     { x: 108, y: 0 },
+      //     { x: 128, y: 20 },
+      //     { x: 128, y: 50 },
+      //     { x: 108, y: 70 },
+      //     { x: 20, y: 70 },
+      //     { x: 0, y: 50 },
+      //     { x: 0, y: 20 },
+      //     { x: 20, y: 0 }
+      //   ]
+      // },
+      // {
+      //   frame: 10,
+      //   game: {
+      //     speedRotate: 100,
+      //     speed: 290,
+      //     health: 550
+      //   },
+      //   catYOffset: 35,
+      //   offset: { yOffset: 0, xOffset: 0 },
+      //   vert: [
+      //     { x: 108, y: 0 },
+      //     { x: 128, y: 20 },
+      //     { x: 128, y: 65 },
+      //     { x: 108, y: 85 },
+      //     { x: 20, y: 85 },
+      //     { x: 0, y: 65 },
+      //     { x: 0, y: 20 },
+      //     { x: 20, y: 0 }
+      //   ]
+      // },
+      // {
+      //   frame: 11,
+      //   game: {
+      //     speedRotate: 100,
+      //     speed: 300,
+      //     health: 600
+      //   },
+      //   catYOffset: 30,
+      //   offset: { yOffset: 0, xOffset: 0 },
+      //   vert: [
+      //     { x: 108, y: 0 },
+      //     { x: 128, y: 20 },
+      //     { x: 128, y: 65 },
+      //     { x: 108, y: 85 },
+      //     { x: 20, y: 85 },
+      //     { x: 0, y: 65 },
+      //     { x: 0, y: 20 },
+      //     { x: 20, y: 0 }
+      //   ]
+      // },
+      // {
+      //   frame: 23,
+      //   game: {
+      //     speedRotate: 100,
+      //     speed: 300,
+      //     health: 600
+      //   },
+      //   catYOffset: 30,
+      //   offset: { yOffset: 0, xOffset: 0 },
+      //   vert: [
+      //     { x: 108, y: 0 },
+      //     { x: 128, y: 20 },
+      //     { x: 128, y: 65 },
+      //     { x: 108, y: 85 },
+      //     { x: 20, y: 85 },
+      //     { x: 0, y: 65 },
+      //     { x: 0, y: 20 },
+      //     { x: 20, y: 0 }
+      //   ]
+      // },
+      // {
+      //   frame: 15,
+      //   game: {
+      //     speedRotate: 100,
+      //     speed: 300,
+      //     health: 600
+      //   },
+      //   catYOffset: 30,
+      //   offset: { yOffset: 0, xOffset: 0 },
+      //   vert: [
+      //     { x: 108, y: 0 },
+      //     { x: 128, y: 20 },
+      //     { x: 128, y: 65 },
+      //     { x: 108, y: 85 },
+      //     { x: 20, y: 85 },
+      //     { x: 0, y: 65 },
+      //     { x: 0, y: 20 },
+      //     { x: 20, y: 0 }
+      //   ]
+      // },
+      // {
+      //   frame: 19,
+      //   game: {
+      //     speedRotate: 100,
+      //     speed: 300,
+      //     health: 600
+      //   },
+      //   catYOffset: 30,
+      //   offset: { yOffset: 0, xOffset: 0 },
+      //   vert: [
+      //     { x: 108, y: 0 },
+      //     { x: 128, y: 20 },
+      //     { x: 128, y: 65 },
+      //     { x: 108, y: 85 },
+      //     { x: 20, y: 85 },
+      //     { x: 0, y: 65 },
+      //     { x: 0, y: 20 },
+      //     { x: 20, y: 0 }
+      //   ]
+      // }
     ]
   },
 
@@ -759,7 +789,7 @@ export const GameOptions: IGameOptions = {
   maximum: {
     health: 1000,
     speed: 500,
-    speedRotate: 180,
+    speedRotate: 120,
     speedRotateTower: 360,
     accuracy: 100,
     timeRefreshWeapon: 4000,
@@ -792,107 +822,585 @@ export const GameOptions: IGameOptions = {
   },
   complexTanks: [
     {
-      name: 'Def-01',
+      id: '001',
+      name: 'T-000',
+      color: '#889869',
       tank: 0,
       tower: 0,
       muzzle: 0,
       cost: 0,
-      rank: 0
+      rank: 0,
+      maxTimeBeforeShoot: {
+        min: 1500,
+        max: 3000
+      }
     },
     {
-      name: 'Def-02',
+      id: '002',
+      name: 'T-110',
+      color: '#889869',
+      tank: 1,
+      tower: 1,
+      muzzle: 0,
+      cost: 5000,
+      rank: 0,
+      maxTimeBeforeShoot: {
+        min: 1500,
+        max: 3000
+      }
+    },
+    {
+      id: '003',
+      name: 'T-220',
+      color: '#889869',
+      tank: 2,
+      tower: 2,
+      muzzle: 0,
+      cost: 20000,
+      rank: 2,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '004',
+      name: 'T-001',
+      color: '#889869',
+      tank: 0,
+      tower: 0,
+      muzzle: 1,
+      cost: 6000,
+      rank: 0,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '005',
+      name: 'T-111',
+      color: '#889869',
       tank: 1,
       tower: 1,
       muzzle: 1,
-      cost: 1000,
-      rank: 1
+      cost: 17000,
+      rank: 2,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
     },
     {
-      name: 'Def-03',
+      id: '006',
+      name: 'T-221',
+      color: '#889869',
+      tank: 2,
+      tower: 2,
+      muzzle: 1,
+      cost: 38000,
+      rank: 3,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '007',
+      name: 'T-002',
+      color: '#889869',
+      tank: 0,
+      tower: 0,
+      muzzle: 2,
+      cost: 8000,
+      rank: 1,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '008',
+      name: 'T-112',
+      color: '#889869',
+      tank: 1,
+      tower: 1,
+      muzzle: 2,
+      cost: 28000,
+      rank: 2,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '009',
+      name: 'T-222',
+      color: '#889869',
       tank: 2,
       tower: 2,
       muzzle: 2,
-      cost: 2000,
-      rank: 2
+      cost: 45000,
+      rank: 4,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
     },
     {
-      name: 'Def-03',
+      id: '010',
+      name: 'T-003',
+      color: '#889869',
+      tank: 0,
+      tower: 0,
+      muzzle: 3,
+      cost: 10000,
+      rank: 2,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '011',
+      name: 'T-113',
+      color: '#889869',
+      tank: 1,
+      tower: 1,
+      muzzle: 3,
+      cost: 28000,
+      rank: 2,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '012',
+      name: 'T-223',
+      color: '#889869',
+      tank: 2,
+      tower: 2,
+      muzzle: 3,
+      cost: 45000,
+      rank: 4,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '013',
+      name: 'X-300',
+      color: '#889869',
+      tank: 3,
+      tower: 0,
+      muzzle: 0,
+      cost: 15000,
+      rank: 2,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '014',
+      name: 'X-310',
+      color: '#889869',
+      tank: 3,
+      tower: 1,
+      muzzle: 0,
+      cost: 25000,
+      rank: 2,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '015',
+      name: 'X-320',
+      color: '#889869',
+      tank: 3,
+      tower: 2,
+      muzzle: 0,
+      cost: 30000,
+      rank: 3,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '016',
+      name: 'X-330',
+      color: '#889869',
       tank: 3,
       tower: 3,
       muzzle: 0,
-      cost: 1,
-      rank: 3
+      cost: 40000,
+      rank: 3,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
     },
     {
-      name: 'Un-01',
-      tank: 4,
-      tower: 4,
+      id: '017',
+      name: 'X-301',
+      color: '#889869',
+      tank: 3,
+      tower: 0,
       muzzle: 1,
-      cost: 1,
-      rank: 4
+      cost: 34000,
+      rank: 3,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
     },
     {
-      name: 'Un-02',
-      tank: 5,
-      tower: 5,
+      id: '018',
+      name: 'X-302',
+      color: '#889869',
+      tank: 3,
+      tower: 0,
       muzzle: 2,
-      cost: 2,
-      rank: 5
+      cost: 42000,
+      rank: 3,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
     },
     {
-      name: 'Un-03',
-      tank: 6,
+      id: '019',
+      name: 'X-303',
+      color: '#889869',
+      tank: 3,
+      tower: 0,
+      muzzle: 3,
+      cost: 43000,
+      rank: 3,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '020',
+      name: 'X-313',
+      color: '#889869',
+      tank: 3,
+      tower: 1,
+      muzzle: 3,
+      cost: 47000,
+      rank: 4,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '021',
+      name: 'X-323',
+      color: '#889869',
+      tank: 3,
+      tower: 2,
+      muzzle: 3,
+      cost: 48000,
+      rank: 4,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '022',
+      name: 'X-333',
+      color: '#889869',
+      tank: 3,
+      tower: 3,
+      muzzle: 3,
+      cost: 50000,
+      rank: 5,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '023',
+      name: 'Z-450',
+      color: '#FFEBCD',
+      tank: 4,
+      tower: 5,
+      muzzle: 0,
+      cost: 50000,
+      rank: 5,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '024',
+      name: 'Z-460',
+      color: '#FFEBCD',
+      tank: 4,
       tower: 6,
       muzzle: 0,
-      cost: 2,
-      rank: 5
+      cost: 53000,
+      rank: 5,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
     },
     {
-      name: 'Demon-01',
-      tank: 7,
+      id: '025',
+      name: 'Z-470',
+      color: '#FFEBCD',
+      tank: 4,
       tower: 7,
-      muzzle: 1,
-      cost: 2,
-      rank: 6
+      muzzle: 0,
+      cost: 55000,
+      rank: 5,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
     },
     {
-      name: 'Demon-02',
-      tank: 8,
+      id: '026',
+      name: 'Z-480',
+      color: '#FFEBCD',
+      tank: 4,
       tower: 8,
-      muzzle: 2,
-      cost: 3,
-      rank: 6
+      muzzle: 0,
+      cost: 60000,
+      rank: 6,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
     },
     {
-      name: 'Demon-03',
-      tank: 9,
+      id: '027',
+      name: 'Z-490',
+      color: '#FFEBCD',
+      tank: 4,
       tower: 9,
       muzzle: 0,
-      cost: 3,
-      rank: 7
+      cost: 65000,
+      rank: 6,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
     },
     {
-      name: 'Demon-04',
-      tank: 10,
-      tower: 10,
+      id: '028',
+      name: 'Z-561',
+      color: '#FFEBCD',
+      tank: 5,
+      tower: 6,
       muzzle: 1,
-      cost: 3,
-      rank: 7
+      cost: 57000,
+      rank: 6,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
     },
     {
-      name: 'Killer-X01',
-      tank: 11,
+      id: '029',
+      name: 'Z-562',
+      color: '#FFEBCD',
+      tank: 5,
+      tower: 6,
+      muzzle: 2,
+      cost: 63000,
+      rank: 6,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '030',
+      name: 'Z-573',
+      color: '#FFEBCD',
+      tank: 5,
+      tower: 7,
+      muzzle: 3,
+      cost: 70000,
+      rank: 7,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '031',
+      name: 'Z-683',
+      color: '#FFFACD',
+      tank: 6,
+      tower: 8,
+      muzzle: 3,
+      cost: 78000,
+      rank: 7,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '032',
+      name: 'Z-583',
+      color: '#FFFACD',
+      tank: 5,
+      tower: 8,
+      muzzle: 3,
+      cost: 75000,
+      rank: 7,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '033',
+      name: 'Z-593',
+      color: '#FFFACD',
+      tank: 5,
+      tower: 9,
+      muzzle: 3,
+      cost: 80000,
+      rank: 7,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '034',
+      name: 'Z-752',
+      color: '#889869',
+      tank: 7,
+      tower: 5,
+      muzzle: 2,
+      cost: 62000,
+      rank: 6,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '035',
+      name: 'Z-763',
+      color: '#FFEBCD',
+      tank: 7,
+      tower: 6,
+      muzzle: 3,
+      cost: 68000,
+      rank: 7,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '036',
+      name: 'Z-773',
+      color: '#FFEBCD',
+      tank: 7,
+      tower: 7,
+      muzzle: 3,
+      cost: 72000,
+      rank: 7,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '040',
+      name: 'M-8102',
+      color: '#889869',
+      tank: 8,
+      tower: 10,
+      muzzle: 2,
+      cost: 95000,
+      rank: 7,
+      maxTimeBeforeShoot: {
+        min: 1400,
+        max: 2800
+      }
+    },
+    {
+      id: '041',
+      name: 'M-8103',
+      color: '#889869',
+      tank: 8,
+      tower: 10,
+      muzzle: 3,
+      cost: 95000,
+      rank: 7,
+      maxTimeBeforeShoot: {
+        min: 100,
+        max: 300
+      }
+    },
+    {
+      id: '042',
+      name: 'M-8104',
+      color: '#889869',
+      tank: 8,
+      tower: 10,
+      muzzle: 4,
+      cost: 95000,
+      rank: 7,
+      maxTimeBeforeShoot: {
+        min: 100,
+        max: 300
+      }
+    },
+    {
+      id: '043',
+      name: 'M-8114',
+      color: '#FAEBD7',
+      tank: 8,
       tower: 11,
-      muzzle: 5,
-      cost: 100000,
-      rank: 8
+      muzzle: 4,
+      cost: 95000,
+      rank: 7,
+      maxTimeBeforeShoot: {
+        min: 100,
+        max: 300
+      }
+    },
+    {
+      id: '044',
+      name: 'M-8124 Killer',
+      color: '#F5DEB3',
+      tank: 8,
+      tower: 12,
+      muzzle: 4,
+      cost: 200000,
+      rank: 8,
+      maxTimeBeforeShoot: {
+        min: 100,
+        max: 300
+      }
     }
   ],
-  excludeFromStretchOptions: ['level', 'levelTower', 'levelTank', 'levelMuzzle'],
+  excludeFromStretchOptions: ['levelTower', 'levelTank', 'levelMuzzle', 'cb', 'id'],
   weaponObjects: [
     {
       type: WeaponType.default,
-      count: 3,
+      count: 10,
       texture: 'weapon',
       frame: 0,
       vert: [
@@ -903,6 +1411,7 @@ export const GameOptions: IGameOptions = {
       ],
       timeRefresh: -1,
       damage: 10,
+      cost: -1,
       scaleCrator: 1,
       frameParticleMuzzle: 'white',
       color: 0xffd189,
@@ -922,21 +1431,22 @@ export const GameOptions: IGameOptions = {
       }
     },
     {
-      type: WeaponType.fire,
+      type: WeaponType.subcaliber,
       count: 3,
       texture: 'weapon',
-      frame: 1,
+      frame: 3,
       vert: [
         { x: 30, y: 30 },
         { x: 80, y: 30 },
         { x: 80, y: 80 },
         { x: 30, y: 80 }
       ],
-      timeRefresh: 3000,
+      timeRefresh: 20000,
       damage: 20,
-      scaleCrator: 0.8,
-      frameParticleMuzzle: 'yellow',
-      color: 0xcab719,
+      cost: 20,
+      scaleCrator: 1.4,
+      frameParticleMuzzle: 'white',
+      color: 0x555555,
       configParticlesBoom: {
         frame: 1,
         // quantity: 0.01,
@@ -944,7 +1454,7 @@ export const GameOptions: IGameOptions = {
         // frequency: 5,
         lifespan: 1000,
         // angle: { min: -100, max: -80 },
-        color: [0x111111, 0xcab719, 0xf89800, 0x222222],
+        color: [0x111111, 0x40942f, 0xf89800, 0x222222],
         colorEase: 'quad.out',
         scale: { start: 0.7, end: 0.5, ease: 'sine.out' },
         speed: 50,
@@ -953,8 +1463,8 @@ export const GameOptions: IGameOptions = {
       }
     },
     {
-      type: WeaponType.armour,
-      count: 3,
+      type: WeaponType.cumulative,
+      count: 5,
       texture: 'weapon',
       frame: 2,
       vert: [
@@ -963,8 +1473,9 @@ export const GameOptions: IGameOptions = {
         { x: 80, y: 80 },
         { x: 30, y: 80 }
       ],
-      timeRefresh: 3000,
+      timeRefresh: 30000,
       damage: 30,
+      cost: 30,
       scaleCrator: 1.2,
       frameParticleMuzzle: 'red',
       color: 0xbb1919,
@@ -975,7 +1486,7 @@ export const GameOptions: IGameOptions = {
         // frequency: 5,
         lifespan: 1000,
         // angle: { min: -100, max: -80 },
-        color: [0x111111, 0xbb1919, 0xf89800, 0x222222],
+        color: [0x111111, 0xbb1919, 0x222222],
         colorEase: 'quad.out',
         scale: { start: 0.7, end: 0.5, ease: 'sine.out' },
         speed: 50,
@@ -984,21 +1495,22 @@ export const GameOptions: IGameOptions = {
       }
     },
     {
-      type: WeaponType.fosfor,
+      type: WeaponType.explosive,
       count: 3,
       texture: 'weapon',
-      frame: 3,
+      frame: 5,
       vert: [
         { x: 30, y: 30 },
         { x: 80, y: 30 },
         { x: 80, y: 80 },
         { x: 30, y: 80 }
       ],
-      timeRefresh: 5000,
-      damage: 40,
-      scaleCrator: 1.4,
-      frameParticleMuzzle: 'green',
-      color: 0x40942f,
+      timeRefresh: 40000,
+      damage: 50,
+      cost: 50,
+      scaleCrator: 0.8,
+      frameParticleMuzzle: 'yellow',
+      color: 0xcab719,
       configParticlesBoom: {
         frame: 1,
         // quantity: 0.01,
@@ -1006,7 +1518,7 @@ export const GameOptions: IGameOptions = {
         // frequency: 5,
         lifespan: 1000,
         // angle: { min: -100, max: -80 },
-        color: [0x111111, 0x40942f, 0xf89800, 0x222222],
+        color: [0x111111, 0xbb1919, 0xcab719, 0xf89800, 0x222222],
         colorEase: 'quad.out',
         scale: { start: 0.7, end: 0.5, ease: 'sine.out' },
         speed: 50,
@@ -1025,8 +1537,9 @@ export const GameOptions: IGameOptions = {
         { x: 80, y: 80 },
         { x: 30, y: 80 }
       ],
-      timeRefresh: 10000,
-      damage: 50,
+      timeRefresh: 60000,
+      damage: 100,
+      cost: 100,
       scaleCrator: 0.5,
       frameParticleMuzzle: 'blue',
       color: 0x6495ed,
@@ -1063,10 +1576,10 @@ export const GameOptions: IGameOptions = {
       frameStart: 2,
       frameEnd: 3,
       vert: [
-        { x: 20, y: 20 },
-        { x: 80, y: 20 },
+        { x: 10, y: 10 },
+        { x: 80, y: 10 },
         { x: 80, y: 80 },
-        { x: 20, y: 80 }
+        { x: 10, y: 80 }
       ]
     },
     {

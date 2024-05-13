@@ -39,7 +39,7 @@ export function createAreaEyeSystem(scene: Phaser.Scene) {
             width: 3
           }
         })
-        .setDepth(1)
+        .setDepth(0)
       scene.minimap?.ignore(graphics)
       areaEyeById.set(idTank, graphics)
     }
@@ -83,21 +83,36 @@ export function createAreaEyeSyncSystem(scene) {
       // const towerConfig = Tower
       const isPlayer = players.includes(id)
       const playerId = players[0]
-      if (isPlayer || Entity.teamIndex[id] !== Entity.teamIndex[playerId]) {
-        area.clear()
+      area.clear()
+      if (
+        isPlayer ||
+        Entity.target[id] == scene.idPlayer ||
+        (Entity.teamIndex[id] !== Entity.teamIndex[playerId] &&
+          scene.gameData.settings.showAllEnemyEye)
+      ) {
         if (Entity.target[id] != -1) {
-          area.lineStyle(3, GameOptions.configTeams[Entity.teamIndex[id]].colorAttackZone, 0.2)
+          const colorTeamAttackZone =
+            Entity.teamIndex[id] >= GameOptions.configTeams.length
+              ? GameOptions.configTeams[1].colorAttackZone
+              : GameOptions.configTeams[Entity.teamIndex[id]].colorAttackZone
+          const colorTeamDistanceView =
+            Entity.teamIndex[id] >= GameOptions.configTeams.length
+              ? GameOptions.configTeams[1].colorDistanceView
+              : GameOptions.configTeams[Entity.teamIndex[id]].colorDistanceView
+
+          area.lineStyle(5, colorTeamDistanceView, 0.3)
           area.strokeCircle(Position.x[id], Position.y[id], Tank.distanceView[id])
 
           // draw fire area.
-          const muzzleConfig = GameOptions.muzzles.items[Tank.levelMuzzle[id]]
+          const configComplexTank = GameOptions.complexTanks[Tank.index[id]]
+          const muzzleConfig = GameOptions.muzzles.items[configComplexTank.muzzle]
           const muzzleObject = muzzlesById.get(id)
           const vec = new Phaser.Math.Vector2(muzzleObject.x, muzzleObject.y)
           vec.setToPolar(muzzleObject.rotation, muzzleConfig.vert[0].x)
           const x2 = Position.x[id] + vec.x
           const y2 = Position.y[id] + vec.y
 
-          area.lineStyle(3, GameOptions.configTeams[Entity.teamIndex[id]].colorAttackZone, 0.3)
+          area.lineStyle(5, colorTeamAttackZone, 0.2)
           let maxAccuracity =
             GameOptions.maxAccuracityTower -
             Tank.accuracy[id] * GameOptions.maxAccuracityTower * 0.01
@@ -106,7 +121,7 @@ export function createAreaEyeSyncSystem(scene) {
             maxAccuracity = GameOptions.minAngleArc
           }
 
-          area.fillStyle(GameOptions.configTeams[Entity.teamIndex[id]].colorAttackZone, 0.2)
+          area.fillStyle(colorTeamAttackZone, 0.3)
           area.slice(
             x2,
             y2,
@@ -117,9 +132,23 @@ export function createAreaEyeSyncSystem(scene) {
           )
           area.fillPath()
 
-          area.fillStyle(GameOptions.configTeams[Entity.teamIndex[id]].colorAttackZone, 0.05)
+          area.fillStyle(colorTeamAttackZone, 0.05)
           area.strokeCircle(x2, y2, Tank.distanceShot[id] + GameOptions.offsetAttackZone)
           area.fillCircle(x2, y2, Tank.distanceShot[id] + GameOptions.offsetAttackZone)
+
+          if (id == scene.idPlayer && !scene.scene.isPaused()) {
+            scene.scene.get('Control').showHelp('distanceViewMy', 1000)
+          }
+          if (id == scene.idPlayer && !scene.scene.isPaused()) {
+            scene.scene.get('Control').showHelp('distanceShotMy', 1000)
+          }
+
+          if (Entity.target[id] == scene.idPlayer && !scene.scene.isPaused()) {
+            scene.scene.get('Control').showHelp('distanceView', 1000)
+          }
+          if (Entity.target[id] == scene.idPlayer && !scene.scene.isPaused()) {
+            scene.scene.get('Control').showHelp('distanceShot', 1000)
+          }
         }
       }
 

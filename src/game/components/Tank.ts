@@ -2,9 +2,9 @@ import { Types, defineComponent } from 'bitecs'
 
 export const Tank = defineComponent({
   // texture: Types.ui8,
-  level: Types.ui8,
-  levelTower: Types.ui8,
-  levelMuzzle: Types.ui8,
+  index: Types.ui8,
+  // levelTower: Types.ui8,
+  // levelMuzzle: Types.ui8,
   activeWeaponType: Types.f32,
   timeBeforeShoot: Types.f32,
 

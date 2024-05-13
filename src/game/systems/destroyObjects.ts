@@ -4,7 +4,7 @@ import { defineSystem, defineQuery, enterQuery, exitQuery } from 'bitecs'
 
 import { Position } from '../components/Position'
 import { StaticObject } from '../components/MatterStaticSprite'
-import { GameOptions, allCollision } from '../options/gameOptions'
+import { GameOptions, mapObjectCategory, tankAmunition, tankCategory } from '../options/gameOptions'
 import { DestroyObject } from '../objects/DestroyObject'
 
 export const matterStaticObjectsById = new Map<number, Phaser.Physics.Matter.Sprite>()
@@ -30,7 +30,8 @@ export function createDestroyObjectsSystem(scene: Phaser.Scene) {
         isStatic: true,
         density: 1000,
         collisionFilter: {
-          category: allCollision
+          category: mapObjectCategory,
+          mask: tankCategory | tankAmunition
         }
       })
 
@@ -51,44 +52,3 @@ export function createDestroyObjectsSystem(scene: Phaser.Scene) {
     return world
   })
 }
-
-// export function createMatterStaticSpriteSystem() {
-//   // create query
-//   const query = defineQuery([MatterSprite, MatterStaticSprite])
-
-//   // create enter query
-//   const onQueryEnter = enterQuery(query)
-//   const onQueryExit = exitQuery(query)
-
-//   return defineSystem((world) => {
-//     // loop through enter query entities
-//     const enterEntities = onQueryEnter(world)
-//     for (const id of enterEntities) {
-//       const sprite = matterSpritesById.get(id)
-
-//       if (!sprite) {
-//         continue
-//       }
-
-//       const { tank, tower } = sprite
-
-//       tank.setStatic(true)
-//       // tower.setStatic(true)
-//     }
-
-//     const exitEntities = onQueryExit(world)
-//     for (const id of exitEntities) {
-//       const sprite = matterSpritesById.get(id)
-
-//       if (!sprite) {
-//         continue
-//       }
-
-//       const { tank } = sprite
-
-//       tank.setStatic(false)
-//     }
-
-//     return world
-//   })
-// }

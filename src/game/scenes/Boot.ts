@@ -1,4 +1,5 @@
 import { Scene } from 'phaser'
+import { EventBus } from '../EventBus'
 
 export class Boot extends Scene {
   constructor() {
@@ -14,6 +15,12 @@ export class Boot extends Scene {
   }
 
   create() {
+    let lang = null
+    if (window.getLang) {
+      lang = window?.getLang()
+    }
+    EventBus.emit('set-lang', lang)
+
     this.scene.start('Preloader')
   }
 }

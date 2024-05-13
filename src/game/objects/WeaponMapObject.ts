@@ -3,6 +3,7 @@ import { IWeaponObject } from '../types'
 import { GameOptions, WeaponType } from '../options/gameOptions'
 import Position from '../components/Position'
 import { Weapon } from '../components/Weapon'
+import { Tank } from '../components/Tank'
 
 export class WeaponMapObject extends Phaser.Physics.Matter.Sprite {
   key = 'weaponMap'
@@ -12,6 +13,11 @@ export class WeaponMapObject extends Phaser.Physics.Matter.Sprite {
   status: boolean = true
   container: Phaser.GameObjects.Container
   startTimer: boolean = false
+  emitter: Phaser.GameObjects.Particles.ParticleEmitter
+  explodeSound:
+    | Phaser.Sound.HTML5AudioSound
+    | Phaser.Sound.NoAudioSound
+    | Phaser.Sound.WebAudioSound
 
   constructor(
     ecsId: number,
@@ -37,6 +43,11 @@ export class WeaponMapObject extends Phaser.Physics.Matter.Sprite {
     this.config = config
     this.ecsId = ecsId
     this.setScale(1).setTint(0xffffff)
+
+    this.explodeSound = this.scene.sound.add('get_bonus', {
+      volume: 0.2
+    })
+
     const bgImage = this.scene.add.circle(
       0,
       0,
@@ -66,6 +77,27 @@ export class WeaponMapObject extends Phaser.Physics.Matter.Sprite {
       image.setPipeline('Light2D')
     }
 
+    this.emitter = this.scene.add
+      .particles(0, 0, 'smokeBoom', {
+        frame: 1,
+        // quantity: 0.01,
+        blendMode: 'ADD',
+        // frequency: 5,
+        //lifespan: 2000,
+        // angle: { min: -100, max: -80 },
+        color: [0x666666, this.config.color, 0x222222],
+        colorEase: 'quad.out',
+        scale: { start: 1, end: 0, ease: 'sine.out' },
+        speed: 150,
+        emitting: false
+      })
+      .on('complete', () => {
+        // console.log('complete destroy')
+        this.setActive(false)
+      })
+      .setDepth(100)
+      .startFollow(this)
+
     // const rotates = [0, 90, 180]
     // this.setAngle(rotates[Phaser.Math.Between(0, rotates.length - 1)])
     this.setDepth(2)
@@ -85,8 +117,17 @@ export class WeaponMapObject extends Phaser.Physics.Matter.Sprite {
         return
       }
 
+      if (targetObject.ecsId == this.scene.idPlayer) {
+        this.scene.scene
+          .get('Control')
+          .showHelp('weapon', 2000)
+          .then((r) => {
+            this.scene.scene.get('Control').showHelp('checkWeapon', 2000)
+          })
+      }
+
       const ecsId = targetObject.ecsId
-      if (ecsId === undefined) {
+      if (ecsId === undefined || ['weapon'].includes(targetObject.key)) {
         return
       }
 
@@ -118,6 +159,25 @@ export class WeaponMapObject extends Phaser.Physics.Matter.Sprite {
         Weapon.entityId[this.ecsId] = ecsId
       }
 
+      if (this.scene.idPlayer == ecsId && this.scene.gameData.settings.autoCheckWeapon) {
+        const weaponsIds = entities
+          .filter((x) => Weapon.entityId[x] == ecsId)
+          .sort((a, b) => Weapon.type[a] - Weapon.type[b])
+        // console.log(
+        //   weaponsIds.reduce((ac, el) => {
+        //     const a = ac || []
+        //     a.push(Weapon.type[el])
+        //     return a
+        //   }, [])
+        // )
+
+        if (weaponsIds.length > 0) {
+          Tank.activeWeaponType[ecsId] = Weapon.type[weaponsIds[weaponsIds.length - 1]]
+        } else {
+          Tank.activeWeaponType[ecsId] = WeaponType.default
+        }
+      }
+
       if (weaponObject.config.timeRefresh > 0) {
         this.scene.time.delayedCall(
           weaponObject.config.timeRefresh,
@@ -143,32 +203,41 @@ export class WeaponMapObject extends Phaser.Physics.Matter.Sprite {
 
       weaponObject.hide()
 
-      const text = this.scene.add
-        .text(
-          targetObject.x,
-          targetObject.y,
-          weaponObject.config.count === -1
-            ? `${this.scene.lang.repair} ${this.scene.lang.weapons[keyWeapon]} ${this.scene.lang.weapon}`
-            : `${this.scene.lang.weapons[keyWeapon]} ${this.scene.lang.weapon} +${weaponObject.config.count}`,
-          {
-            color: '#ffffff',
-            fontFamily: 'Arial',
-            fontSize: 25
+      if (ecsId == this.scene.idPlayer || this.scene.gameData.settings.showToast) {
+        const bgText = this.scene.add
+          .rectangle(0, 0, 400, 50, this.config.color, 0.5)
+          .setOrigin(0.5)
+        const text = this.scene.add
+          .text(
+            0,
+            0,
+            weaponObject.config.count === -1
+              ? `${this.scene.lang.repair} ${this.scene.lang.weapons[keyWeapon]} ${this.scene.lang.weapon}`
+              : `${this.scene.lang.weapons[keyWeapon]} ${this.scene.lang.weapon} +${weaponObject.config.count}`,
+            {
+              color: '#ffffff',
+              fontFamily: 'Arial',
+              fontSize: 25
+            }
+          )
+          .setOrigin(0.5)
+        const textContainer = this.scene.add
+          .container(targetObject.x, targetObject.y, [bgText, text])
+          .setDepth(999999)
+        this.scene.tweens.addCounter({
+          from: 0,
+          to: 2,
+          duration: 3000,
+          onUpdate: (tween) => {
+            const v = tween.getValue()
+            textContainer.y = textContainer.y - v
+            textContainer.alpha -= v * 0.005
+          },
+          onComplete: () => {
+            textContainer.destroy()
           }
-        )
-        .setDepth(999999)
-      this.scene.tweens.addCounter({
-        from: 0,
-        to: 2,
-        duration: 3000,
-        onUpdate: (tween) => {
-          const v = tween.getValue()
-          text.y = text.y - v
-        },
-        onComplete: () => {
-          text.destroy()
-        }
-      })
+        })
+      }
 
       // if (Bonus.duration[this.ecsId] > 0) {
       //   // console.log('Refresh bonus', keyBonus, Bonus.duration[id])
@@ -196,9 +265,12 @@ export class WeaponMapObject extends Phaser.Physics.Matter.Sprite {
   }
 
   hide() {
-    this.setActive(false)
-    this.setVisible(false)
+    if (this.scene.cameras.main.cull([this]).length && this.scene.isMute) {
+      this.emitter.explode(16)
+      this.explodeSound.play()
+    }
     this.world.remove(this.body, true)
+    this.setVisible(false)
     this.container.setVisible(false)
 
     // console.log('hide: ', this.startTimer, this.bonusConfig.timeRefresh)
@@ -233,5 +305,11 @@ export class WeaponMapObject extends Phaser.Physics.Matter.Sprite {
   removeObject() {
     this.world.remove(this.body, true)
     this.destroy(true)
+  }
+
+  destroy(fromScene?: boolean): void {
+    super.destroy(fromScene)
+
+    this.explodeSound.stop()
   }
 }

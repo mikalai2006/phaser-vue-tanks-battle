@@ -13,6 +13,10 @@ export default function createAIMoveToSystem(scene: Phaser.Scene) {
   const query = defineQuery([AI])
 
   return defineSystem((world) => {
+    if (scene.isPauseAI) {
+      return
+    }
+
     const entities = query(world)
     const onQueryExit = exitQuery(query)
 
@@ -25,29 +29,29 @@ export default function createAIMoveToSystem(scene: Phaser.Scene) {
       }
 
       AI.accumulatedPathTime[id] += dt
-      Input.left[id] = 0
-      Input.right[id] = 0
-      Input.up[id] = 0
-      Input.down[id] = 0
+      // Input.left[id] = 0
+      // Input.right[id] = 0
+      // Input.up[id] = 0
+      // Input.down[id] = 0
 
       // check time wait.
       // detect obstacle.
-      // if (Input.obstacle[id]) {
-      //   AI.status[id] = StatusAI.MoveRandom
-      //   // pathEntityById.delete(id)
-      //   // Input.obstacle[id] = 0
-      //   // AI.accumulatedTime[id] += dt
-      //   // if (AI.accumulatedTime[id] < AI.timeBetweenActions[id]) {
-      //   //   continue
-      //   // } else {
-      //   //   Input.obstacle[id] = 0
-      //   //   AI.timeBetweenActions[id] = Phaser.Math.Between(
-      //   //     GameOptions.ai.timeActions.min,
-      //   //     GameOptions.ai.timeActions.max
-      //   //   )
-      //   //   AI.accumulatedTime[id] = 0
-      //   continue
-      // }
+      if (Input.obstacle[id]) {
+        AI.status[id] = StatusAI.MoveRandom
+        pathEntityById.delete(id)
+        Input.obstacle[id] = 0
+        // AI.accumulatedTime[id] += dt
+        // if (AI.accumulatedTime[id] < AI.timeBetweenActions[id]) {
+        //   continue
+        // } else {
+        //   Input.obstacle[id] = 0
+        //   AI.timeBetweenActions[id] = Phaser.Math.Between(
+        //     GameOptions.ai.timeActions.min,
+        //     GameOptions.ai.timeActions.max
+        //   )
+        //   AI.accumulatedTime[id] = 0
+        continue
+      }
 
       //   continue
       // }
@@ -56,8 +60,25 @@ export default function createAIMoveToSystem(scene: Phaser.Scene) {
 
       //   // console.log(entityPath?.length)
       // }
+      // if (Input.obstacle[id]) {
+      //   // AI.accumulatedPathTime[id] = AI.timeBetweenActions[id]
+      //   Input.left[id] = 0
+      //   Input.right[id] = 0
+      //   Input.up[id] = 0
+      //   Input.down[id] = 0
+      //   Input.obstacle[id] = 0
+      //   pathEntityById.delete(id)
+      //   Input.obstacle[id] == 1
+      //   AI.status[id] = StatusAI.MoveRandom
+      //   continue
+      // }
 
       const entityPath = pathEntityById.get(id)
+
+      Input.up[id] = 0
+      Input.down[id] = 0
+      Input.left[id] = 0
+      Input.right[id] = 0
 
       if (!entityPath?.length) {
         AI.status[id] = StatusAI.Idle
@@ -100,11 +121,6 @@ export default function createAIMoveToSystem(scene: Phaser.Scene) {
         //   Phaser.Math.Fuzzy.Equal(angleToPointer, Rotation.angle[id] - 90, 1.0)
         // )
         // console.log(Input.up[id], Math.sign(angleDelta))
-
-        Input.up[id] = 0
-        Input.down[id] = 0
-        Input.left[id] = 0
-        Input.right[id] = 0
 
         // const a = angleToPointer > ang ? angleToPointer : ang
         // const b = angleToPointer < ang ? angleToPointer : ang
@@ -152,6 +168,8 @@ export default function createAIMoveToSystem(scene: Phaser.Scene) {
             if (scene.matter.world.drawDebug) {
               scene.groundTilesLayer.setTint(0xffffff, currentTile.x, currentTile.y, 1, 1)
             }
+            AI.accumulatedPathTime[id] = 0
+
             entityPath.shift()
           } else {
             Input.up[id] = 1

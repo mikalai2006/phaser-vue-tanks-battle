@@ -1,6 +1,11 @@
 import { BonusType, WeaponType } from './options/gameOptions'
 import { langs } from './lang'
 
+export enum TypeRound {
+  alone = 0,
+  teams = 1
+}
+
 export type TLang = (typeof langs)['ru']
 
 export interface IUserData {
@@ -14,27 +19,69 @@ export interface IGameDataTank
     ITowerConfigGameOptions,
     IMuzzleConfigGameOptions {
   /**
+   * ID танка в списке complexTank
+   */
+  id: string
+  /**
    * Уровень танка = позиции танка в списке complexTank
    */
-  level: number
-  levelTank: number
-  levelTower: number
-  levelMuzzle: number
+  // levelTank: number
+  // levelTower: number
+  // levelMuzzle: number
+  /**
+   * Количество боев для этого танка
+   */
+  cb: number
+}
+
+export interface IUserSettings {
+  showArrow: boolean
+  showToast: boolean
+  showAreol: boolean
+  autoShot: boolean
+  showBar: boolean
+  autoCheckWeapon: boolean
+  friendlyFire: boolean
+  towerForward: boolean
+  showAllEnemyEye: boolean
+}
+
+export interface IUIGameSettings {
+  scrollGT: number
+  scrollGW: number
+  scrollST: number
+  scrollSW: number
+}
+
+export interface IHelpData {
+  move: number
+  moveMobile: number
+  friendly: number
+  distanceView: number
+  distanceShot: number
+  distanceViewMy: number
+  distanceShotMy: number
+  destroyObject: number
+  bonus: number
+  weapon: number
+  checkWeapon: number
+  markers: number
 }
 
 export interface IGameData {
+  lang: string
   name: string
   gerbId: number
+  settings: IUserSettings
   score: number
-  lang: string
   activeTankIndex: number
   tanks: IGameDataTank[]
-
+  weapons: {
+    [key in WeaponType]: number
+  }
   // bullet: IBulletConfig[]
-  rank: number
   coin: number
-  roundRate: number
-  roundId: number
+  help: IHelpData
 }
 
 export interface IBonusConfig {
@@ -67,7 +114,7 @@ export interface IBonusConfig {
    */
   probability: number
   /**
-   * Размер бонуса для начисления
+   * Размер бонуса для начисления, %
    *
    * -1 - пополнить до максимума
    */
@@ -138,6 +185,10 @@ export interface IConfigTeam {
    * Цвет зоны атаки
    */
   colorAttackZone: number
+  /**
+   * Цвет зоны наведения
+   */
+  colorDistanceView: number
 }
 export interface ITankConfigGameOptions {
   /**
@@ -153,7 +204,7 @@ export interface ITankConfigGameOptions {
   speed: number
   /**
    * Скорость поворота базы, углов в сек
-   * @max 180
+   * @max 120
    */
   speedRotate: number
 }
@@ -185,12 +236,24 @@ export interface ITowerConfigGameOptions {
 }
 
 export interface IComplexConfig {
+  id: string
   name: string
+  /**
+   * Цвет танка (HEX)
+   */
+  color: string
   tank: number
   tower: number
   muzzle: number
   cost: number
   rank: number
+  /**
+   * Время реакции перед выстрелом, мсек
+   */
+  maxTimeBeforeShoot: {
+    min: number
+    max: number
+  }
 }
 
 export interface IWeaponObject {
@@ -199,7 +262,14 @@ export interface IWeaponObject {
   vert: { x: number; y: number }[]
   timeRefresh: number
   type: WeaponType
+  /**
+   * Сколько создается на карте (value*level player)
+   */
   count: number
+  /**
+   * Стоимость 1 снаряда
+   */
+  cost: number
   color: number
   /**
    * Поражающая сила снаряда, в HP
@@ -253,11 +323,33 @@ export interface IRankItem {
   range: [number, number]
 }
 
+export interface ITypeRoundConfig {
+  /**
+   * Тип раунда
+   */
+  type: TypeRound
+  /**
+   * Количество команд на поле
+   */
+  countTeams: number
+  /**
+   * Количество игроков в команде
+   */
+  countPlayers: number
+}
+
 export interface IGameOptions {
+  /**
+   * Сложность раундов
+   * @min 1
+   * @max 3
+   */
+  complexity: number
   ranks: IRankItem[]
   destroyObjects: IDestroyObject[]
   weaponObjects: IWeaponObject[]
   localStorageName: string
+  localStorageSettingsName: string
   lang: string
   /**
    * Пакеты для покупки монет
@@ -281,13 +373,9 @@ export interface IGameOptions {
    */
   minAngleArc: number
   /**
-   * Количество команд на поле
+   * Тип раунда
    */
-  countTeams: number
-  /**
-   * Количество игроков в команде
-   */
-  countTeamPlayers: number
+  typesRound: ITypeRoundConfig[]
 
   /**
    * Данные команд
@@ -323,13 +411,6 @@ export interface IGameOptions {
     items: {
       frame: number
       game: ITowerConfigGameOptions
-      /**
-       * Время реакции перед выстрелом, мсек
-       */
-      maxTimeBeforeShoot: {
-        min: number
-        max: number
-      }
     }[]
   }
   // bullets: {
@@ -380,6 +461,10 @@ export interface IGameOptions {
      * Цвет HP
      */
     health: number
+    /**
+     * Цвет гусениц
+     */
+    caterpillar: number
   }
   /**
    * Количество гербов (Зависит от спрайтов)
@@ -415,7 +500,7 @@ export interface IGameOptions {
     speed: number
     /**
      * Скорость поворота базы, углов в сек
-     * @max 180
+     * @max 120
      */
     speedRotate: number
 
@@ -459,7 +544,7 @@ export interface IGameOptions {
     speed: number
     /**
      * шаг - Скорость поворота базы, углов в сек
-     * @max 180
+     * @max 120
      */
     speedRotate: number
 
@@ -533,10 +618,52 @@ export interface ILeaderBoard {
 declare global {
   interface Window {
     /**
+     * Старт загрузки игры
+     * @returns
+     */
+    onSdkGameLoadingStart: () => void
+    /**
+     * Загрузка игры завершена
+     * @returns
+     */
+    onSdkGameLoadingStop: () => void
+    /**
+     * Получить данные профиля пользователя
+     * @returns
+     */
+    getPlayerData: () => Promise<IUserData>
+    /**
+     * Инициализация лидерборда
+     * @returns
+     */
+    initLB: () => Promise<any>
+    /**
+     * Инициализация пользователя
+     * @returns player
+     */
+    initPlayer: () => Promise<any>
+    /**
+     * Проверка авторизации пользователя
+     * @returns player auth status
+     */
+    getModePlayer: () => string
+    /**
+     * Объект, передаваемый сценам при создании
+     */
+    game: {
+      currentLang: TLang
+      gameData: IGameData
+    }
+    /**
+     * Возвращает язык локализации
+     * @returns string
+     */
+    getLang: () => string
+    /**
      * Инициализация SDK
      * @returns
      */
-    initSDK: () => void
+    initSDK: () => Promise<any>
     /**
      * Сохраняет прогресс игры
      * @param IGameData
@@ -548,7 +675,7 @@ declare global {
      * @param
      * @returns IGameData
      */
-    loadGameData: () => IGameData
+    loadGameData: () => Promise<IGameData>
     /**
      * Отправляет рекорд на запись в лидерборд
      * @param number
@@ -571,7 +698,7 @@ declare global {
      * Запрашивает и возвращает в ответе данные из лидерборда
      * @returns ILeaderBoard
      */
-    getLB: () => ILeaderBoard
+    getLB: () => Promise<ILeaderBoard>
     /**
      * SDK
      */
@@ -603,7 +730,8 @@ export interface IConfigRoundTeam {
   data: IConfigTeam
 }
 export interface IConfigRound {
-  playerLevel: number
+  config: ITypeRoundConfig
+  playerIndexTank: number
   teams: IConfigRoundTeam[]
   night: boolean
 }

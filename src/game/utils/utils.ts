@@ -1,4 +1,5 @@
 import { GameOptions } from '../options/gameOptions'
+import { IComplexConfig, IGameDataTank } from '../types'
 
 export const shuffle = function (array) {
   let currentIndex = array.length,
@@ -17,16 +18,12 @@ export const shuffle = function (array) {
   return array
 }
 
-export const getMaxOptionValue = (
-  keyOption: string,
-  levelTank: number,
-  levelTower: number,
-  levelMuzzle: number
-) => {
+export const getMaxOptionValue = (keyOption: string, id: string) => {
+  const configComplexTank = GameOptions.complexTanks.find((x) => x.id == id)
   const tankGameOptions = {
-    ...GameOptions.tanks.items[levelTank].game,
-    ...GameOptions.towers.items[levelTower].game,
-    ...GameOptions.muzzles.items[levelMuzzle].game
+    ...GameOptions.tanks.items[configComplexTank.tank]?.game,
+    ...GameOptions.towers.items[configComplexTank.tower]?.game,
+    ...GameOptions.muzzles.items[configComplexTank.muzzle]?.game
   }
   const maximumOptionValue = Phaser.Math.Clamp(
     tankGameOptions[keyOption] * 2,
@@ -74,13 +71,13 @@ export function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1)
 }
 
-export function debounce(func, ms) {
-  let timeout
-  return function () {
-    clearTimeout(timeout)
-    timeout = setTimeout(() => func.apply(this, arguments), ms)
-  }
-}
+// export function debounce(func, ms) {
+//   let timeout
+//   return function () {
+//     clearTimeout(timeout)
+//     timeout = setTimeout(() => func.apply(this, arguments), ms)
+//   }
+// }
 
 export function updateParticleRotation(p) {
   return Phaser.Math.RadToDeg(Math.atan2(p.velocityY, p.velocityX))
@@ -2968,33 +2965,38 @@ export function getRank(score: number) {
     return score < max && score >= min
   })
   return rankResult.rank
-  // switch (true) {
-  //   case rate >= 1000000:
-  //     rank = 8
-  //     break
-  //   case rate < 1000000 && rate >= 500000:
-  //     rank = 7
-  //     break
-  //   case rate < 500000 && rate >= 250000:
-  //     rank = 6
-  //     break
-  //   case rate < 250000 && rate >= 100000:
-  //     rank = 5
-  //     break
-  //   case rate < 100000 && rate >= 50000:
-  //     rank = 4
-  //     break
-  //   case rate < 50000 && rate >= 25000:
-  //     rank = 3
-  //     break
-  //   case rate < 25000 && rate >= 10000:
-  //     rank = 2
-  //     break
-  //   case rate < 10000 && rate >= 5000:
-  //     rank = 1
-  //     break
-  //   default:
-  //     rank = 0
-  //     break
-  // }
+}
+
+export function getTankImage(scene: Phaser.Scene, id: string): Phaser.GameObjects.Container {
+  const configTank = GameOptions.complexTanks.find((x) => x.id == id)
+  const tankConfig = GameOptions.tanks.items[configTank.tank]
+  const towerConfig = GameOptions.towers.items[configTank.tower]
+  const muzzleConfig = GameOptions.muzzles.items[configTank.muzzle]
+
+  const caterpillar1 = scene.add
+    .sprite(0, -tankConfig.catYOffset, 'caterpillar', 0)
+    .setTint(GameOptions.colors.caterpillar)
+  const caterpillar2 = scene.add
+    .sprite(0, tankConfig.catYOffset, 'caterpillar', 0)
+    .setTint(GameOptions.colors.caterpillar)
+  const tank = scene.add.sprite(0, 0, 'tank', tankConfig.frame)
+  tank.setTint(+configTank.color.replace('#', '0x'))
+  const tower = scene.add.sprite(0, 0, 'tower', towerConfig.frame)
+  tower.setTint(+configTank.color.replace('#', '0x'))
+  const muzzle = scene.add
+    .sprite(
+      // -muzzleConfig.offset.xOffset * muzzleConfig.vert[0].x,
+      -GameOptions.muzzles.items[0].offset.xOffset * GameOptions.muzzles.items[0].vert[0].x,
+      0,
+      'muzzle',
+      muzzleConfig.frame
+    )
+    .setTint(0x111111)
+
+  const containerTank = scene.add.container(0, 0, [caterpillar1, caterpillar2, tank, tower, muzzle])
+  return containerTank
+}
+
+export function getEnumStringKey<T>(_enum: T, keyNumber: number) {
+  return Object.keys(_enum).find((key) => _enum[key] === keyNumber)
 }

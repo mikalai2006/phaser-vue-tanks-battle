@@ -6,7 +6,6 @@ import { EntityBar } from '../components/EntityBar'
 import { Entity } from '../components/Entity'
 import { GameOptions } from '../options/gameOptions'
 import { towersById } from './matter'
-import { generateName } from '../utils/utils'
 
 const WIDTH_BAR = 100
 
@@ -18,6 +17,14 @@ export const entityBarById = new Map<
     weaponImageBg: Phaser.GameObjects.Rectangle
     healthImage: Phaser.GameObjects.Rectangle
     weaponImage: Phaser.GameObjects.Rectangle
+
+    bg1: Phaser.GameObjects.Rectangle
+    bg: Phaser.GameObjects.Rectangle
+    textName: Phaser.GameObjects.Text
+    imageBrandBg: Phaser.GameObjects.Image
+    imageGerb: Phaser.GameObjects.Image
+    imageRankBg: Phaser.GameObjects.Rectangle
+    imageRank: Phaser.GameObjects.Image
     // imgMaskHealth: Phaser.GameObjects.Image
     // imgMaskWeapon: Phaser.GameObjects.Image
   }
@@ -31,8 +38,10 @@ export function createEntityBarSystem(scene: Phaser.Scene) {
     const enterEntities = onQueryEnter(world)
 
     for (const id of enterEntities) {
+      if (id == scene.idPlayer && !scene.gameData.settings.showBar) {
+        continue
+      }
       addComponent(world, EntityBar, id)
-      EntityBar.weapon[id] = 1
       // addComponent(world, Position, barId)
       // Position.x[barId] = Position.x[idTank]
       // Position.y[barId] = Position.y[idTank]
@@ -40,12 +49,13 @@ export function createEntityBarSystem(scene: Phaser.Scene) {
       // addComponent(world, EntityBar, barId)
       // EntityBar.idTank[barId] = idTank
 
-      const bg1 = scene.add
-        .rectangle(0, 0, WIDTH_BAR + 10, 30, GameOptions.configTeams[Entity.teamIndex[id]].color)
-        .setOrigin(0, 0.5)
-      const imageBrandBg = scene.add
-        .image(-17, 0, 'marker', 0)
-        .setTint(GameOptions.configTeams[Entity.teamIndex[id]].color)
+      const colorTeam =
+        Entity.teamIndex[id] >= GameOptions.configTeams.length
+          ? GameOptions.configTeams[1].color
+          : GameOptions.configTeams[Entity.teamIndex[id]].color
+
+      const bg1 = scene.add.rectangle(0, 0, WIDTH_BAR + 10, 30, colorTeam).setOrigin(0, 0.5)
+      const imageBrandBg = scene.add.image(-17, 0, 'marker', 0).setTint(colorTeam)
       const imageGerb = scene.add
         .image(-16, 3, 'gerb', Entity.gerbId[id])
         .setTint(0xffffff)
@@ -73,11 +83,11 @@ export function createEntityBarSystem(scene: Phaser.Scene) {
         }
       )
       const healthImage = scene.add
-        .rectangle(5, -8, WIDTH_BAR, 6, GameOptions.colors.health)
+        .rectangle(5, -10, WIDTH_BAR, 12, GameOptions.colors.health)
         .setOrigin(0)
-      const healthImageBg = scene.add.rectangle(5, -8, WIDTH_BAR, 6, 0x444444).setOrigin(0, 0)
-      const weaponImage = scene.add.rectangle(5, 4, WIDTH_BAR, 6, 0xf59e0b).setOrigin(0, 0.5)
-      const weaponImageBg = scene.add.rectangle(5, 4, WIDTH_BAR, 6, 0x444444).setOrigin(0, 0.5)
+      const healthImageBg = scene.add.rectangle(5, -10, WIDTH_BAR, 12, 0x444444).setOrigin(0, 0)
+      const weaponImage = scene.add.rectangle(5, 6, WIDTH_BAR, 6, 0xf59e0b).setOrigin(0, 0.5)
+      const weaponImageBg = scene.add.rectangle(5, 6, WIDTH_BAR, 6, 0x444444).setOrigin(0, 0.5)
 
       let imgMaskHealth = null,
         imgMaskWeapon = null
@@ -120,16 +130,36 @@ export function createEntityBarSystem(scene: Phaser.Scene) {
           imageRank
         ])
         .setDepth(99999)
+
+      // if (scene.configRound.night) {
+      //   bg1.setPipeline('Light2D'),
+      //     bg.setPipeline('Light2D'),
+      //     textName.setPipeline('Light2D'),
+      //     imageBrandBg.setPipeline('Light2D'),
+      //     imageGerb.setPipeline('Light2D'),
+      //     healthImageBg.setPipeline('Light2D'),
+      //     healthImage.setPipeline('Light2D'),
+      //     weaponImageBg.setPipeline('Light2D'),
+      //     weaponImage.setPipeline('Light2D'),
+      //     imageRankBg.setPipeline('Light2D'),
+      //     imageRank.setPipeline('Light2D')
+      // }
+
       scene.minimap?.ignore(bar)
 
       entityBarById.set(id, {
         bar,
-        healthImage,
+        bg1,
+        bg,
+        textName,
+        imageBrandBg,
+        imageGerb,
         healthImageBg,
+        healthImage,
+        weaponImageBg,
         weaponImage,
-        weaponImageBg
-        // imgMaskHealth,
-        // imgMaskWeapon
+        imageRankBg,
+        imageRank
       })
     }
 
@@ -138,7 +168,9 @@ export function createEntityBarSystem(scene: Phaser.Scene) {
       if (Tank.health[id] <= 0) {
         // console.log('remove bar: ', id)
         const barObject = entityBarById.get(id)
-        barObject.bar.destroy(true)
+        if (barObject) {
+          barObject.bar?.destroy(true)
+        }
         // barObject.imgMaskHealth?.destroy(true)
         // barObject.imgMaskWeapon?.destroy(true)
         entityBarById.delete(id)
@@ -175,12 +207,38 @@ export function createEntityBarSyncSystem(scene) {
       if (tower.weaponRefreshEvent) {
         const progress = tower.weaponRefreshEvent.getProgress()
         if (progress < 1) {
-          EntityBar.weapon[id] = 0
+          Entity.weapon[id] = 0
         } else if (progress == 1) {
-          EntityBar.weapon[id] = 1
+          Entity.weapon[id] = 1
         }
         object.weaponImage.displayWidth = WIDTH_BAR * progress
       }
+
+      // if (Entity.teamIndex[id] != Entity.teamIndex[scene.idFollower]) {
+      //   object.bg1.removePostPipeline('Light2D'),
+      //     object.bg.removePostPipeline('Light2D'),
+      //     object.textName.removePostPipeline('Light2D'),
+      //     object.imageBrandBg.removePostPipeline('Light2D'),
+      //     object.imageGerb.removePostPipeline('Light2D'),
+      //     object.healthImageBg.removePostPipeline('Light2D'),
+      //     object.healthImage.removePostPipeline('Light2D'),
+      //     object.weaponImageBg.removePostPipeline('Light2D'),
+      //     object.weaponImage.removePostPipeline('Light2D'),
+      //     object.imageRankBg.removePostPipeline('Light2D'),
+      //     object.imageRank.removePostPipeline('Light2D')
+      // } else {
+      //   object.bg1.setPipeline('Light2D'),
+      //     object.bg.setPipeline('Light2D'),
+      //     object.textName.setPipeline('Light2D'),
+      //     object.imageBrandBg.setPipeline('Light2D'),
+      //     object.imageGerb.setPipeline('Light2D'),
+      //     object.healthImageBg.setPipeline('Light2D'),
+      //     object.healthImage.setPipeline('Light2D'),
+      //     object.weaponImageBg.setPipeline('Light2D'),
+      //     object.weaponImage.setPipeline('Light2D'),
+      //     object.imageRankBg.setPipeline('Light2D'),
+      //     object.imageRank.setPipeline('Light2D')
+      // }
     }
 
     return world

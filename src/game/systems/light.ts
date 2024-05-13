@@ -3,6 +3,7 @@ import { defineSystem, defineQuery, enterQuery, addEntity, addComponent, exitQue
 import { Tank } from '../components/Tank'
 import Position from '../components/Position'
 import { Light } from '../components/Light'
+import { tanksById } from './matter'
 
 export const lightById = new Map<number, Phaser.GameObjects.Light>()
 
@@ -13,6 +14,10 @@ export function createLightSystem(scene: Phaser.Scene) {
   return defineSystem((world) => {
     const entities = onQueryEnter(world)
     const exitEntities = onQueryExit(world)
+
+    if (!scene.configRound.night) {
+      return
+    }
 
     for (const id of entities) {
       // const areaId = addEntity(world)
@@ -41,7 +46,7 @@ export function createLightSystem(scene: Phaser.Scene) {
   })
 }
 
-export function createLightSyncSystem() {
+export function createLightSyncSystem(scene: Phaser.Scene) {
   const query = defineQuery([Light])
 
   return defineSystem((world) => {
@@ -49,9 +54,17 @@ export function createLightSyncSystem() {
 
     for (let i = 0; i < entities.length; ++i) {
       const id = entities[i]
+      const light = lightById.get(id)
+      const tank = tanksById.get(id)
 
-      lightById.get(id).x = Position.x[id]
-      lightById.get(id).y = Position.y[id]
+      light.x = Position.x[id]
+      light.y = Position.y[id]
+
+      if (scene.cameras.main.cull([tank]).length) {
+        light.setVisible(true)
+      } else {
+        light.setVisible(false)
+      }
     }
 
     return world

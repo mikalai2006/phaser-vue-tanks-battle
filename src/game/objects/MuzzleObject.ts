@@ -18,6 +18,10 @@ export class MuzzleObject extends Phaser.Physics.Matter.Sprite {
   rotateTween: Phaser.Tweens.Tween
   count: number
   ecsWorld: IWorld
+  public audioBoom:
+    | Phaser.Sound.NoAudioSound
+    | Phaser.Sound.HTML5AudioSound
+    | Phaser.Sound.WebAudioSound
 
   constructor(
     ecsId: number,
@@ -47,7 +51,11 @@ export class MuzzleObject extends Phaser.Physics.Matter.Sprite {
 
     this.scene.add.existing(this)
 
-    this.setDepth(3)
+    this.setDepth(11)
+
+    this.audioBoom = this.scene.sound.add('boom', {
+      volume: 1
+    })
 
     this.emitter = this.scene.add.particles(0, 0, 'flares').setDepth(3)
   }
@@ -62,7 +70,9 @@ export class MuzzleObject extends Phaser.Physics.Matter.Sprite {
      */
     numberShot: number
   ) {
-    this.scene.audioBoom.play()
+    if (this.scene.cameras.main.cull([this]).length && this.scene.isMute) {
+      this.audioBoom.play()
+    }
     const weaponConfig = GameOptions.weaponObjects.find(
       (x) => x.type == Tank.activeWeaponType[this.ecsId]
     )
@@ -94,6 +104,12 @@ export class MuzzleObject extends Phaser.Physics.Matter.Sprite {
       .get(weaponConfig.type)
       .find((bullet) => !bullet.active)
     if (bullet) {
+      bullet.setEcsId(this.ecsId)
+
+      if (this.ecsId == this.scene.idPlayer) {
+        this.scene.scene.get('Control').showHelp('refreshWeapon', 2000)
+      }
+
       bullet.fire(x, y, this.rotation, weaponConfig, muzzleConfig)
       bullet.setOnCollide((collisionData) => {
         if (!this.scene) {
@@ -104,10 +120,19 @@ export class MuzzleObject extends Phaser.Physics.Matter.Sprite {
           collisionData.bodyB.gameObject?.key === 'weapon'
             ? collisionData.bodyB.gameObject
             : collisionData.bodyA.gameObject
-        const enemy: WeaponObject =
+        const enemyBody =
           collisionData.bodyB.gameObject?.key !== 'weapon'
-            ? collisionData.bodyB.gameObject
-            : collisionData.bodyA.gameObject
+            ? collisionData.bodyB
+            : collisionData.bodyA
+        const enemy: WeaponObject = enemyBody.gameObject
+        // console.log(bul, enemyBody, collisionData)
+
+        if (bul && !['bonus'].includes(enemy?.key) && !enemyBody.isSensor) {
+          bul.boom()
+          // bul.setActive(false)
+          // bul.setVisible(false)
+          // bul.world.remove(bul.body, true)
+        }
 
         // if collision with their body
         if ((enemy && enemy.ecsId == this.ecsId) || !enemy) {
@@ -116,28 +141,37 @@ export class MuzzleObject extends Phaser.Physics.Matter.Sprite {
         // console.log(id, bul, enemy?.ecsId)
         // this.ecsId === 0 && console.log(Tank.health[enemy.ecsId])
 
-        if (bul && !['bonus'].includes(enemy.key)) {
-          bul.boom()
-          // bul.setActive(false)
-          // bul.setVisible(false)
-          // bul.world.remove(bul.body, true)
-        }
-
         // if entity death
         if (!Tank.health[enemy.ecsId] || Tank.health[enemy.ecsId] <= 0 || bul.key == enemy.key) {
+          return
+        }
+
+        const friendlyFire = Entity.teamIndex[enemy.ecsId] == Entity.teamIndex[this.ecsId]
+        if (friendlyFire && !this.scene.gameData.settings.friendlyFire) {
           return
         }
         // #${Phaser.Display.Color.ComponentToHex(
         //   GameOptions.configTeams[Entity.teamIndex[id]].colorAttackZone
         // )}
         if (enemy && ['tank', 'caterpillar', 'tower', 'muzzle'].includes(enemy.key)) {
-          if (
-            enemy.ecsId == this.scene.gameData.roundId ||
-            this.ecsId == this.scene.gameData.roundId
-          ) {
+          // console.log(enemy.key)
+
+          if (friendlyFire && this.ecsId == this.scene.idPlayer && !this.scene.scene.isPaused()) {
+            this.scene.scene.get('Control').showHelp('friendly', 5000)
+          }
+
+          // const complexityDiff = (this.scene.configRound.playerLevel / 10) * GameOptions.complexity
+          const damage = weaponConfig.damage
+          //  Phaser.Math.Clamp(
+          //   weaponConfig.damage * complexityDiff,
+          //   weaponConfig.damage,
+          //   weaponConfig.damage * complexityDiff
+          // )
+
+          if (enemy.ecsId == this.scene.idPlayer || this.ecsId == this.scene.idPlayer) {
             const text = this.scene.add
-              .text(enemy.x, enemy.y, `-${weaponConfig.damage}`, {
-                color: '#ffffff',
+              .text(enemy.x, enemy.y, `-${damage}`, {
+                color: friendlyFire ? '#ff0000' : '#ffffff',
                 fontFamily: 'Arial',
                 fontSize: 25
               })
@@ -155,16 +189,17 @@ export class MuzzleObject extends Phaser.Physics.Matter.Sprite {
               }
             })
           }
-          Tank.health[enemy.ecsId] -= weaponConfig.damage
+          Tank.health[enemy.ecsId] -= damage
           tanksById.get(enemy.ecsId)?.onGetDamage()
 
-          Entity.roundCoin[this.ecsId] += weaponConfig.damage
+          if (friendlyFire) {
+            Entity.roundCoin[this.ecsId] -= damage
+          } else {
+            Entity.roundCoin[this.ecsId] += damage
+          }
           if (this.ecsId == this.scene.idPlayer) {
             this.scene.roundCoin = Entity.roundCoin[this.ecsId]
           }
-          // if (this.ecsId == this.scene.gameData.roundId) {
-          //   this.scene.gameData.roundRate += weaponConfig.damage
-          // }
           // console.log('Damage tank ', enemy.ecsId, Tank.health[enemy.ecsId])
 
           if (Tank.health[enemy.ecsId] <= 0) {
@@ -220,5 +255,10 @@ export class MuzzleObject extends Phaser.Physics.Matter.Sprite {
 
       this.emitter.setPosition(x2, y2)
     }
+  }
+  destroy(fromScene?: boolean): void {
+    super.destroy(fromScene)
+
+    this.audioBoom.stop()
   }
 }

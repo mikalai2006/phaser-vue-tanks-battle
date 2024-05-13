@@ -17,11 +17,11 @@
             "scaleInDock": 1
         },
         "level1.tmx": {
-            "scale": 0.75,
+            "scale": 0.125,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 3606.666666666666,
-                "y": 3686
+                "x": 2856,
+                "y": 3284
             }
         },
         "level1.tmx#effects": {
@@ -58,11 +58,11 @@
             "scaleInDock": 0.33
         },
         "level30x30.tmx": {
-            "scale": 0.5,
-            "selectedLayer": 4,
+            "scale": 0.25,
+            "selectedLayer": 6,
             "viewCenter": {
-                "x": 1445,
-                "y": 1217
+                "x": 1536,
+                "y": 1934
             }
         },
         "level30x30.tmx#effects": {
@@ -75,6 +75,41 @@
         },
         "level30x30.tmx#tiles": {
             "scaleInDock": 0.33
+        },
+        "level30x30_2.tmx": {
+            "scale": 0.25,
+            "selectedLayer": 6,
+            "viewCenter": {
+                "x": 1748,
+                "y": 1842
+            }
+        },
+        "level30x30_2.tmx#effects": {
+            "scaleInDock": 1
+        },
+        "level30x30_2.tmx#tileMapObjects": {
+            "scaleInDock": 0.33,
+            "scaleInEditor": 0.5
+        },
+        "level30x30_2.tmx#tiles": {
+            "scaleInDock": 0.33
+        },
+        "level_3_40x40.tmx": {
+            "scale": 0.230078125,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 1921.0865874363328,
+                "y": 1923.2597623089985
+            }
+        },
+        "level_3_40x40.tmx#effects": {
+            "scaleInDock": 1
+        },
+        "level_3_40x40.tmx#tileMapObjects": {
+            "scaleInDock": 1
+        },
+        "level_3_40x40.tmx#tiles": {
+            "scaleInDock": 1
         },
         "map.tmx": {
             "scale": 0.17,
@@ -124,8 +159,10 @@
     "project": "tile.tiled-project",
     "property.type": "bool",
     "recentFiles": [
-        "level30x30.tmx",
+        "level_3_40x40.tmx",
         "level1.tmx",
+        "level30x30.tmx",
+        "level30x30_2.tmx",
         "level1_tileMapObjects.tmx",
         "tileMapObjects..tsx",
         "tank_tower.tsx",

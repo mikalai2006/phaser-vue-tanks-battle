@@ -1,7 +1,8 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
 import { EventBus } from './EventBus'
 import StartGame from './main'
+import { IGameData } from './types'
 // Save the current scene instance
 const scene = ref()
 const game = ref()
@@ -9,13 +10,15 @@ const game = ref()
 const emit = defineEmits([
   'current-active-scene',
   'save-data',
-  'start-create',
   'show-reward-adv',
   'show-fullscreen-adv',
-  'toggle-lang-list',
   'toggle-lang',
-  'start-game',
-  'show-lb'
+  // 'start-game',
+  'set-lb',
+  'get-lb',
+  'set-lang',
+  'set-data',
+  'set-player-data'
 ])
 
 onMounted(() => {
@@ -39,20 +42,24 @@ onMounted(() => {
     emit('show-fullscreen-adv', callback)
   })
 
-  EventBus.on('start-create', (data) => {
-    emit('start-create', data)
-  })
-  EventBus.on('toggle-lang-list', () => {
-    emit('toggle-lang-list')
-  })
+  // EventBus.on('start-game', (data) => {
+  //   emit('start-game', data)
+  // })
   EventBus.on('toggle-lang', () => {
     emit('toggle-lang')
   })
-  EventBus.on('start-game', (currentScene) => {
-    emit('start-game', currentScene)
+  EventBus.on('get-lb', () => {
+    emit('get-lb')
   })
-  EventBus.on('show-lb', (status) => {
-    emit('show-lb', status)
+
+  EventBus.on('set-lang', (code: string) => {
+    emit('set-lang', code)
+  })
+  EventBus.on('set-data', (data: IGameData) => {
+    return emit('set-data', data)
+  })
+  EventBus.on('set-player-data', (data: IGameData) => {
+    return emit('set-player-data', data)
   })
 })
 

@@ -9,6 +9,7 @@ import Position from '../components/Position'
 import { GameOptions } from '../options/gameOptions'
 import { Entity } from '../components/Entity'
 import { Tank } from '../components/Tank'
+import { tanksById } from './matter'
 
 export default function createRaycastSystem(scene: Phaser.Scene) {
   const debugGraphics = scene.add
@@ -31,6 +32,10 @@ export default function createRaycastSystem(scene: Phaser.Scene) {
     const entities = query(world)
     const entities2 = query(world)
 
+    if (scene.isPauseAI) {
+      return
+    }
+
     if (debugGraphics) {
       debugGraphics.clear()
     }
@@ -51,18 +56,40 @@ export default function createRaycastSystem(scene: Phaser.Scene) {
         }
 
         // calc coordinates.
-
-        const collisions = scene.matter.query.ray(
-          scene.matter.world.getAllBodies(),
-          scene.matter.vector.create(Position.x[id], Position.y[id]),
-          scene.matter.vector.create(Position.x[idPlayer], Position.y[idPlayer])
-        )
+        // const bodies = Array.from(tanksById, ([name, value]) => value.body).filter((x) => !!x)
+        // if (!bodies.length) {
+        //   continue
+        // }
+        // console.log(bodies)
 
         const distance = Phaser.Math.Distance.Between(
           Position.x[id],
           Position.y[id],
           Position.x[idPlayer],
           Position.y[idPlayer]
+        )
+
+        let far = true
+        if (distance <= Tank.distanceView[idPlayer]) {
+          // distance <= Tank.distanceView[id] ||
+          // console.log('brak', distance, Tank.distanceView[id], Tank.distanceView[idPlayer])
+          far = false
+        }
+
+        // idPlayer === scene.idPlayer &&
+        //   console.log('far ', far, distance, Tank.distanceView[idPlayer])
+        Entity.target[idPlayer] = -1
+        if (far) {
+          continue
+        }
+
+        // console.log('ray', distance, Tank.distanceView[id], Tank.distanceView[idPlayer])
+
+        const collisions = scene.matter.query.ray(
+          scene.matter.world.getAllBodies(),
+          // bodies,
+          scene.matter.vector.create(Position.x[id], Position.y[id]),
+          scene.matter.vector.create(Position.x[idPlayer], Position.y[idPlayer])
         )
 
         const allowCollisions = collisions.filter(
@@ -77,8 +104,8 @@ export default function createRaycastSystem(scene: Phaser.Scene) {
               !['caterpillar', 'muzzle', 'tower', 'tank', 'weapon', 'weaponMap', 'bonus'].includes(
                 x.bodyB.gameObject?.key
               )) &&
-            x.bodyA.gameObject &&
-            x.bodyB.gameObject
+            x.bodyA.key != 'detector' &&
+            x.bodyB.key != 'detector'
         )
         // console.log(
         //   collisions.filter(
@@ -88,6 +115,8 @@ export default function createRaycastSystem(scene: Phaser.Scene) {
         //   )
         // )
         // console.log(collisions.map((x) => [x.bodyA.gameObject, x.bodyB.gameObject]))
+        // idPlayer === scene.idPlayer &&
+        //   console.log(obstaclesCollisions, Entity.teamIndex[id], Entity.teamIndex[idPlayer])
 
         if (
           // collisions.length >= 3 &&
@@ -127,21 +156,22 @@ export default function createRaycastSystem(scene: Phaser.Scene) {
           // Entity.target[nearId] = idPlayer
           Entity.target[idPlayer] = nearId
         }
-        debugGraphics.beginPath()
-        debugGraphics.moveTo(target.bodyA.position.x, target.bodyA.position.y)
-        debugGraphics.lineStyle(
-          2,
-          GameOptions.configTeams[Entity.teamIndex[idPlayer]].colorAttackZone,
-          0.5
-        )
-        debugGraphics.lineTo(Position.x[idPlayer], Position.y[idPlayer])
-        // if (collisions.length > 6) {
-        //   debugGraphics.lineStyle(1, 0xd946ef, 1)
-        // } else {
-        //   debugGraphics.lineStyle(1, 0xffffff, 1)
-        // }
-        debugGraphics.closePath()
-        debugGraphics.strokePath()
+        // debugGraphics.beginPath()
+        // debugGraphics.moveTo(target.bodyA.position.x, target.bodyA.position.y)
+
+        // const colorTeam =
+        //   Entity.teamIndex[idPlayer] >= GameOptions.configTeams.length
+        //     ? GameOptions.configTeams[1].colorAttackZone
+        //     : GameOptions.configTeams[Entity.teamIndex[idPlayer]].colorAttackZone
+        // debugGraphics.lineStyle(2, colorTeam, 0.5)
+        // debugGraphics.lineTo(Position.x[idPlayer], Position.y[idPlayer])
+        // // if (collisions.length > 6) {
+        // //   debugGraphics.lineStyle(1, 0xd946ef, 1)
+        // // } else {
+        // //   debugGraphics.lineStyle(1, 0xffffff, 1)
+        // // }
+        // debugGraphics.closePath()
+        // debugGraphics.strokePath()
       }
     }
 

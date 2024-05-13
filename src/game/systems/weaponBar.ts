@@ -58,11 +58,19 @@ export function createWeaponBarSystem(scene: Phaser.Scene) {
         //   GameOptions.workshop.colorLowProgress
         // )
       } else {
-        Tank.activeWeaponType[scene.idFollower] = weapon.type
-        scene.showToast(
-          replaceRegexByArray(scene.lang.activeWeapon, [scene.lang.weapons[keyWeapon]]),
-          GameOptions.ui.panelBgColor
-        )
+        if (!scene.gameData.settings.autoCheckWeapon) {
+          Tank.activeWeaponType[scene.idFollower] = weapon.type
+          scene.scene
+            .get('Message')
+            .showToast(
+              replaceRegexByArray(scene.lang.activeWeapon, [scene.lang.weapons[keyWeapon]]),
+              GameOptions.ui.panelBgColor
+            )
+        } else {
+          scene.scene
+            .get('Message')
+            .showToast(scene.lang.enableAutoCheckWeapon, GameOptions.ui.panelBgColor)
+        }
       }
     }
     button.on('pointerup', funcCallback)
@@ -71,7 +79,7 @@ export function createWeaponBarSystem(scene: Phaser.Scene) {
     // new Button(scene, 0, 0, WIDTH_CELL, HEIGHT_CELL, 0x000000, '', {}, () => {
     //   console.log('Check ', weapon.type)
     // }).setDepth(99999)
-    const image = scene.add.image(0, 0, weapon.texture, weapon.frame).setOrigin(0.5)
+    const image = scene.add.image(-10, 0, weapon.texture, weapon.frame).setOrigin(0.5)
     const container = scene.add.container(0, 0, [button, image, text]).setAlpha(i == 0 ? 1 : 0.5)
     cells.push(container)
     // if (i != 0) {
@@ -151,13 +159,13 @@ export function createWeaponBarSystem(scene: Phaser.Scene) {
         }, 0)
         button.container.setAlpha(1)
         // button.container.setVisible(true)
-        button.text.setText(key == WeaponType.default ? '--' : weaponCount.toString())
+        button.text.setText(key == WeaponType.default ? '∞' : weaponCount.toString())
       } else {
         if (key != WeaponType.default) {
           button.container.setAlpha(0.5)
           // button.container.setVisible(false)
         }
-        button.text.setText(key == WeaponType.default ? '--' : '0')
+        button.text.setText(key == WeaponType.default ? '∞' : '0')
       }
       if (typeActiveWeapon == key) {
         button.button.fillColor = GameOptions.ui.accent.replace('#', '0x')

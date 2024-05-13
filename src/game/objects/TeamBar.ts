@@ -27,7 +27,7 @@ export class TeamBar extends Phaser.GameObjects.Container {
         GameOptions.teamBarSize.height / 2 + GameOptions.marginMarker * 2
       ]
     ]
-    for (let i = 0; i < GameOptions.countTeams; i++) {
+    for (let i = 0; i < this.scene.configRound.config.countTeams; i++) {
       // const bg = this.scene.add.rectangle(
       //   0,
       //   0,

@@ -25,6 +25,9 @@ export function createSteeringSystem(scene) {
 
       const isLeft = !!Input.left[id]
       const isRight = !!Input.right[id]
+      // if (!isMoving && !isLeft && !isRight) {
+      //   continue
+      // }
 
       const caterpillars = caterpillarsById.get(id)
 
@@ -118,10 +121,21 @@ export function createSteeringSystem(scene) {
           } else if (!Input.fire[id] && Tank.timeBeforeShoot[id] > 0) {
             // console.log('Boom!!!')
             // const isFire = Phaser.Math.Between(0, 100)
-            if (!players.includes(id)) {
+            if (!players.includes(id) || scene.gameData.settings.autoShot) {
               Input.fire[id] = 1 //isFire > 50 ? 1 : 0
             }
           }
+        }
+      } else if (scene.gameData.settings.towerForward && players.includes(id)) {
+        const angleDelta = Phaser.Math.Angle.ShortestBetween(
+          RotationTower.angle[id],
+          Rotation.angle[id]
+        )
+        if (Math.round(Math.abs(angleDelta)) > 0) {
+          const speedRotateTower = Tank.speedRotateTower[id]
+          const deltaRotateTower = (((speedRotateTower * dt) / 1000) * Math.PI) / 180
+          RotationTower.angleMuzzle[id] =
+            RotationTower.angle[id] + Math.sign(angleDelta) * deltaRotateTower * 10
         }
       }
 
@@ -130,7 +144,7 @@ export function createSteeringSystem(scene) {
       const deltaSpeed = (speed * dt) / 1000
       const speedRotate = Tank.speedRotate[id]
       const deltaRotate = (((speedRotate * dt) / 1000) * Math.PI) / 180
-      // if (id == 1) console.log(deltaSpeed, deltaRotate)
+      // if (id == scene.idPlayer) console.log(deltaSpeed, deltaRotate)
       // if moving...
       if (isMoving) {
         const moveDir = isUp ? 1 : -1
@@ -186,14 +200,6 @@ export function createSteeringSystem(scene) {
         Velocity.x[id] = 0
         Velocity.y[id] = 0
       }
-
-      // decide on a moving direction
-
-      // know if turning
-
-      // adjust angle based on turn direction
-
-      // if not moving then set velocity to 0
     }
 
     return world

@@ -3,8 +3,8 @@
  <editorsettings>
   <export target="map0.json" format="json"/>
  </editorsettings>
- <tileset firstgid="1" name="tiles" tilewidth="128" tileheight="128" tilecount="40" columns="10">
-  <image source="tiles/tiles0.png" width="1280" height="512"/>
+ <tileset firstgid="1" name="tiles" tilewidth="128" tileheight="128" spacing="2" margin="1" tilecount="40" columns="10">
+  <image source="tiles/tiles0.png" width="1300" height="520"/>
  </tileset>
  <tileset firstgid="41" name="tileMapObjects" tilewidth="128" tileheight="128" tilecount="40" columns="10">
   <image source="tiles/tileMapObjects.png" width="1280" height="512"/>

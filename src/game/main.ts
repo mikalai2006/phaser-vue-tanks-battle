@@ -1,11 +1,12 @@
 import { Boot } from './scenes/Boot'
-import Game from './scenes/Game'
+// import Game from './scenes/Game'
 import Phaser from 'phaser'
 import { Preloader } from './scenes/Preloader'
 import { GameOptions } from './options/gameOptions'
 import { Home } from './scenes/Home'
 import { WorkShop } from './scenes/WorkShop'
 
+import ToggleSwitchPlugin from 'phaser3-rex-plugins/plugins/toggleswitch-plugin.js'
 import RexUIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin.js'
 import SliderPlugin from 'phaser3-rex-plugins/plugins/slider-plugin.js'
 
@@ -33,14 +34,14 @@ const configObject: Phaser.Types.Core.GameConfig = {
     // Game,
     Home,
     Bank,
-    Message,
+    WorkShop,
     Control,
-    WorkShop
+    Message
     // NextLevel,  GameOver, Help
   ],
   fps: {
     forceSetTimeOut: false
-    // limit: 50
+    // limit: 30
     // target: 30 // 30x per second
   },
   // physics: {
@@ -77,6 +78,11 @@ const configObject: Phaser.Types.Core.GameConfig = {
       {
         key: 'rexSlider',
         plugin: SliderPlugin,
+        start: true
+      },
+      {
+        key: 'rexToggleSwitchPlugin',
+        plugin: ToggleSwitchPlugin,
         start: true
       }
     ]
