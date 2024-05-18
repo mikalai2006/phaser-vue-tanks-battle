@@ -36,22 +36,27 @@ export default function createAIMoveToSystem(scene: Phaser.Scene) {
 
       // check time wait.
       // detect obstacle.
-      if (Input.obstacle[id]) {
-        AI.status[id] = StatusAI.MoveRandom
-        pathEntityById.delete(id)
-        Input.obstacle[id] = 0
-        // AI.accumulatedTime[id] += dt
-        // if (AI.accumulatedTime[id] < AI.timeBetweenActions[id]) {
-        //   continue
-        // } else {
-        //   Input.obstacle[id] = 0
-        //   AI.timeBetweenActions[id] = Phaser.Math.Between(
-        //     GameOptions.ai.timeActions.min,
-        //     GameOptions.ai.timeActions.max
-        //   )
-        //   AI.accumulatedTime[id] = 0
-        continue
-      }
+      // if (Input.obstacle[id]) {
+      //   AI.status[id] = StatusAI.Idle
+      //   pathEntityById.delete(id)
+      //   Input.obstacle[id] = 0
+      //   AI.accumulatedPathTime[id] = 0
+      //   Input.up[id] = 0
+      //   Input.down[id] = 0
+      //   Input.left[id] = 0
+      //   Input.right[id] = 0
+      //   // AI.accumulatedTime[id] += dt
+      //   // if (AI.accumulatedTime[id] < AI.timeBetweenActions[id]) {
+      //   //   continue
+      //   // } else {
+      //   //   Input.obstacle[id] = 0
+      //   //   AI.timeBetweenActions[id] = Phaser.Math.Between(
+      //   //     GameOptions.ai.timeActions.min,
+      //   //     GameOptions.ai.timeActions.max
+      //   //   )
+      //   //   AI.accumulatedTime[id] = 0
+      //   continue
+      // }
 
       //   continue
       // }

@@ -2,7 +2,7 @@ import Phaser from 'phaser'
 import { defineSystem, defineQuery, enterQuery, exitQuery, Not } from 'bitecs'
 import { Tank } from '../components/Tank'
 import Position from '../components/Position'
-import { GameOptions } from '../options/gameOptions'
+import { GameOptions, SpriteKeys } from '../options/gameOptions'
 import { Entity } from '../components/Entity'
 import { Player } from '../components/Player'
 
@@ -52,7 +52,7 @@ export function createMarkersSystem(scene: Phaser.Scene) {
       //   progress.setMask(mask)
       // }
       const imageGerb = scene.add
-        .image(0, 3, 'gerb', Entity.gerbId[id])
+        .image(0, 3, SpriteKeys.Gerb, Entity.gerbId[id])
         .setTint(0xffffff)
         .setScale(0.3)
       const container = scene.add

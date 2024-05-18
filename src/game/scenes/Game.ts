@@ -6,7 +6,9 @@ import {
   pipe,
   deleteWorld,
   resetWorld,
-  defineQuery
+  defineQuery,
+  getAllEntities,
+  removeEntity
 } from 'bitecs'
 import PF from 'pathfinding'
 
@@ -45,10 +47,25 @@ import { Entity } from '../components/Entity'
 import { Effect } from '../objects/Effects'
 import { createBonusSyncSystem, createBonusSystem } from '../systems/bonus'
 import { createMarkersSyncSystem, createMarkersSystem } from '../systems/markers'
-import { generateName, getRank, isProbability, shuffle } from '../utils/utils'
+import {
+  generateName,
+  getRank,
+  getSupportWeapons,
+  getTrimName,
+  isProbability,
+  shuffle
+} from '../utils/utils'
 import { createTeamBarSyncSystem, createTeamBarSystem } from '../systems/teamBar'
 import { TeamBar } from '../objects/TeamBar'
-import { IConfigRound, IConfigRoundTeamPlayer, IGameData, TLang } from '../types'
+import {
+  IConfigRound,
+  IConfigRoundTeamPlayer,
+  IGameData,
+  IPlayerData,
+  KeyParticles,
+  KeySound,
+  TLang
+} from '../types'
 import { StaticObject } from '../components/MatterStaticSprite'
 import { createDestroyObjectsSystem } from '../systems/destroyObjects'
 import { createEntityBarBonusesSystem as createBonusBarSystem } from '../systems/bonusBar'
@@ -60,10 +77,16 @@ import createAIWeaponSystem from '../systems/aiWeapon'
 import { createPlayerBarSyncSystem, createPlayerBarSystem } from '../systems/playerBar'
 import { groupBy } from 'lodash'
 import { EventBus } from '../EventBus'
+import { createDebugBarSyncSystem, createDebugBarSystem } from '../systems/debugBar'
+import { createAloneBarSyncSystem, createAloneBarSystem } from '../systems/aloneBar'
+import { createHintSyncSystem, createHintSystem } from '../systems/hint'
+import { userNames } from '../utils/names'
 
 export default class Game extends Phaser.Scene {
   public gameData: IGameData
+  public playerData: IPlayerData
   public lang: TLang
+
   public keys!: {
     a: Phaser.Input.Keyboard.Key
     s: Phaser.Input.Keyboard.Key
@@ -79,17 +102,20 @@ export default class Game extends Phaser.Scene {
         right: Phaser.Input.Keyboard.Key
       }
   private joystikMove: VirtualJoyStick
+  public buttonFire: Phaser.GameObjects.Sprite
 
   public configRound: IConfigRound
 
   private world!: IWorld
 
-  public isMute: boolean = false
+  public isMute: boolean = true
   public idFollower: number = -1
   public idPlayer: number = -1
   public roundCoin: number = 0
   public isPauseAI: boolean = true
+  public isRoundEnd: boolean = false
   public isFire: boolean
+  public emitterDestroyTank: Phaser.GameObjects.Particles.ParticleEmitter
 
   private fpsText: Phaser.GameObjects.Text
   private steerSystem!: System
@@ -114,16 +140,45 @@ export default class Game extends Phaser.Scene {
   private groundTilesLayer: Phaser.Tilemaps.TilemapLayer
   // private effectsTilesLayer: Phaser.Tilemaps.TilemapLayer
   public names: Map<number, string> = new Map()
+  public prob: any = {}
 
   constructor() {
     super('Game')
   }
 
   init() {
-    this.scene.bringToTop('Control')
+    // console.log(this.game.events)
+
+    this.game.events.on(Phaser.Core.Events.FOCUS, this.onFocus, this)
+    this.game.events.on(Phaser.Core.Events.BLUR, this.onBlur, this)
 
     // create container with effects.
     this.effects = new Effect(this, 0, 0)
+
+    this.emitterDestroyTank = this.add
+      .particles(0, 0, KeyParticles.SmokeBoom, {
+        frame: 1,
+        //color: [0x111111, 0x40942f, 0xf89800, 0x222222],
+        color: [0x555555, 0xffd189, 0x222222],
+        colorEase: 'quad.out',
+        scale: { start: 1.5, end: 0, ease: 'sine.out' },
+        speed: { random: [30, 100] },
+        lifespan: { random: [1000, 2000] },
+        blendMode: 'ADD',
+        // advance: 1000,
+        // duration: 500,
+
+        emitting: false,
+        // quantity: 5,
+        // speed: { random: [50, 100] },
+        // lifespan: { random: [200, 400] },
+        // scale: { random: true, start: 0.5, end: 0 },
+        rotate: { random: true, start: 0, end: 180 }
+        // color: [0x666666, 0xffd189, 0x222222],
+        // colorEase: 'quad.out'
+        // // angle: { random: true, start: 0, end: 270 }
+      })
+      .setDepth(999)
 
     // choose keyboard.
     this.keys = this.input.keyboard.addKeys({
@@ -139,6 +194,8 @@ export default class Game extends Phaser.Scene {
     })
     if (this.sys.game.device.os.desktop) {
       this.cursors = this.input.keyboard.createCursorKeys()
+    } else {
+      this.input.addPointer(1)
     }
 
     const onAfterUpdate = () => {
@@ -153,6 +210,11 @@ export default class Game extends Phaser.Scene {
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.matter.world.off(Phaser.Physics.Matter.Events.AFTER_UPDATE, onAfterUpdate)
+    })
+
+    this.events.once(Phaser.Scenes.Events.DESTROY, () => {
+      this.game.events.off(Phaser.Core.Events.FOCUS, this.onFocus)
+      this.game.events.off(Phaser.Core.Events.BLUR, this.onBlur)
     })
 
     // this.cameras.main.on(
@@ -173,9 +235,40 @@ export default class Game extends Phaser.Scene {
   //   this.load.image('tank-red', 'assets/tank_red.png')
   // }
 
-  create({ lang, data }) {
+  create({ lang, data, playerData }) {
+    // this.game.scale.scaleMode = Phaser.Scale.RESIZE
     this.lang = lang
     this.gameData = data
+    this.playerData = playerData
+    // console.log(this.rexUI)
+
+    // const { width, height } = this.scale
+    // console.log(width, height)
+
+    // // create queue toast
+    // this.toastQueue = this.rexUI.add.toastQueue(this, {
+    //   x: 200,
+    //   y: 280,
+    //   originY: 0,
+    //   space: { item: 10 },
+    //   queueDirection: 'top-to-bottom',
+    //   createMessageLabelCallback(scene, message) {
+    //     return scene.rexUI.add.label({
+    //       width: 240,
+    //       space: { left: 10, right: 10, top: 10, bottom: 10 },
+    //       background: scene.rexUI.add.roundRectangle({
+    //         color: GameOptions.colors.darkColor,
+    //         radius: 1
+    //       }),
+    //       text: scene.add.text(0, 0, message, { fontSize: 20 }),
+    //       wrapText: true
+    //     })
+    //   },
+
+    //   duration: {
+    //     hold: 4000
+    //   }
+    // })
 
     // animations.
     // this.anims.create({
@@ -251,8 +344,19 @@ export default class Game extends Phaser.Scene {
     //   .setTint(0x333333)
     // this.minimap.ignore(hud)
 
+    // Create round data.
+    const activeTankIndexByComplex = GameOptions.complexTanks.findIndex(
+      (x) => x.id == this.gameData.tanks[this.gameData.activeTankIndex].id
+    )
+    this.configRound = {
+      playerIndexTank: activeTankIndexByComplex,
+      teams: [],
+      night: this.sys.game.device.os.desktop ? isProbability(0.2) : false,
+      config: GameOptions.typesRound[Phaser.Math.Between(0, GameOptions.typesRound.length - 1)] // Phaser.Math.Between(0, GameOptions.typesRound.length - 1)
+    }
+
     // map.
-    this.map = this.make.tilemap({ key: 'map3' })
+    this.map = this.make.tilemap({ key: this.configRound.config.mapKey })
     this.matter.world.setBounds(0, 0, this.map.width, this.map.height)
     // tiles.
     const groundTiles = this.map.addTilesetImage('tiles', 'tiles', 128, 128)
@@ -362,17 +466,15 @@ export default class Game extends Phaser.Scene {
     // console.log(this.grid)
 
     this.fpsText = this.add
-      .text(GameOptions.screen.width / 2, GameOptions.screen.height - 100, 'fps', {
-        fontSize: 40,
-        color: '#fff'
+      .text(GameOptions.screen.width - 100, GameOptions.screen.height - 30, 'fps', {
+        fontSize: 20,
+        color: GameOptions.colors.lightColor
       })
       .setScrollFactor(0)
       .setDepth(99999)
     this.minimap?.ignore(this.fpsText)
 
     this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
-
-    const { width, height } = this.scale
 
     // Create ecs world.
     this.world = createWorld()
@@ -402,17 +504,6 @@ export default class Game extends Phaser.Scene {
     //   Position.y[bonusId] = point.y
     // }
 
-    // Create round data.
-    const activeTankIndexByComplex = GameOptions.complexTanks.findIndex(
-      (x) => x.id == this.gameData.tanks[this.gameData.activeTankIndex].id
-    )
-    this.configRound = {
-      playerIndexTank: activeTankIndexByComplex,
-      teams: [],
-      night: isProbability(0.2),
-      config: GameOptions.typesRound[Phaser.Math.Between(0, GameOptions.typesRound.length)]
-    }
-
     // create container with teams info.
     if (this.configRound.config.countTeams > 0) {
       this.teamBar = new TeamBar(this, 0, 0)
@@ -423,7 +514,7 @@ export default class Game extends Phaser.Scene {
       (x) => x != this.gameData.gerbId
     )
 
-    const numberPlayer = Phaser.Math.Between(0, this.configRound.config.countPlayers / 2 - 1)
+    const numberPlayer = Phaser.Math.Between(0, this.configRound.config.maxCountPlayers / 2 - 1)
     for (let i = 0; i < this.configRound.config.countTeams; i++) {
       // Spawn points.
       const spawnPoints = this.map.filterObjects('Objects', (obj) =>
@@ -442,16 +533,15 @@ export default class Game extends Phaser.Scene {
         this.configRound.playerIndexTank
       )
       const to = Phaser.Math.Clamp(
-        this.configRound.playerIndexTank + 1,
+        this.configRound.playerIndexTank + 2,
         this.configRound.playerIndexTank,
         GameOptions.complexTanks.length - 1
       )
-      const gerbId =
-        this.configRound.config.countTeams > 1 && i == 0 ? this.gameData.gerbId : gerbList[i]
+      const gerbId = i == 0 ? this.gameData.gerbId : gerbList[i]
 
       const players: IConfigRoundTeamPlayer[] = []
       const rank = getRank(this.gameData.score)
-      for (let h = 0; h < this.configRound.config.countPlayers; h++) {
+      for (let h = 0; h < this.configRound.config.maxCountPlayers; h++) {
         players.push({
           level:
             i === 0 && h === numberPlayer
@@ -472,7 +562,12 @@ export default class Game extends Phaser.Scene {
                   Phaser.Math.Clamp(rank - 2, 0, rank),
                   Phaser.Math.Clamp(rank + 2, rank, GameOptions.ranks.length - 1)
                 ),
-          gerbId: this.configRound.config.countTeams > 1 ? gerbId : gerbList[h]
+          gerbId:
+            this.configRound.config.countTeams > 1
+              ? gerbId
+              : h === numberPlayer
+                ? gerbId
+                : gerbList[h]
           // teamId
         })
         // spawnPoints.pop()
@@ -485,10 +580,18 @@ export default class Game extends Phaser.Scene {
     }
     // console.log(this.configRound)
 
+    const listNames = shuffle(userNames[this.gameData.lang])
+    // while (listNames.length < 40) {
+    //   const name = generateName()
+    //   if (!listNames.includes(name) && name) {
+    //     listNames.push(getTrimName(name))
+    //   }
+    // }
+
     // Create teams.
     let counter = 0
     for (let x = 0; x < this.configRound.config.countTeams; x++) {
-      for (let y = 0; y < this.configRound.config.countPlayers; y++) {
+      for (let y = 0; y < this.configRound.config.maxCountPlayers; y++) {
         counter++
         const configPlayer = this.configRound.teams[x].players[y]
         const indexTank = Phaser.Math.Between(
@@ -508,14 +611,22 @@ export default class Game extends Phaser.Scene {
         )
 
         if (configPlayer.isPlayer) {
-          this.names.set(tank, this.gameData.name)
+          this.names.set(tank, getTrimName(this.gameData.name))
           this.idFollower = tank
           this.idPlayer = tank
         } else {
-          this.names.set(tank, generateName())
+          this.names.set(tank, listNames.pop())
         }
 
+        // add weapons
         for (const weapon in this.gameData.weapons) {
+          if (
+            (+weapon == WeaponType.energy && !configPlayer.isPlayer) ||
+            this.gameData.weapons[weapon] <= 0
+          ) {
+            continue
+          }
+
           const weaponId = addEntity(this.world)
           addComponent(this.world, Weapon, weaponId)
           Weapon.type[weaponId] = +weapon
@@ -523,6 +634,9 @@ export default class Game extends Phaser.Scene {
             ? this.gameData.weapons[weapon]
             : Phaser.Math.Between(0, this.gameData.weapons[weapon])
           Weapon.entityId[weaponId] = tank
+          Weapon.isRefresh[weaponId] = 0
+
+          // console.log('create weapon: ', weapon, ' for ', tank)
         }
 
         // Entity.teamIndex[tank] = configPlayer.teamId
@@ -602,6 +716,10 @@ export default class Game extends Phaser.Scene {
               GameOptions.muzzles.items[muzzleLevel].game.speedShot,
               playerTankData.speedShot //GameOptions.muzzles.items[muzzleLevel].game.speedShot * 2
             )
+        Tank.timeBeforeShoot[tank] = Phaser.Math.FloatBetween(
+          GameOptions.muzzles.items[muzzleLevel].maxTimeBeforeShoot.min,
+          GameOptions.muzzles.items[muzzleLevel].maxTimeBeforeShoot.max
+        )
 
         Tank.activeWeaponType[tank] = 0
         // Phaser.Math.Between(
@@ -609,10 +727,6 @@ export default class Game extends Phaser.Scene {
         //   configPlayer.level.to
         // )
         const levelTower = complexTankConfig.tower
-        Tank.timeBeforeShoot[tank] = Phaser.Math.FloatBetween(
-          complexTankConfig.maxTimeBeforeShoot.min,
-          complexTankConfig.maxTimeBeforeShoot.max
-        )
         Tank.maxTimeRefreshWeapon[tank] = Tank.timeRefreshWeapon[tank] = configPlayer.isPlayer
           ? playerTankData.timeRefreshWeapon
           : Phaser.Math.Clamp(
@@ -660,20 +774,20 @@ export default class Game extends Phaser.Scene {
               playerTankData.distanceView //GameOptions.towers.items[levelTower].game.distanceView * 2
             )
 
-        console.log(
-          configPlayer.isPlayer,
-          tank,
-          Tank.index[tank],
-          Tank.health[tank] +
-            Tank.speed[tank] +
-            Tank.speedRotate[tank] +
-            Tank.accuracy[tank] +
-            Tank.distanceShot[tank] +
-            Tank.distanceView[tank] +
-            Tank.speedRotateTower[tank] +
-            Tank.speedShot[tank] +
-            Tank.timeRefreshWeapon[tank]
-        )
+        // console.log(
+        //   configPlayer.isPlayer,
+        //   tank,
+        //   Tank.index[tank],
+        //   Tank.health[tank] +
+        //     Tank.speed[tank] +
+        //     Tank.speedRotate[tank] +
+        //     Tank.accuracy[tank] +
+        //     Tank.distanceShot[tank] +
+        //     Tank.distanceView[tank] +
+        //     Tank.speedRotateTower[tank] +
+        //     Tank.speedShot[tank] +
+        //     Tank.timeRefreshWeapon[tank]
+        // )
 
         addComponent(this.world, Rotation, tank)
         addComponent(this.world, RotationTower, tank)
@@ -701,6 +815,9 @@ export default class Game extends Phaser.Scene {
       'Objects',
       (obj) => !!obj.name.match('weapon')
     )
+
+    const supportWeapons = getSupportWeapons(this.gameData.tanks[this.gameData.activeTankIndex].id)
+
     for (let i = 0; i < spawnWeaponObjectsPoints.length; ++i) {
       const id = addEntity(this.world)
 
@@ -719,11 +836,11 @@ export default class Game extends Phaser.Scene {
       }
 
       addComponent(this.world, Weapon, id)
-      const weaponIndex = Phaser.Math.Between(1, GameOptions.weaponObjects.length - 1)
-      const weapon = GameOptions.weaponObjects[weaponIndex]
+      const weapon = supportWeapons[Phaser.Math.Between(1, supportWeapons.length - 1)]
       Weapon.type[id] = weapon.type
       Weapon.entityId[id] = -1
-      Weapon.count[id] = weapon.count
+      Weapon.count[id] = weapon.count + Math.ceil(weapon.count * (this.gameData.rank / 3))
+      Weapon.isRefresh[id] = weapon.timeRefresh > 0 ? 1 : 0
     }
 
     // create static bonus objects.
@@ -772,12 +889,12 @@ export default class Game extends Phaser.Scene {
       .setScrollFactor(0)
 
     if (!this.sys.game.device.os.desktop) {
-      const baseGameObject = this.add.circle(0, 0, 150, 0xffffff, 0.1).setDepth(99999)
+      const baseGameObject = this.add.circle(0, 0, 200, 0xffffff, 0.1).setDepth(99999)
       const thumbGameObject = this.add.sprite(0, 0, 'mobButtons', 0).setDepth(99999)
       this.joystikMove = new VirtualJoyStick(this, {
-        x: 200,
-        y: GameOptions.screen.height - 200,
-        radius: 150,
+        x: 250,
+        y: GameOptions.screen.height - 250,
+        radius: 200,
         base: baseGameObject,
         thumb: thumbGameObject,
         // dir: '8dir',
@@ -788,19 +905,19 @@ export default class Game extends Phaser.Scene {
       this.minimap?.ignore([baseGameObject, thumbGameObject])
       this.cursors = this.joystikMove.createCursorKeys()
 
-      const buttonFire = this.add
-        .sprite(GameOptions.screen.width - 250, GameOptions.screen.height - 200, 'mobButtons', 1)
-        .setScale(2)
+      this.buttonFire = this.add
+        .sprite(GameOptions.screen.width - 300, GameOptions.screen.height - 250, 'mobButtons', 1)
+        .setScale(2.5)
         .setAlpha(0.5)
         .setDepth(999999)
         .setScrollFactor(0)
         .setInteractive()
         .on('pointerdown', () => {
           this.isFire = true
-          buttonFire.setFrame(2)
+          this.buttonFire.setFrame(2)
         })
         .on('pointerup', () => {
-          buttonFire.setFrame(1)
+          this.buttonFire.setFrame(1)
           this.isFire = false
         })
     }
@@ -822,21 +939,27 @@ export default class Game extends Phaser.Scene {
       createLightSystem(this),
       // createCameraSystem(this),
       createEntityBarSystem(this),
+      createEntityBarSyncSystem(this),
       createWeaponBarSystem(this),
       createBonusBarSystem(this),
       // createBattleBarSystem(this),
       createTeamBarSystem(this),
+      createAloneBarSystem(this),
+      createAloneBarSyncSystem(this),
+      // createDebugBarSystem(this),
       createPlayerBarSystem(this),
       createFireSystem(this),
       createMarkersSystem(this),
       createBonusSystem(this),
       createAIManagerSystem(this),
-      createAIMoveRandomSystem(this),
       createAIMoveToSystem(this),
+      createAIMoveRandomSystem(this),
       createAIWeaponSystem(this),
       // createPlayerWeaponSystem(this),
       createRaycastSystem(this),
-      createInputSystem(this)
+      createInputSystem(this),
+      // createDebugBarSyncSystem(this),
+      createHintSystem(this)
       // createSteeringSystem(10),
       // createMatterPhysicsSystem(this)
     )
@@ -846,10 +969,10 @@ export default class Game extends Phaser.Scene {
       createAreaEyeSyncSystem(this),
       createMarkersSyncSystem(this),
       createLightSyncSystem(this),
-      createEntityBarSyncSystem(this),
       createTeamBarSyncSystem(this),
       createPlayerBarSyncSystem(this),
-      createBonusSyncSystem(this)
+      createBonusSyncSystem(this),
+      createHintSyncSystem(this)
     )
     this.matterSystem = createMatterPhysicsSystem(this)
     this.steerSystem = createSteeringSystem(this)
@@ -858,10 +981,11 @@ export default class Game extends Phaser.Scene {
   }
 
   createHelloMessage() {
+    this.input.keyboard.enabled = false
     // console.log(this.sys.displayList.list)
 
     const bg = this.add
-      .rectangle(0, 0, GameOptions.screen.width, GameOptions.screen.height, 0x000000, 0.95)
+      .rectangle(0, 0, GameOptions.screen.width, GameOptions.screen.height, 0x000000, 0.8)
       .setOrigin(0.5)
 
     const title = this.add
@@ -869,7 +993,7 @@ export default class Game extends Phaser.Scene {
         fontFamily: 'Arial',
         fontStyle: 'bold',
         fontSize: 70,
-        color: GameOptions.ui.accent,
+        color: GameOptions.colors.accent,
         align: 'center',
         wordWrap: {
           width: 800
@@ -882,7 +1006,7 @@ export default class Game extends Phaser.Scene {
         fontFamily: 'Arial',
         fontStyle: 'bold',
         fontSize: 30,
-        color: GameOptions.ui.primaryColor,
+        color: GameOptions.colors.lightColor,
         align: 'center',
         wordWrap: {
           width: 800
@@ -890,13 +1014,55 @@ export default class Game extends Phaser.Scene {
       })
       .setOrigin(0.5)
     const text = this.add
-      .text(0, 0, '100', {
+      .text(0, 0, '', {
         fontFamily: 'Arial',
         fontStyle: 'bold',
         fontSize: 150,
         align: 'center'
       })
       .setOrigin(0.5)
+
+    const bgHint = this.add
+      .rectangle(
+        0,
+        0,
+        GameOptions.screen.width / 2,
+        300,
+        Phaser.Display.Color.ValueToColor(GameOptions.colors.secondaryColor).color,
+        1
+      )
+      .setOrigin(0)
+
+      .setOrigin(0)
+    const hintTitle = this.add
+      .text(30, 30, this.lang.hint, {
+        fontFamily: 'Arial',
+        color: GameOptions.colors.success,
+        fontSize: 40,
+        fontStyle: 'bold',
+        align: 'left',
+        wordWrap: {
+          width: GameOptions.screen.width / 2 - 60
+        }
+      })
+      .setOrigin(0)
+    const hintText = this.add
+      .text(30, 90, this.lang.hints[Phaser.Math.Between(0, this.lang.hints.length - 1)], {
+        fontFamily: 'Arial',
+        color: GameOptions.colors.lightColor,
+        fontSize: 40,
+        align: 'left',
+        wordWrap: {
+          width: GameOptions.screen.width / 2 - 60
+        }
+      })
+      .setOrigin(0)
+
+    const hintContainer = this.add.container(
+      -GameOptions.screen.width / 4,
+      GameOptions.screen.height / 2 - 350,
+      [bgHint, hintTitle, hintText]
+    )
 
     const graphics = this.add
       .graphics({
@@ -906,7 +1072,7 @@ export default class Game extends Phaser.Scene {
           width: 3
         },
         fillStyle: {
-          color: GameOptions.ui.panelBgColorLight
+          color: Phaser.Display.Color.ValueToColor(GameOptions.colors.lightColor).color
         }
       })
       .setAlpha(1)
@@ -919,36 +1085,51 @@ export default class Game extends Phaser.Scene {
         title,
         description,
         text,
-        graphics
+        graphics,
+        hintContainer
       ])
       .setDepth(9999999999)
       .setScrollFactor(0)
 
+    // const timedEvent = this.time.addEvent({
+    //   delay: 1000,
+    //   callback: () => {
+    //     this.sound.play(KeySound.Clock)
+    //   },
+    //   callbackScope: this,
+    //   loop: true,
+    // })
+
     this.tweens.addCounter({
       from: 0,
       to: 360,
-      duration: 5000,
+      duration: GameOptions.timeHelloRound,
       onUpdate: (tween) => {
         const v = tween.getValue()
-        text.setText((Math.round((5000 - tween.totalElapsed) / 1000) + 1).toString())
+        const newNumber = (
+          Math.round((GameOptions.timeHelloRound - tween.totalElapsed) / 1000) + 1
+        ).toString()
+        if (newNumber != text.text && text.text && this.isMute) {
+          this.sound.play(KeySound.Clock)
+        }
+        text.setText(newNumber)
         graphics.clear()
-        // graphics.lineStyle(50, GameOptions.ui.panelBgColorLight)
-        // graphics.beginPath()
-        // graphics.arc(0, 0, 200, Phaser.Math.DegToRad(0), Phaser.Math.DegToRad(360), false, 0.02)
-        // graphics.strokePath()
-        // graphics.fill()
-        // graphics.closePath()
 
         graphics.beginPath()
-        graphics.lineStyle(40, GameOptions.ui.panelBgColorLight)
+        graphics.lineStyle(
+          40,
+          Phaser.Display.Color.ValueToColor(GameOptions.colors.lightColor).color
+        )
         graphics.arc(0, 0, 200, Phaser.Math.DegToRad(0), Phaser.Math.DegToRad(v), true, 0.02)
         graphics.strokePath()
         graphics.closePath()
       },
       onComplete: async () => {
+        this.scene.bringToTop('Control')
         container.destroy()
         this.isMute = true
         this.isPauseAI = false
+        this.input.keyboard.enabled = true
 
         await this.scene
           .get('Control')
@@ -957,6 +1138,60 @@ export default class Game extends Phaser.Scene {
         await this.scene.get('Control').showHelp('destroyObject', 3000)
       }
     })
+  }
+
+  createEntityWithEffect(xVals, yVals, callback) {
+    const emitter = this.add
+      .particles(xVals[0], yVals[0], KeyParticles.SmokeBoom, {
+        frame: 1,
+        color: [0x555555, 0xffd189, 0x222222],
+        colorEase: 'quad.out',
+        scale: { start: 0.7, end: 0.5, ease: 'sine.out' },
+        speed: { random: [50, 100] },
+        lifespan: { random: [200, 400] },
+        gravityX: 0,
+        gravityY: 0,
+        blendMode: 'COLOR'
+        // // emitting: false,
+        // quantity: 5,
+        // speed: { random: [50, 100] },
+        // lifespan: { random: [200, 400] },
+        // scale: { random: true, start: 0.5, end: 0 },
+        // rotate: { random: true, start: 0, end: 180 },
+        // color: [0x666666, 0xffd189, 0x222222],
+        // colorEase: 'quad.out'
+        // // angle: { random: true, start: 0, end: 270 }
+      })
+      .setDepth(999)
+    // emitter.start()
+
+    this.tweens.addCounter({
+      from: 0,
+      to: 1,
+      ease: Phaser.Math.Easing.Quadratic.InOut,
+      duration: 1000,
+      onUpdate: (tween) => {
+        const v = tween.getValue()
+        const x = Phaser.Math.Interpolation.CatmullRom(xVals, v)
+        const y = Phaser.Math.Interpolation.CatmullRom(yVals, v)
+
+        emitter.setPosition(x, y)
+      },
+      onComplete: () => {
+        // emitter.explode(50, xVals.toX, data.toY)
+        callback && callback()
+        emitter.stop()
+        emitter.destroy()
+
+        this.time.delayedCall(1000, () => {
+          //particles.removeEmitter(emitter)
+        })
+      }
+    })
+  }
+
+  onSyncPlayerData(playerData: IPlayerData) {
+    this.playerData = JSON.parse(JSON.stringify(playerData))
   }
 
   onSync(gameData: IGameData, lang: TLang) {
@@ -993,8 +1228,14 @@ export default class Game extends Phaser.Scene {
   }
 
   onShutdown() {
-    console.log('onShutdown')
-    EventBus.emit('save-data', this.gameData)
+    // console.log('onShutdown')
+    // this.sound.stopAll()
+    // console.log(
+    //   this.events.listeners('pause'),
+    //   this.events.listeners('resume'),
+    //   this.events.listeners('stop')
+    // )
+    //EventBus.emit('save-data', this.gameData)
 
     // const query = defineQuery([Weapon])
     // const weapons = query(this.world)
@@ -1006,7 +1247,7 @@ export default class Game extends Phaser.Scene {
     // }
     // this.gameData.weapons =
 
-    // console.log(getAllEntities(this.world))
+    // console.log(getAllEntities(this.world), this.sound.sounds)
     // for (const id of getAllEntities(this.world)) {
     //   removeEntity(this.world, id)
     // }
@@ -1021,17 +1262,28 @@ export default class Game extends Phaser.Scene {
     // check player game over
     const playerIsGameOver = !tanks.includes(this.idPlayer)
     if (playerIsGameOver) {
-      // console.log('playerIsGameOver=', playerIsGameOver)
       this.isMute = false
+
+      this.gameData.tanks[this.gameData.activeTankIndex].cb += 1
+      this.gameData.cb += 1
+      // this.gameData.coin += this.roundCoin
+      this.gameData.score += this.roundCoin
+      EventBus.emit('save-data', this.gameData)
+      EventBus.emit('set-lb', this.gameData.score)
+
       this.scene
         .get('Control')
         .onGameOverPlayer(
           this.lang?.gameOverTitle,
           this.lang?.gameOverPlayer,
-          GameOptions.ui.dangerText,
+          GameOptions.colors.danger,
           this.roundCoin
         )
+      this.input.keyboard.enabled = false
+      // this.input.mouse.enabled = false
       this.isFire = false
+      this.isRoundEnd = true
+      return
     }
 
     // check team win
@@ -1040,16 +1292,40 @@ export default class Game extends Phaser.Scene {
     if (Object.keys(groupByTeams).length == 1) {
       // console.log('Win team: ', groupByTeams)
       this.isMute = false
+
+      this.gameData.tanks[this.gameData.activeTankIndex].cb += 1
+      this.gameData.cb += 1
+      this.gameData.cw += 1
+      // this.gameData.coin += this.roundCoin
+      this.gameData.score += this.roundCoin
+      EventBus.emit('save-data', this.gameData)
+      EventBus.emit('set-lb', this.gameData.score)
+
       this.scene
         .get('Control')
         .onGameOverPlayer(
           this.lang?.winTitle,
           this.configRound.config.countTeams > 1 ? this.lang.winTeam : this.lang.winAlone,
-          GameOptions.ui.successColor,
+          GameOptions.colors.success,
           this.roundCoin
         )
+      this.input.keyboard.enabled = false
       this.isFire = false
+      this.isRoundEnd = true
     }
+  }
+
+  onFocus() {
+    // window?.onGameplayStart && window.onGameplayStart()
+
+    if (!this.isRoundEnd && !this.isPauseAI) {
+      this.isMute = true
+    }
+  }
+  onBlur() {
+    // window?.onGameplayStop && window.onGameplayStop()
+
+    this.isMute = false
   }
 
   update(t: number, dt: number) {
@@ -1057,7 +1333,7 @@ export default class Game extends Phaser.Scene {
       return
     }
 
-    const t0 = performance.now()
+    // const t0 = performance.now()
 
     this.pipeline(this.world)
     // run each system in desired order
@@ -1065,11 +1341,6 @@ export default class Game extends Phaser.Scene {
     // this.cpuSystem(this.world)
     this.steerSystem(this.world, dt)
     this.matterSystem(this.world)
-    const t1 = performance.now()
-    this.fpsText.setText(
-      `fps: ${Math.round(this.game.loop.actualFps)}, ecs: ${Math.round(t1 - t0)} ms.`
-    )
-
     if (!this.sys.game.device.os.desktop) {
       if (this.isFire) {
         Input.fire[this.idPlayer] = 1
@@ -1077,6 +1348,11 @@ export default class Game extends Phaser.Scene {
         Input.fire[this.idPlayer] = 0
       }
     }
+    // const t1 = performance.now()
+    this.fpsText.setText(
+      `fps: ${Math.round(this.game.loop.actualFps)}` //, ecs: ${Math.round(t1 - t0)} ms. isFire=${Input.fire[this.idPlayer]}
+    )
+
     // t1 - t0 > 1 && console.log(`${t1 - t0} ms.`)
 
     // this.spriteSystem(this.world)

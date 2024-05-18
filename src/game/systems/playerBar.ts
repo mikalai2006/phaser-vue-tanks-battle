@@ -1,12 +1,10 @@
 import Phaser from 'phaser'
-import { defineSystem, defineQuery, enterQuery, addComponent, IWorld, exitQuery } from 'bitecs'
+import { defineSystem, defineQuery, enterQuery, exitQuery } from 'bitecs'
 import { Tank } from '../components/Tank'
 import Position from '../components/Position'
-import { EntityBar } from '../components/EntityBar'
 import { Entity } from '../components/Entity'
-import { GameOptions } from '../options/gameOptions'
+import { GameOptions, SpriteKeys } from '../options/gameOptions'
 import { towersById } from './matter'
-import { generateName } from '../utils/utils'
 import { Player } from '../components/Player'
 
 const WIDTH_BAR = 400
@@ -41,10 +39,10 @@ export function createPlayerBarSystem(scene: Phaser.Scene) {
     .rectangle(0, -HEIGHT_BAR / 2 + 5, WIDTH_BAR, HEIGHT_BAR - 10, 0x000000, 0.8)
     .setOrigin(0, 0)
   // const imageBrandBg = scene.add.circle(50, 0, 50, 0x000000, 0.5)
-  const imageGerb = scene.add.image(50, 3, 'gerb', 0).setTint(0xffffff).setScale(1)
+  const imageGerb = scene.add.image(50, 3, SpriteKeys.Gerb, 0).setTint(0xffffff).setScale(1)
 
   const imageRank = scene.add
-    .image(WIDTH_BAR - 80, -20, 'rank', 3)
+    .image(WIDTH_BAR - 80, -20, SpriteKeys.Ranks, 3)
     .setTint(0xffffff)
     .setOrigin(0)
     .setScale(1)
@@ -81,7 +79,7 @@ export function createPlayerBarSystem(scene: Phaser.Scene) {
       0x444444
     )
     .setOrigin(0, 0.5)
-  const coinImage = scene.add.image(670, 0, 'clipart', 3).setScale(1)
+  const coinImage = scene.add.image(670, 0, SpriteKeys.Clipart, 3).setScale(1)
   const textCoin = scene.add.text(coinImage.x + 40, -20, '234234234', {
     fontFamily: 'Arial',
     fontStyle: 'bold',
@@ -155,9 +153,8 @@ export function createPlayerBarSyncSystem(scene) {
     object.healthImage.displayWidth = currentHealth
     object.bg.setFillStyle(colorTeam, 1)
     // object.imageBrandBg.setFillStyle(GameOptions.configTeams[Entity.teamIndex[id]].color, 1)
-    object.imageGerb.setTexture('gerb', Entity.gerbId[id])
-    scene.names.get(id) &&
-      object.textName.setText(scene.names.get(id).substring(0, GameOptions.maxNameUser))
+    object.imageGerb.setTexture(SpriteKeys.Gerb, Entity.gerbId[id])
+    scene.names.get(id) && object.textName.setText(scene.names.get(id))
     object.imageRank.setFrame(Entity.rank[id])
     object.textCoin.setText(Entity.roundCoin[id].toString())
 

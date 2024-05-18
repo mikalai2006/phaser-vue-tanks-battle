@@ -1,13 +1,9 @@
 {
-    "Map/SizeTest": {
-        "height": 4300,
-        "width": 2
-    },
-    "activeFile": "level1.tmx",
+    "activeFile": "E:/phaser/tanks-battle/backup/maps/level_1_30x30.tmx",
     "expandedProjectPaths": [
+        "E:/phaser/tanks-battle/backup/maps",
         "."
     ],
-    "file.lastUsedOpenFilter": "Все файлы (*)",
     "fileStates": {
         "": {
             "scaleInDock": 1,
@@ -16,12 +12,84 @@
         ":/automap-tiles.tsx": {
             "scaleInDock": 1
         },
+        "E:/phaser/tanks-battle/backup/maps/level_1_30x30.tmx": {
+            "scale": 0.20756510416666665,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 1919.8795558622423,
+                "y": 2599.1844928172636
+            }
+        },
+        "E:/phaser/tanks-battle/backup/maps/level_1_30x30.tmx#effects": {
+            "scaleInDock": 1
+        },
+        "E:/phaser/tanks-battle/backup/maps/level_1_30x30.tmx#tileMapObjects": {
+            "scaleInDock": 1
+        },
+        "E:/phaser/tanks-battle/backup/maps/level_1_30x30.tmx#tiles": {
+            "scaleInDock": 1
+        },
+        "E:/phaser/tanks-battle/backup/maps/level_2_30x30.tmx": {
+            "scale": 0.20756510416666665,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 1924.6973213725614,
+                "y": 1924.6973213725612
+            }
+        },
+        "E:/phaser/tanks-battle/backup/maps/level_2_30x30.tmx#effects": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "E:/phaser/tanks-battle/backup/maps/level_2_30x30.tmx#tileMapObjects": {
+            "scaleInDock": 1
+        },
+        "E:/phaser/tanks-battle/backup/maps/level_2_30x30.tmx#tiles": {
+            "scaleInDock": 1
+        },
+        "E:/phaser/tanks-battle/backup/maps/level_3_40x40.tmx": {
+            "scale": 0.155673828125,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 2566.2630951634146,
+                "y": 2566.263095163415
+            }
+        },
+        "E:/phaser/tanks-battle/backup/maps/level_3_40x40.tmx#effects": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "E:/phaser/tanks-battle/backup/maps/level_3_40x40.tmx#tileMapObjects": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "E:/phaser/tanks-battle/backup/maps/level_3_40x40.tmx#tiles": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "E:/phaser/tanks-battle/backup/maps/level_4_40x40.tmx": {
+            "scale": 0.155673828125,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 2566.2630951634146,
+                "y": 2566.263095163415
+            }
+        },
+        "E:/phaser/tanks-battle/backup/maps/level_4_40x40.tmx#effects": {
+            "scaleInDock": 1
+        },
+        "E:/phaser/tanks-battle/backup/maps/level_4_40x40.tmx#tileMapObjects": {
+            "scaleInDock": 1
+        },
+        "E:/phaser/tanks-battle/backup/maps/level_4_40x40.tmx#tiles": {
+            "scaleInDock": 1
+        },
         "level1.tmx": {
             "scale": 0.125,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 2856,
-                "y": 3284
+                "x": 2836,
+                "y": 3268
             }
         },
         "level1.tmx#effects": {
@@ -43,11 +111,11 @@
             "scaleInDock": 1
         },
         "level1_tileMapObjects.tmx": {
-            "scale": 0.33,
+            "scale": 0.125,
             "selectedLayer": 4,
             "viewCenter": {
-                "x": 906.060606060606,
-                "y": 889.3939393939394
+                "x": 2500,
+                "y": 1996
             }
         },
         "level1_tileMapObjects.tmx#tileMapObjects": {
@@ -61,8 +129,8 @@
             "scale": 0.25,
             "selectedLayer": 6,
             "viewCenter": {
-                "x": 1536,
-                "y": 1934
+                "x": 1532,
+                "y": 1930
             }
         },
         "level30x30.tmx#effects": {
@@ -94,7 +162,61 @@
         "level30x30_2.tmx#tiles": {
             "scaleInDock": 0.33
         },
+        "level_1_30x30.tmx": {
+            "scale": 0.33,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 1834.8484848484848,
+                "y": 1234.8484848484848
+            }
+        },
+        "level_1_30x30.tmx#effects": {
+            "scaleInDock": 1
+        },
+        "level_1_30x30.tmx#tileMapObjects": {
+            "scaleInDock": 1
+        },
+        "level_1_30x30.tmx#tiles": {
+            "scaleInDock": 1
+        },
+        "level_2_30x30.tmx": {
+            "scale": 0.2778255208333333,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 1920.2699536017249,
+                "y": 1920.269953601725
+            }
+        },
+        "level_2_30x30.tmx#effects": {
+            "scaleInDock": 1
+        },
+        "level_2_30x30.tmx#tileMapObjects": {
+            "scaleInDock": 1
+        },
+        "level_2_30x30.tmx#tiles": {
+            "scaleInDock": 1
+        },
         "level_3_40x40.tmx": {
+            "expandedObjectLayers": [
+                2
+            ],
+            "scale": 0.25,
+            "selectedLayer": 4,
+            "viewCenter": {
+                "x": 1946,
+                "y": 2262
+            }
+        },
+        "level_3_40x40.tmx#effects": {
+            "scaleInDock": 1
+        },
+        "level_3_40x40.tmx#tileMapObjects": {
+            "scaleInDock": 0.5
+        },
+        "level_3_40x40.tmx#tiles": {
+            "scaleInDock": 0.33
+        },
+        "level_4_30x30.tmx": {
             "scale": 0.230078125,
             "selectedLayer": 0,
             "viewCenter": {
@@ -102,14 +224,34 @@
                 "y": 1923.2597623089985
             }
         },
-        "level_3_40x40.tmx#effects": {
+        "level_4_30x30.tmx#effects": {
             "scaleInDock": 1
         },
-        "level_3_40x40.tmx#tileMapObjects": {
+        "level_4_30x30.tmx#tileMapObjects": {
             "scaleInDock": 1
         },
-        "level_3_40x40.tmx#tiles": {
+        "level_4_30x30.tmx#tiles": {
             "scaleInDock": 1
+        },
+        "level_4_40x40.tmx": {
+            "expandedObjectLayers": [
+                2
+            ],
+            "scale": 0.25,
+            "selectedLayer": 4,
+            "viewCenter": {
+                "x": 934,
+                "y": 2950
+            }
+        },
+        "level_4_40x40.tmx#effects": {
+            "scaleInDock": 1
+        },
+        "level_4_40x40.tmx#tileMapObjects": {
+            "scaleInDock": 1
+        },
+        "level_4_40x40.tmx#tiles": {
+            "scaleInDock": 0.25
         },
         "map.tmx": {
             "scale": 0.17,
@@ -142,40 +284,25 @@
             "scaleInEditor": 1
         }
     },
-    "last.exportedFilePath": "E:/phaser/tanks-battle/public/assets",
-    "last.externalTilesetPath": "E:/phaser/tanks-battle/public/assets",
-    "last.imagePath": "E:/phaser/tanks-battle/public/assets/tiles",
-    "lastUsedTilesetExportFilter": "JSON файлы с наборами тайлов (*.tsj *.json)",
-    "map.height": 50,
-    "map.lastUsedExportFilter": "JSON map-файлы (*.tmj *.json)",
-    "map.lastUsedFormat": "tmx",
-    "map.renderOrder": null,
-    "map.tileHeight": 128,
-    "map.tileWidth": 128,
-    "map.width": 50,
     "openFiles": [
-        "level1.tmx"
+        "E:/phaser/tanks-battle/backup/maps/level_1_30x30.tmx",
+        "E:/phaser/tanks-battle/backup/maps/level_2_30x30.tmx",
+        "E:/phaser/tanks-battle/backup/maps/level_3_40x40.tmx",
+        "E:/phaser/tanks-battle/backup/maps/level_4_40x40.tmx"
     ],
     "project": "tile.tiled-project",
-    "property.type": "bool",
     "recentFiles": [
+        "E:/phaser/tanks-battle/backup/maps/level_4_40x40.tmx",
+        "E:/phaser/tanks-battle/backup/maps/level_3_40x40.tmx",
+        "E:/phaser/tanks-battle/backup/maps/level_2_30x30.tmx",
+        "E:/phaser/tanks-battle/backup/maps/level_1_30x30.tmx",
+        "level_4_40x40.tmx",
+        "level_2_30x30.tmx",
         "level_3_40x40.tmx",
-        "level1.tmx",
-        "level30x30.tmx",
-        "level30x30_2.tmx",
         "level1_tileMapObjects.tmx",
-        "tileMapObjects..tsx",
-        "tank_tower.tsx",
-        "map.tmx",
-        "tilesets0.tsx"
-    ],
-    "tileset.embedInMap": true,
-    "tileset.lastUsedFilter": "Файлы набора тайлов Tiled (*.tsx *.xml)",
-    "tileset.lastUsedFormat": "tsx",
-    "tileset.margin": 0,
-    "tileset.spacing": 0,
-    "tileset.tileSize": {
-        "height": 128,
-        "width": 128
-    }
+        "level1.tmx",
+        "level_1_30x30.tmx",
+        "level_4_30x30.tmx",
+        "level30x30.tmx"
+    ]
 }

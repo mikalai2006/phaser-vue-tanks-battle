@@ -28,7 +28,7 @@ export class Caterpillar extends Phaser.Physics.Matter.Sprite {
     // this.setFixedRotation()
     // this.setActive(false)
     this.scene.add.existing(this)
-    this.setDepth(1)
+    this.setDepth(2)
 
     this.anims.create({
       key: 'up',

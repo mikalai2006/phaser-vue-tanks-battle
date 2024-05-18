@@ -1,10 +1,11 @@
 import { EventBus } from '../EventBus'
 import { Scene } from 'phaser'
 import { langs } from '../lang'
-import { GameOptions } from '../options/gameOptions'
+import { GameOptions, SpriteKeys } from '../options/gameOptions'
 import { capitalizeFirstLetter, replaceRegexByArray } from '../utils/utils'
-import { IGameData, TLang } from '../types'
+import { IGameData, IPlayerData, KeySound, TLang } from '../types'
 import { Button } from '../objects/ui/Button'
+import Input from '../components/Input'
 
 export class Control extends Scene {
   constructor() {
@@ -12,6 +13,7 @@ export class Control extends Scene {
   }
 
   gameData: IGameData
+  playerData: IPlayerData
   lang: TLang
 
   buttonSetting: Phaser.GameObjects.Container
@@ -27,26 +29,38 @@ export class Control extends Scene {
   buttonSound: Phaser.GameObjects.Container
   soundButtonBg: Phaser.GameObjects.NineSlice
   soundButtonSprite: Phaser.GameObjects.Sprite
-  click: Phaser.Sound.HTML5AudioSound | Phaser.Sound.NoAudioSound | Phaser.Sound.WebAudioSound
 
   overlay: Phaser.GameObjects.Rectangle
   btnLangText: Phaser.GameObjects.Text
 
   isOpenHelp: boolean
 
-  create({ lang, gameData }: { lang: TLang; gameData: IGameData }) {
-    this.click = this.sound.add('click')
-
+  create({
+    lang,
+    gameData,
+    playerData
+  }: {
+    lang: TLang
+    gameData: IGameData
+    playerData: IPlayerData
+  }) {
     // general container.
     this.overlay = this.add
-      .rectangle(0, 0, GameOptions.screen.width, GameOptions.screen.height, 0x000000, 0.95)
+      .rectangle(
+        0,
+        0,
+        GameOptions.screen.width,
+        GameOptions.screen.height,
+        Phaser.Display.Color.ValueToColor(GameOptions.colors.darkColor).color,
+        0.95
+      )
       .setInteractive()
     this.textControlTitle = this.add
-      .text(0, -450, '#controlTitle', {
+      .text(0, -500, '#controlTitle', {
         fontFamily: 'Arial',
         fontStyle: 'bold',
         fontSize: 70,
-        color: GameOptions.ui.accent,
+        color: GameOptions.colors.accent,
         stroke: '#ffffff',
         // strokeThickness: 0,
         align: 'center'
@@ -61,10 +75,10 @@ export class Control extends Scene {
         this.textControlTitle
       ])
       .setVisible(false)
-      .setDepth(999999)
+      .setDepth(9999999)
 
     const overlayGameOver = this.add
-      .rectangle(0, 0, GameOptions.screen.width, GameOptions.screen.height, 0x000000, 0.9)
+      .rectangle(0, 0, GameOptions.screen.width, GameOptions.screen.height, 0x000000, 0.5)
       .setInteractive()
     this.textGameOverTitle = this.add
       .text(
@@ -74,9 +88,9 @@ export class Control extends Scene {
         {
           fontFamily: 'Arial',
           fontStyle: 'bold',
-          fontSize: 50,
-          color: GameOptions.ui.accent,
-          stroke: '#ffffff',
+          fontSize: 60,
+          color: GameOptions.colors.accent,
+          // stroke: '#ffffff',
           // strokeThickness: 0,
           align: 'center'
         }
@@ -90,17 +104,17 @@ export class Control extends Scene {
         this.textGameOverTitle
       ])
       // .setVisible(false)
-      .setDepth(999999)
+      .setDepth(99999999)
 
     // button exit from round.
     const buttonExitSprite = this.add
-      .sprite(0, 0, 'clipart', 8)
-      .setTint(GameOptions.ui.white.replace('#', '0x'))
+      .sprite(0, 0, SpriteKeys.Clipart, 8)
+      .setTint(Phaser.Display.Color.ValueToColor(GameOptions.colors.lightColor).color)
     const buttonExitBg = this.add
       .circle(0, 0, 45, 0x000000, 0.2)
       .setInteractive({ useHandCursor: true })
     buttonExitBg.on('pointerup', (pointer) => {
-      this.click.play()
+      this.sound.play(KeySound.Click)
       this.exitFromRound()
     })
     this.buttonExitFromRound = this.add
@@ -122,7 +136,7 @@ export class Control extends Scene {
     //     fontSize: 40
     //   },
     //   () => {
-    //     this.click.play()
+    //     this.sound.play(KeySound.Click)
     //     this.exitFromRound()
     //   }
     // )
@@ -130,8 +144,8 @@ export class Control extends Scene {
 
     // button menu.
     const buttonMenuSprite = this.add
-      .sprite(0, 0, 'clipart', 5)
-      .setTint(GameOptions.ui.white.replace('#', '0x'))
+      .sprite(0, 0, SpriteKeys.Clipart, 5)
+      .setTint(Phaser.Display.Color.ValueToColor(GameOptions.colors.lightColor).color)
     const buttonMenuBg = this.add
       .circle(0, 0, 45, 0x000000, 0.2)
       .setInteractive({ useHandCursor: true })
@@ -143,7 +157,9 @@ export class Control extends Scene {
         buttonMenuSprite.setTint(0xffffff)
       })
       .on('pointerout', () => {
-        buttonMenuSprite.setTint(GameOptions.ui.white.replace('#', '0x'))
+        buttonMenuSprite.setTint(
+          Phaser.Display.Color.ValueToColor(GameOptions.colors.lightColor).color
+        )
       })
     this.buttonSetting = this.add
       .container(
@@ -157,14 +173,9 @@ export class Control extends Scene {
     const soundButtonBg = this.add
       .circle(0, 0, 45, 0x000000, 0.2)
       .setInteractive({ useHandCursor: true })
-    // const soundButtonBg = this.add
-    //   .nineslice(0, 0, 'button', 0, 110, 110, 33, 33, 33, 33)
-    //   .setTint(GameOptions.ui.buttonBgColor)
-    //   .setOrigin(0.5)
-    //   .setInteractive({ useHandCursor: true })
     this.soundButtonSprite = this.add
-      .sprite(0, 0, 'clipart', 7)
-      .setTint(GameOptions.ui.white.replace('#', '0x'))
+      .sprite(0, 0, SpriteKeys.Clipart, 7)
+      .setTint(Phaser.Display.Color.ValueToColor(GameOptions.colors.lightColor).color)
       .setScale(1)
       .setOrigin(0.5)
     // this.add.existing(this.settingButton)
@@ -178,27 +189,23 @@ export class Control extends Scene {
       this.soundButtonSprite.setTint(0xffffff)
     })
     soundButtonBg.on('pointerout', (pointer) => {
-      this.soundButtonSprite.setTint(GameOptions.ui.white.replace('#', '0x'))
+      this.soundButtonSprite.setTint(
+        Phaser.Display.Color.ValueToColor(GameOptions.colors.lightColor).color
+      )
     })
     soundButtonBg.on('pointerup', () => {
-      this.click.play()
+      this.sound.play(KeySound.Click)
       this.game.sound.mute = !this.game.sound.mute
       // console.log('tap to toggle mute. sound.mute = ' + this.game.sound.mute)
       this.toggleSoundEffect()
     })
 
-    // events.
-    this.events.on('pause', () => {
-      this.click.pause()
-    })
-    this.events.on('resume', () => {
-      this.tooglePanel(false)
-    })
     // this.toggleSoundEffect()
     // this.onCreateBanner()
     this.tooglePanel(false)
     EventBus.emit('current-scene-ready', this)
 
+    this.onSyncPlayerData(playerData)
     this.onSync(gameData, lang)
   }
 
@@ -215,17 +222,17 @@ export class Control extends Scene {
         -GameOptions.screen.width / 2,
         -GameOptions.screen.height / 2,
         GameOptions.screen.width,
-        500,
-        GameOptions.ui.panelBgColor,
-        0.7
+        400,
+        Phaser.Display.Color.ValueToColor(GameOptions.colors.darkColor).color,
+        1
       )
       .setOrigin(0)
     const textBody = this.add
-      .text(-GameOptions.screen.width / 2 + 50, -GameOptions.screen.height / 2 + 90, description, {
+      .text(-GameOptions.screen.width / 2 + 50, -GameOptions.screen.height / 2 + 100, description, {
         fontFamily: 'Arial',
         // fontStyle: 'bold',
         fontSize: 40,
-        color: GameOptions.ui.white,
+        color: GameOptions.colors.lightColor,
         stroke: '#ffffff',
         wordWrap: {
           width: GameOptions.screen.width
@@ -237,13 +244,13 @@ export class Control extends Scene {
     const textReward = this.add
       .text(
         -GameOptions.screen.width / 2 + 50,
-        -GameOptions.screen.height / 2 + 280,
+        -GameOptions.screen.height / 2 + 225,
         this.lang ? replaceRegexByArray(this.lang?.roundReward, [roundCoin.toString()]) : '',
         {
           fontFamily: 'Arial',
           // fontStyle: 'bold',
           fontSize: 40,
-          color: GameOptions.ui.white,
+          color: GameOptions.colors.lightColor,
           stroke: '#ffffff',
           wordWrap: {
             width: 1400
@@ -253,14 +260,14 @@ export class Control extends Scene {
       )
       .setOrigin(0)
     const imageCoin = this.add
-      .image(-GameOptions.screen.width / 2 + 100, -150, 'clipart', 3)
+      .image(-GameOptions.screen.width / 2 + 100, -290, SpriteKeys.Clipart, 3)
       .setScale(1.5)
     const textCoin = this.add
-      .text(-GameOptions.screen.width / 2 + 150, -190, roundCoin.toString(), {
+      .text(-GameOptions.screen.width / 2 + 150, -330, roundCoin.toString(), {
         fontFamily: 'Arial',
         fontStyle: 'bold',
         fontSize: 80,
-        color: GameOptions.ui.accent,
+        color: GameOptions.colors.accent,
         stroke: '#ffffff',
         wordWrap: {
           width: 600
@@ -268,13 +275,29 @@ export class Control extends Scene {
         align: 'left'
       })
       .setOrigin(0)
+    this.gameOverBodyContainer.add([bg, textBody, textCoin, imageCoin])
+
+    // const tempMatrix = new Phaser.GameObjects.Components.TransformMatrix()
+    // const tempParentMatrix = new Phaser.GameObjects.Components.TransformMatrix()
+    // imageCoin.getWorldTransformMatrix(tempMatrix, tempParentMatrix)
+
+    // const d = tempMatrix.decomposeMatrix()
+    const fromX =
+      this.gameOverBodyContainer.x + this.gameOverBodyContainer.parentContainer.x + imageCoin.x
+    const fromY =
+      this.gameOverBodyContainer.y + this.gameOverBodyContainer.parentContainer.y + imageCoin.y
+
+    const sceneHome = this.scene.get('Home')
+    const toMoveCoinX = sceneHome.walletContainer.x || 0
+    const toMoveCoinY = sceneHome.walletContainer.y || 0
+
     const buttonReward = new Button(
       this,
-      GameOptions.screen.width / 2 - 200,
-      -150,
-      350,
-      200,
-      GameOptions.ui.accentNumber,
+      GameOptions.screen.width / 2 - 220,
+      -330,
+      300,
+      150,
+      Phaser.Display.Color.ValueToColor(GameOptions.colors.buttonPrimary).color,
       this.lang?.getReward,
       {
         fontSize: 40,
@@ -283,74 +306,198 @@ export class Control extends Scene {
         }
       },
       () => {
-        this.gameData.coin += roundCoin
-        this.gameData.tanks[this.gameData.activeTankIndex].cb += 1
-        this.game.scene.getScene('Home').stopGame()
-        this.tooglePanel(false)
-        EventBus.emit('save-data', this.gameData)
+        // this.gameData.coin += roundCoin
+        // this.gameData.score += roundCoin
+        // EventBus.emit('save-data', this.gameData)
+
+        window?.showFullSrcAdv(() => {
+          this.scene.resume()
+          this.moveCoinToWallet(
+            new Phaser.Math.Vector2(fromX, fromY),
+            new Phaser.Math.Vector2(toMoveCoinX, toMoveCoinY),
+            1000,
+            () => {
+              this.gameData.coin += roundCoin
+              EventBus.emit('save-data', this.gameData)
+
+              this.scene.get('Message')?.showNewRank()
+            }
+          )
+          this.game.scene.getScene('Home').stopGame()
+          this.tooglePanel(false)
+        })
+
+        this.scene.pause()
       }
     )
 
-    this.gameOverBodyContainer.add([bg, textBody, textCoin, imageCoin, textReward, buttonReward])
+    this.gameOverBodyContainer.add([textReward, buttonReward])
 
-    if (GameOptions.isAdv) {
+    if (GameOptions.isDoubleRewardAdv) {
       const buttonGetReward = new Button(
         this,
-        340,
-        -150,
+        buttonReward.x - 440,
+        buttonReward.y,
         500,
-        200,
-        GameOptions.ui.buttonBgColor,
+        150,
+        Phaser.Display.Color.ValueToColor(GameOptions.colors.buttonSecondary).color,
         this.lang?.getReward2,
         {
           fontSize: 35,
           wordWrap: { width: 400 }
         },
         () => {
-          window?.showRewardedAdv(() => {
-            this.gameData.coin += roundCoin * 2
-            this.gameData.tanks[this.gameData.activeTankIndex].cb += 1
-            this.game.scene.getScene('Home').stopGame()
-            this.tooglePanel(false)
-            EventBus.emit('save-data', this.gameData)
+          window?.showRewardedAdv({
+            successC: () => {
+              this.scene.resume()
+              this.moveCoinToWallet(
+                new Phaser.Math.Vector2(fromX, fromY),
+                new Phaser.Math.Vector2(toMoveCoinX, toMoveCoinY),
+                1000,
+                () => {
+                  this.gameData.coin += roundCoin * 2
+                  EventBus.emit('save-data', this.gameData)
+
+                  this.scene.get('Message')?.showNewRank()
+                }
+              )
+              this.game.scene.getScene('Home').stopGame()
+              this.tooglePanel(false)
+            },
+            errorC: () => {
+              this.scene.resume()
+              this.scene.get('Message')?.showNewRank()
+              this.game.scene.getScene('Home').stopGame()
+              this.tooglePanel(false)
+            }
           })
+          this.scene.pause()
         }
       )
 
       const imageAd = this.add
-        .image(buttonGetReward.x - 210, buttonGetReward.y - 80, 'clipart', 4)
-        .setTint(GameOptions.ui.accentNumber)
+        .image(buttonGetReward.x - 220, buttonGetReward.y - 50, SpriteKeys.Clipart, 4)
+        .setTint(Phaser.Display.Color.ValueToColor(GameOptions.colors.darkColor).color)
       this.gameOverBodyContainer.add([buttonGetReward, imageAd])
     }
   }
 
+  moveCoinToWallet(
+    from: Phaser.Math.Vector2,
+    to: Phaser.Math.Vector2,
+    duration: number,
+    callback: () => void
+  ) {
+    // console.log('move to ', from, to)
+    //   const vec = new Phaser.Math.Vector2(tank.x, tank.y)
+    //   const azimut = Phaser.Math.FloatBetween(-Math.PI, Math.PI)
+    //   vec.setToPolar(azimut, 100)
+    //   const x2 = tank.x + vec.x
+    //   const y2 = tank.y + vec.y
+
+    const xVals = [from.x, GameOptions.screen.width / 2, to.x]
+    const yVals = [from.y, GameOptions.screen.height / 2, to.y]
+    const target = this.add.image(from.x, from.y, SpriteKeys.Coin)
+    const particles = this.add
+      .particles(0, 0, SpriteKeys.Coin, {
+        // frame: 3,
+        x: 0,
+        y: 0,
+        // x: { values: xVals, interpolation: 'catmull' },
+        // y: { values: yVals, interpolation: 'catmull' },
+        // x: xVals[0],
+        // y: yVals[0],
+        // advance: 300,
+        quantity: { random: [1, 5] },
+        frequency: 100,
+        gravityY: 500,
+        speed: { random: [50, 200] },
+        lifespan: { random: [400, 2000] },
+        scale: { random: true, start: 2, end: 0 },
+        // rotate: { random: true, start: 0, end: 180 },
+        // angle: { random: true, start: 0, end: 270 },
+        blendMode: 'ADD',
+        follow: target,
+        duration
+        // color: [0x555555, 0xffd189, 0x222222],
+        // colorEase: 'quad.out',
+        // duration: 1000
+        // gravityX: 0,
+        // gravityY: 0,
+        // // // emitting: false,
+        // // quantity: 5,
+        // // speed: { random: [50, 100] },
+        // // lifespan: { random: [200, 400] },
+        // // scale: { random: true, start: 0.5, end: 0 },
+        // // color: [0x666666, 0xffd189, 0x222222],
+        // // colorEase: 'quad.out'
+      })
+      .setDepth(999)
+    // emitter.start()
+
+    this.tweens.addCounter({
+      from: 0,
+      to: 1,
+      ease: Phaser.Math.Easing.Quadratic.InOut,
+      duration: duration,
+      onUpdate: (tween) => {
+        const v = tween.getValue()
+        const x = Phaser.Math.Interpolation.CatmullRom(xVals, v)
+        const y = Phaser.Math.Interpolation.CatmullRom(yVals, v)
+
+        target.setPosition(x, y)
+      },
+      onComplete: () => {
+        particles.explode(16)
+        callback && callback()
+        target.destroy()
+        this.sound.play(KeySound.AddCoin, {
+          volume: 0.5
+        })
+
+        this.time.delayedCall(2000, () => {
+          //particles.removeEmitter(emitter)
+          particles.stop()
+          particles.destroy(true)
+        })
+      }
+    })
+  }
+
   createSettings() {
-    this.overlay.setAlpha(0.9)
+    this.overlay.setAlpha(1)
     this.bodyContainer?.removeAll(true)
     // settings.
     const options = []
 
     for (const settingKey in this.gameData.settings) {
       var toggleSwitch = this.add
-        .rexToggleSwitch(0, 0, 100, 100, GameOptions.ui.accentNumber, {
-          trackRadius: 0.1,
-          thumbRadius: 0.1,
-          thumbColor: GameOptions.ui.buttonBgColor,
-          falseValueTrackColor: GameOptions.ui.panelBgColorLight,
-          value: this.gameData.settings[settingKey]
-        })
+        .rexToggleSwitch(
+          0,
+          0,
+          100,
+          100,
+          Phaser.Display.Color.ValueToColor(GameOptions.colors.accent).color,
+          {
+            trackRadius: 0.1,
+            thumbRadius: 0.1,
+            thumbColor: Phaser.Display.Color.ValueToColor(GameOptions.colors.darkColor).color,
+            falseValueTrackColor: Phaser.Display.Color.ValueToColor(
+              GameOptions.colors.secondaryColor
+            ).color,
+            value: this.gameData.settings[settingKey]
+          }
+        )
         .on('valuechange', (value) => {
           this.gameData.settings[settingKey] = value
           EventBus.emit('save-data', this.gameData)
         })
       const text = this.add
-        .text(65, 0, this.lang.settings[settingKey], {
+        .text(65, 0, this.lang.settings ? this.lang.settings[settingKey] : '', {
           fontFamily: 'Arial',
-          fontSize: 25,
-          color: GameOptions.ui.white,
-          stroke: '#ffffff',
-          // strokeThickness: 0,
-          wordWrap: { width: 1000 },
+          fontSize: 22,
+          color: GameOptions.colors.lightColor,
+          wordWrap: { width: GameOptions.screen.width / 2 - 200 },
           align: 'left'
         })
         .setOrigin(0, 0.5)
@@ -359,46 +506,106 @@ export class Control extends Scene {
     }
 
     const gridOptions = Phaser.Actions.GridAlign(options, {
-      width: 1,
+      width: 2,
       height: 10,
-      cellWidth: 600,
-      cellHeight: 80,
-      x: -200,
+      cellWidth: GameOptions.screen.width / 2,
+      cellHeight: 120,
+      x: 100,
       y: -350
     })
-    const containerGridOptions = this.add.container(-300, -200, gridOptions)
+    const containerGridOptions = this.add.container(
+      -GameOptions.screen.width / 2,
+      -200,
+      gridOptions
+    )
 
     const bg = this.add
       .rectangle(
-        -600,
+        -GameOptions.screen.width / 2,
         -GameOptions.screen.height / 2 - 200,
-        1200,
+        GameOptions.screen.width,
         GameOptions.screen.height,
-        GameOptions.ui.panelBgColor,
+        Phaser.Display.Color.ValueToColor(GameOptions.colors.darkColor).color,
         0.8
       )
       .setOrigin(0)
 
-    this.bodyContainer.add([bg, containerGridOptions, this.createButtonReturn()])
+    this.bodyContainer.add([
+      bg,
+      containerGridOptions,
+      this.createButtonReturn(),
+      this.createButtonsLang()
+    ])
   }
 
   createButtonReturn() {
     return new Button(
       this,
-      0,
+      GameOptions.screen.width / 2 - 300,
       GameOptions.screen.height / 2 - 300,
       300,
       150,
-      0x000000,
+      Phaser.Display.Color.ValueToColor(GameOptions.colors.buttonSecondary).color,
       this.lang.return || '#return',
       {
         fontSize: 40
       },
       () => {
-        this.click.play()
+        this.sound.play(KeySound.Click)
         this.tooglePanel(false)
       }
     )
+  }
+
+  createButtonsLang() {
+    const elems = []
+    const cellWidth = 200
+    const title = this.add.text(-100, -10, this.lang.langTitle, {
+      fontFamily: 'Arial',
+      color: GameOptions.colors.lightColor,
+      fontSize: 30,
+      align: 'left'
+    })
+
+    for (const langCode in langs) {
+      const lang: TLang = langs[langCode]
+
+      const button = new Button(
+        this,
+        GameOptions.screen.width / 2 - 300,
+        GameOptions.screen.height / 2 - 300,
+        cellWidth,
+        100,
+        this.gameData.lang == lang.code
+          ? Phaser.Display.Color.ValueToColor(GameOptions.colors.accent).color
+          : Phaser.Display.Color.ValueToColor(GameOptions.colors.buttonSecondary).color,
+        lang.name,
+        {
+          fontSize: 35
+        },
+        () => {
+          this.sound.play(KeySound.Click)
+          this.tooglePanel(false)
+          EventBus.emit('toggle-lang', lang.code)
+        }
+      )
+      elems.push(button)
+    }
+
+    const gridLangs = Phaser.Actions.GridAlign(elems, {
+      width: 4,
+      height: 1,
+      cellWidth: cellWidth + 30,
+      cellHeight: 120,
+      x: 0,
+      y: 90
+    })
+
+    const container = this.add.container(-GameOptions.screen.width / 2 + cellWidth, 250, [
+      title,
+      ...gridLangs
+    ])
+    return container
   }
 
   toggleSoundEffect() {
@@ -416,7 +623,6 @@ export class Control extends Scene {
       this.scene
         .get('Message')
         .showToast(replaceRegexByArray(this.lang.sound, [this.lang.on]), 0x000000)
-      // this.soundButtonSprite.setTint(GameOptions.ui.primaryColor.replace('#', '0x'))
       this.soundButtonSprite.setFrame(7)
       // if (this.textPause) {
       //   this.disablePanel()
@@ -448,11 +654,24 @@ export class Control extends Scene {
     return new Promise((resolve, reject) => {
       try {
         if (!this.isOpenHelp && !this.gameData.help[key]) {
+          const gameScene = this.scene.get('Game')
+          if (!gameScene) {
+            reject('Not found scene')
+          }
+          // console.log(gameScene.idPlayer)
+          gameScene.isFire = false
+          Input.up[gameScene.idPlayer] = 0
+          Input.down[gameScene.idPlayer] = 0
+          Input.left[gameScene.idPlayer] = 0
+          Input.right[gameScene.idPlayer] = 0
+
           this.buttonExitFromRound.setVisible(false)
           this.buttonSound.setVisible(false)
           this.isOpenHelp = true
-          console.log(key)
-          // this.click.play()
+          if (gameScene.joystikMove) {
+            gameScene.buttonFire.setVisible(false)
+            gameScene.joystikMove.setVisible(false)
+          }
 
           this.scene.pause('Game')
 
@@ -473,7 +692,7 @@ export class Control extends Scene {
                 width: 3
               },
               fillStyle: {
-                color: GameOptions.ui.panelBgColorLight
+                color: Phaser.Display.Color.ValueToColor(GameOptions.colors.lightColor).color
               }
             })
             .setAlpha(1)
@@ -499,17 +718,27 @@ export class Control extends Scene {
             -GameOptions.screen.height / 2 + 300,
             250,
             120,
-            GameOptions.ui.accentNumber,
-            'Ok',
+            Phaser.Display.Color.ValueToColor(GameOptions.colors.accent).color,
+            this.lang.well,
             {
               fontSize: 35,
               fontStyle: 'bold',
-              strokeThickness: 4,
+              color: GameOptions.colors.darkColor,
               stroke: '#000000'
             },
             () => {
               this.scene.resume('Game')
               container.destroy()
+
+              if (gameScene.joystikMove) {
+                gameScene.buttonFire.setVisible(true)
+                gameScene.joystikMove.setVisible(true)
+              }
+              // for (const pointer of gameScene.input.manager.pointers) {
+              //   pointer.reset()
+              // }
+              gameScene.input.resetPointers()
+              this.input.resetPointers()
 
               this.isOpenHelp = false
               this.gameData.help[key] = true
@@ -531,7 +760,7 @@ export class Control extends Scene {
               fontFamily: 'Arial',
               fontStyle: 'bold',
               fontSize: 60,
-              color: GameOptions.ui.accent,
+              color: GameOptions.colors.accent,
               align: 'left',
               wordWrap: {
                 width: GameOptions.screen.width - 400
@@ -542,7 +771,8 @@ export class Control extends Scene {
             .text(0, 70, this.lang.help[key].text, {
               fontFamily: 'Arial',
               fontStyle: 'bold',
-              fontSize: 28,
+              fontSize: 32,
+              color: GameOptions.colors.lightColor,
               align: 'left',
               lineSpacing: 6,
               wordWrap: {
@@ -571,7 +801,10 @@ export class Control extends Scene {
               graphics.clear()
 
               graphics.beginPath()
-              graphics.lineStyle(10, GameOptions.ui.panelBgColorLight)
+              graphics.lineStyle(
+                10,
+                Phaser.Display.Color.ValueToColor(GameOptions.colors.lightColor).color
+              )
               graphics.arc(0, 0, 100, Phaser.Math.DegToRad(0), Phaser.Math.DegToRad(v), true, 0.02)
               graphics.strokePath()
               graphics.closePath()
@@ -594,7 +827,6 @@ export class Control extends Scene {
     // // this.tooglePanel(true)
     // this.soundButton.setDepth(0)
     // const sceneGame = this.game.scene.getScene('Game')
-    // this.click.play()
     // if (sceneGame && (sceneGame.scene.isActive() || sceneGame.scene.isPaused())) {
     //   sceneGame?.scene.pause()
     // }
@@ -606,14 +838,18 @@ export class Control extends Scene {
     this.buttonSound.setDepth(100)
     this.tooglePanel(false)
     const sceneGame = this.game.scene.getScene('Game')
-    this.click.play()
+    this.sound.play(KeySound.Click)
     sceneGame?.scene.resume()
   }
 
   onOpenMenu(pointer: Phaser.Input.Pointer) {
-    this.click.play()
+    this.sound.play(KeySound.Click)
     this.tooglePanel(true)
     this.gameOverContainer.setVisible(false)
+  }
+
+  onSyncPlayerData(playerData: IPlayerData) {
+    this.playerData = JSON.parse(JSON.stringify(playerData))
   }
 
   onSync(gameData: IGameData, lang: TLang) {

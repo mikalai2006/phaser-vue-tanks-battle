@@ -39,7 +39,7 @@ export function createAreaEyeSystem(scene: Phaser.Scene) {
             width: 3
           }
         })
-        .setDepth(0)
+        .setDepth(1)
       scene.minimap?.ignore(graphics)
       areaEyeById.set(idTank, graphics)
     }
@@ -100,7 +100,7 @@ export function createAreaEyeSyncSystem(scene) {
               ? GameOptions.configTeams[1].colorDistanceView
               : GameOptions.configTeams[Entity.teamIndex[id]].colorDistanceView
 
-          area.lineStyle(5, colorTeamDistanceView, 0.3)
+          area.lineStyle(GameOptions.widthLineArea, colorTeamDistanceView, 0.3)
           area.strokeCircle(Position.x[id], Position.y[id], Tank.distanceView[id])
 
           // draw fire area.
@@ -112,7 +112,7 @@ export function createAreaEyeSyncSystem(scene) {
           const x2 = Position.x[id] + vec.x
           const y2 = Position.y[id] + vec.y
 
-          area.lineStyle(5, colorTeamAttackZone, 0.2)
+          area.lineStyle(GameOptions.widthLineArea, colorTeamAttackZone, 0.2)
           let maxAccuracity =
             GameOptions.maxAccuracityTower -
             Tank.accuracy[id] * GameOptions.maxAccuracityTower * 0.01

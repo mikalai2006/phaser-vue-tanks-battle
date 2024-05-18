@@ -19,6 +19,7 @@ export default function createAIManagerSystem(scene: Phaser.Scene) {
     if (scene.isPauseAI) {
       return
     }
+    const minTanksForFollow = 5
 
     const entities = cpuQuery(world)
     const tanks = queryEntities(world)
@@ -55,13 +56,12 @@ export default function createAIManagerSystem(scene: Phaser.Scene) {
       //   AI.status[id] = StatusAI.MoveRandom
       // }
       else if (
-        AI.status[id] === StatusAI.Idle ||
-        Input.countRandom[id] > 5 ||
-        Entity.targetGridX[id] != -1 ||
-        Tank.health[id] < 50 ||
-        !entityPath ||
-        entityPath.length === 0 ||
-        enemyTanks.length < 3
+        ((AI.status[id] === StatusAI.Idle ||
+          Input.countRandom[id] > 5 ||
+          Tank.health[id] < 50 ||
+          enemyTanks.length < minTanksForFollow) &&
+          (!entityPath || entityPath.length === 0)) ||
+        Entity.targetGridX[id] != -1
       ) {
         const gridBackup: PF.Grid = scene.grid.clone()
         var finder = new PF.AStarFinder({
@@ -82,79 +82,79 @@ export default function createAIManagerSystem(scene: Phaser.Scene) {
 
         // }
 
-        if (
-          !entityPath ||
-          entityPath.length === 0 ||
-          // AI.accumulatedPathTime[id] > 5000 ||
-          (Entity.targetGridX[id] != -1 && Entity.targetGridY[id] != -1)
-        ) {
-          // const t0 = performance.now()
+        // if (
+        //   !entityPath ||
+        //   entityPath.length === 0 ||
+        //   // AI.accumulatedPathTime[id] > 5000 ||
+        //   (Entity.targetGridX[id] != -1 && Entity.targetGridY[id] != -1)
+        // ) {
+        // const t0 = performance.now()
 
-          let xTarget = 0
-          let yTarget = 0
+        let xTarget = 0
+        let yTarget = 0
 
-          if (Entity.targetGridX[id] != -1 && Entity.targetGridY[id] != -1) {
-            xTarget = Entity.targetGridX[id]
-            yTarget = Entity.targetGridY[id]
-            Entity.targetGridX[id] = -1
-            Entity.targetGridY[id] = -1
-            // console.log(id, ' check bonus point: ', xTarget, yTarget)
-          } else if (enemyTanks.length < 3 && Tank.health[id] > 50) {
-            const randomTarget = enemyTanks[Phaser.Math.Between(0, enemyTanks.length - 1)]
-            const tankObject = tanksById.get(randomTarget)
+        if (Entity.targetGridX[id] != -1 && Entity.targetGridY[id] != -1) {
+          xTarget = Entity.targetGridX[id]
+          yTarget = Entity.targetGridY[id]
+          Entity.targetGridX[id] = -1
+          Entity.targetGridY[id] = -1
+          // console.log(id, ' check bonus point: ', xTarget, yTarget)
+        } else if (enemyTanks.length < minTanksForFollow && Tank.health[id] > 50) {
+          const randomTarget = enemyTanks[Phaser.Math.Between(0, enemyTanks.length - 1)]
+          const tankObject = tanksById.get(randomTarget)
 
-            if (!tankObject) {
-              continue
-            }
-            const tile = scene.groundTilesLayer.getTileAtWorldXY(tankObject.x, tankObject.y)
-            xTarget = tile.x
-            yTarget = tile.y
-            // console.log(id, ' check tank point: ', xTarget, yTarget)
-          } else {
-            const allowNodes = gridBackup.nodes.reduce((ac, el) => {
-              if (!ac.length) ac = []
-              const aa = ac.concat(
-                el.filter((z) => z.walkable && z.x !== Position.x[id] && z.y !== Position.y[id])
-              )
-              return aa
-            }, [])
-            const randomNodeTarget = allowNodes[Phaser.Math.Between(0, allowNodes.length - 1)]
-            // console.log(randomNodeTarget)
-
-            xTarget = randomNodeTarget.x
-            yTarget = randomNodeTarget.y
-            // console.log(id, ' check random point: ', xTarget, yTarget)
-          }
-
-          if (!xTarget || !yTarget) {
+          if (!tankObject) {
             continue
           }
+          const tile = scene.groundTilesLayer.getTileAtWorldXY(tankObject.x, tankObject.y)
+          xTarget = tile.x
+          yTarget = tile.y
+          // console.log(id, ' check tank point: ', xTarget, yTarget)
+        } else {
+          const allowNodes = gridBackup.nodes.reduce((ac, el) => {
+            if (!ac.length) ac = []
+            const aa = ac.concat(
+              el.filter((z) => z.walkable && z.x !== Position.x[id] && z.y !== Position.y[id])
+            )
+            return aa
+          }, [])
+          const randomNodeTarget = allowNodes[Phaser.Math.Between(0, allowNodes.length - 1)]
+          // console.log(randomNodeTarget)
 
-          // console.log(id, xTarget, yTarget)
-          // const tileCurrentEntity = scene.groundTilesLayer.getTileAtWorldXY(
-          //   Position.x[id],
-          //   Position.y[id]
-          // )
-          const path = finder.findPath(
-            // tileCurrentEntity.x,
-            // tileCurrentEntity.y,
-            Entity.gridX[id],
-            Entity.gridY[id],
-            xTarget,
-            yTarget,
-            gridBackup
-          )
-
-          // const t1 = performance.now()
-          // console.log(`Call to doSomething took ${t1 - t0} milliseconds.`)
-          // path.shift()
-          pathEntityById.set(id, path)
-          // console.log(id, Entity.teamIndex[id], xTarget, yTarget, pathEntityById.get(id).length)
-
-          // Entity.targetGridX[id] = -1
-          // Entity.targetGridY[id] = -1
-          // console.log(id, ' set status moveTo')
+          xTarget = randomNodeTarget.x
+          yTarget = randomNodeTarget.y
+          // console.log(id, ' check random point: ', xTarget, yTarget)
         }
+
+        if (!xTarget || !yTarget) {
+          continue
+        }
+
+        // console.log(id, xTarget, yTarget)
+        // const tileCurrentEntity = scene.groundTilesLayer.getTileAtWorldXY(
+        //   Position.x[id],
+        //   Position.y[id]
+        // )
+        const path = finder.findPath(
+          // tileCurrentEntity.x,
+          // tileCurrentEntity.y,
+          Entity.gridX[id],
+          Entity.gridY[id],
+          xTarget,
+          yTarget,
+          gridBackup
+        )
+
+        // const t1 = performance.now()
+        // console.log(`Call to doSomething took ${t1 - t0} milliseconds.`)
+        // path.shift()
+        pathEntityById.set(id, path)
+        // console.log(id, Entity.teamIndex[id], xTarget, yTarget, pathEntityById.get(id).length)
+
+        // Entity.targetGridX[id] = -1
+        // Entity.targetGridY[id] = -1
+        // console.log(id, ' set status moveTo')
+        // }
 
         if (scene.matter.world.drawDebug) {
           pathEntityById.get(id).forEach((element, index) => {

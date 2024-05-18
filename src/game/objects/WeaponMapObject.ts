@@ -1,5 +1,5 @@
 import { IWorld, addComponent, addEntity, defineQuery, removeEntity } from 'bitecs'
-import { IWeaponObject } from '../types'
+import { IWeaponObject, KeyParticles, KeySound } from '../types'
 import { GameOptions, WeaponType } from '../options/gameOptions'
 import Position from '../components/Position'
 import { Weapon } from '../components/Weapon'
@@ -44,15 +44,13 @@ export class WeaponMapObject extends Phaser.Physics.Matter.Sprite {
     this.ecsId = ecsId
     this.setScale(1).setTint(0xffffff)
 
-    this.explodeSound = this.scene.sound.add('get_bonus', {
-      volume: 0.2
-    })
+    this.explodeSound = this.scene.sound.get(KeySound.GetBonus)
 
     const bgImage = this.scene.add.circle(
       0,
       0,
       20,
-      GameOptions.ui.colorWeaponBg.replace('#', '0x'),
+      Phaser.Display.Color.ValueToColor(GameOptions.colors.colorWeaponBg).color,
       1
     )
     const image = this.scene.add
@@ -60,12 +58,18 @@ export class WeaponMapObject extends Phaser.Physics.Matter.Sprite {
       .setOrigin(0.5)
       .setScale(0.6)
     this.container = this.scene.add.container(x, y, [bgImage, image]).setDepth(6)
+
     // .setTint(bonusConfig.color)
     // matter.body.setCentre(towerObject?.body, { x: -60, y: 0 }, true)
     // this.setFrictionAir(0)
     // this.setFixedRotation()
     // this.world.remove(this.body, true)
     // this.setActive(false)
+    if (!Weapon.isRefresh[this.ecsId]) {
+      this.world.remove(this.body, true)
+      this.setVisible(false)
+      this.container.setVisible(false)
+    }
 
     this.scene.add.existing(this)
     this.scene.minimap?.ignore([this])
@@ -78,7 +82,7 @@ export class WeaponMapObject extends Phaser.Physics.Matter.Sprite {
     }
 
     this.emitter = this.scene.add
-      .particles(0, 0, 'smokeBoom', {
+      .particles(0, 0, KeyParticles.SmokeBoom, {
         frame: 1,
         // quantity: 0.01,
         blendMode: 'ADD',
@@ -118,12 +122,10 @@ export class WeaponMapObject extends Phaser.Physics.Matter.Sprite {
       }
 
       if (targetObject.ecsId == this.scene.idPlayer) {
-        this.scene.scene
-          .get('Control')
-          .showHelp('weapon', 2000)
-          .then((r) => {
-            this.scene.scene.get('Control').showHelp('checkWeapon', 2000)
-          })
+        const controlScene = this.scene.scene.get('Control')
+        controlScene.showHelp('weapon', 2000).then((r) => {
+          controlScene.showHelp('checkWeapon', 2000)
+        })
       }
 
       const ecsId = targetObject.ecsId
@@ -143,6 +145,7 @@ export class WeaponMapObject extends Phaser.Physics.Matter.Sprite {
       const weaponExistId = entities.find(
         (x) => Weapon.entityId[x] == ecsId && Weapon.type[x] == config.type
       )
+      let idWeapon = this.ecsId
 
       if (weaponExistId) {
         // ecsId == 0 &&
@@ -154,6 +157,7 @@ export class WeaponMapObject extends Phaser.Physics.Matter.Sprite {
         //     Weapon.count[this.ecsId]
         //   )
         Weapon.count[weaponExistId] += Weapon.count[this.ecsId]
+        idWeapon = weaponExistId
         removeEntity(ecsWorld, this.ecsId)
       } else {
         Weapon.entityId[this.ecsId] = ecsId
@@ -178,7 +182,14 @@ export class WeaponMapObject extends Phaser.Physics.Matter.Sprite {
         }
       }
 
-      if (weaponObject.config.timeRefresh > 0) {
+      // if save finded shells
+      if (ecsId == this.scene.idPlayer && GameOptions.saveWeapons) {
+        const playerWeapons = this.scene.gameData.weapons
+        const existWeaponValue = playerWeapons[this.config.type] || 0
+        this.scene.gameData.weapons[this.config.type] = existWeaponValue + Weapon.count[this.ecsId]
+      }
+
+      if (Weapon.isRefresh[this.ecsId]) {
         this.scene.time.delayedCall(
           weaponObject.config.timeRefresh,
           () => {
@@ -187,6 +198,7 @@ export class WeaponMapObject extends Phaser.Physics.Matter.Sprite {
             Weapon.type[weaponId] = this.config.type
             Weapon.count[weaponId] = this.config.count
             Weapon.entityId[weaponId] = -1
+            Weapon.isRefresh[weaponId] = this.config.timeRefresh > 0 ? 1 : 0
 
             addComponent(ecsWorld, Position, weaponId)
             Position.x[weaponId] = Position.x[this.ecsId]
@@ -204,23 +216,23 @@ export class WeaponMapObject extends Phaser.Physics.Matter.Sprite {
       weaponObject.hide()
 
       if (ecsId == this.scene.idPlayer || this.scene.gameData.settings.showToast) {
-        const bgText = this.scene.add
-          .rectangle(0, 0, 400, 50, this.config.color, 0.5)
-          .setOrigin(0.5)
         const text = this.scene.add
           .text(
-            0,
-            0,
-            weaponObject.config.count === -1
+            5,
+            5,
+            Weapon.count[this.ecsId] === -1
               ? `${this.scene.lang.repair} ${this.scene.lang.weapons[keyWeapon]} ${this.scene.lang.weapon}`
-              : `${this.scene.lang.weapons[keyWeapon]} ${this.scene.lang.weapon} +${weaponObject.config.count}`,
+              : `${this.scene.lang.weapons[keyWeapon]} ${this.scene.lang.weapon} +${Weapon.count[this.ecsId]}`,
             {
               color: '#ffffff',
               fontFamily: 'Arial',
-              fontSize: 25
+              fontSize: 20
             }
           )
-          .setOrigin(0.5)
+          .setOrigin(0)
+        const bgText = this.scene.add
+          .rectangle(0, 0, text.width + 10, text.height + 10, this.config.color, 0.5)
+          .setOrigin(0)
         const textContainer = this.scene.add
           .container(targetObject.x, targetObject.y, [bgText, text])
           .setDepth(999999)
@@ -265,10 +277,14 @@ export class WeaponMapObject extends Phaser.Physics.Matter.Sprite {
   }
 
   hide() {
-    if (this.scene.cameras.main.cull([this]).length && this.scene.isMute) {
+    if (this.scene.cameras.main.cull([this]).length) {
       this.emitter.explode(16)
-      this.explodeSound.play()
+
+      if (this.scene.isMute) {
+        this.explodeSound.play()
+      }
     }
+
     this.world.remove(this.body, true)
     this.setVisible(false)
     this.container.setVisible(false)
@@ -296,20 +312,22 @@ export class WeaponMapObject extends Phaser.Physics.Matter.Sprite {
     // // this.bonusRefreshEvent?.destroy()
   }
 
-  setDestroy() {
-    // this.setFrame(this.config.frameEnd)
-    this.setActive(false)
-    this.world.remove(this.body, true)
-  }
+  // setDestroy() {
+  //   // this.setFrame(this.config.frameEnd)
+  //   this.setActive(false)
+  //   this.world.remove(this.body, true)
+  // }
 
   removeObject() {
+    this.setActive(false)
     this.world.remove(this.body, true)
+    this.container.setVisible(false)
+
     this.destroy(true)
   }
 
-  destroy(fromScene?: boolean): void {
-    super.destroy(fromScene)
-
-    this.explodeSound.stop()
-  }
+  // destroy(fromScene?: boolean): void {
+  //   super.destroy(fromScene)
+  //   console.log('Destroy weaponMapObject')
+  // }
 }

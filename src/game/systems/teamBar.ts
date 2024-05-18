@@ -3,7 +3,7 @@ import { defineSystem, defineQuery, enterQuery, addComponent, IWorld, exitQuery 
 import { Tank } from '../components/Tank'
 import Position from '../components/Position'
 import { Entity } from '../components/Entity'
-import { GameOptions } from '../options/gameOptions'
+import { GameOptions, SpriteKeys } from '../options/gameOptions'
 
 const OFFSET = 33
 
@@ -85,7 +85,7 @@ export function createTeamBarSystem(scene: Phaser.Scene) {
         .setOrigin(0.5)
       //.circle(x3, 0, 50, 0x111111, 0.9).setOrigin(0.5)
       const imageGerb = scene.add
-        .image(x3, 0, 'gerb', gerbId)
+        .image(x3, 0, SpriteKeys.Gerb, gerbId)
         .setScale(0.5)
         .setTint(0xffffff)
         .setOrigin(0.5)
@@ -97,7 +97,7 @@ export function createTeamBarSystem(scene: Phaser.Scene) {
           fontFamily: 'Arial',
           fontStyle: 'bold',
           fontSize: 20,
-          color: GameOptions.ui.white,
+          color: GameOptions.colors.lightColor,
           stroke: '#000000',
           strokeThickness: 2,
           align: 'left'
@@ -126,8 +126,6 @@ export function createTeamBarSystem(scene: Phaser.Scene) {
       if (id === 0) {
         containerGerb.scaleX = -1
       }
-
-      // const textName = scene.add.text(50, 0, 'Mikala Parakhnevich')
 
       const bar = scene.add
         .container(-GameOptions.teamBarSize.width / 2, 0, [containerGerb])
@@ -163,6 +161,10 @@ export function createTeamBarSyncSystem(scene) {
   const query = defineQuery([Tank, Position])
 
   return defineSystem((world) => {
+    if (scene.configRound.config.countTeams < 2) {
+      return
+    }
+
     const entities = query(world)
 
     const teams: ITeamBarData[] = entities.reduce((ac: ITeamBarData[], el: number) => {

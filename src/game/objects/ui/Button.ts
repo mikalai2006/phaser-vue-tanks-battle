@@ -18,28 +18,31 @@ export class Button extends Phaser.GameObjects.Container {
     super(scene, x, y, [])
     this.callback = callback
 
-    const bgFill = this.scene.add
-      .nineslice(0, 0, 'buttons', 1, width, height, 50, 50, 50, 50)
-      .setTint(bgColor)
-      .setAlpha(1)
-      .setOrigin(0.5)
-    const bg = this.scene.add
-      .nineslice(0, 0, 'buttons', 0, width, height, 50, 50, 50, 50)
-      .setTint(0xffffff)
-      .setAlpha(1)
-      .setOrigin(0.5)
-      .setScrollFactor(0)
+    // const bgFill = this.scene.add
+    //   .nineslice(0, 0, 'buttons', 1, width, height, 50, 50, 50, 50)
+    //   .setTint(bgColor)
+    //   .setAlpha(1)
+    //   .setOrigin(0.5)
+    // const bg = this.scene.add
+    //   .nineslice(0, 0, 'buttons', 0, width, height, 50, 50, 50, 50)
+    //   .setTint(0xffffff)
+    //   .setAlpha(1)
+    //   .setOrigin(0.5)
+    //   .setScrollFactor(0)
+    //   .setInteractive({ useHandCursor: true })
+    const bg = scene.add
+      .rectangle(0, 0, width, height, bgColor, 1)
+      .setAlpha(0.8)
       .setInteractive({ useHandCursor: true })
-    // bg.setInteractive({ useHandCursor: true })
 
     this.text = this.scene.add
-      .text(0, 0, text, {
+      .text(textStyle?.padding?.left || 0, textStyle?.padding?.top || 0, text, {
         fontFamily: 'Arial',
         fontStyle: 'bold',
         fontSize: 30,
-        color: GameOptions.ui.buttonTextColor,
-        stroke: '#000000',
-        strokeThickness: 3,
+        color: GameOptions.colors.darkColor,
+        // stroke: '#000000',
+        // strokeThickness: 3,
         align: 'center',
         ...textStyle
       })
@@ -48,13 +51,13 @@ export class Button extends Phaser.GameObjects.Container {
 
     bg.on('pointerdown', (pointer: any) => this.callback(pointer))
     bg.on('pointerover', (pointer) => {
-      bg.setAlpha(0.8)
-    })
-    bg.on('pointerout', (pointer) => {
       bg.setAlpha(1)
     })
+    bg.on('pointerout', (pointer) => {
+      bg.setAlpha(0.8)
+    })
 
-    this.add([bgFill, bg, this.text])
+    this.add([bg, this.text])
   }
 
   setCallback(callback: (pointer: Phaser.Input.Pointer) => void) {

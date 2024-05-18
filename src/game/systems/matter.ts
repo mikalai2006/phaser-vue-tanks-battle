@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 
-import { defineSystem, defineQuery, enterQuery, exitQuery, removeEntity } from 'bitecs'
+import { defineSystem, defineQuery, enterQuery, exitQuery } from 'bitecs'
 
 import { Position } from '../components/Position'
 import { Rotation } from '../components/Rotation'
@@ -26,6 +26,8 @@ import { MuzzleObject } from '../objects/MuzzleObject'
 import { Tank } from '../components/Tank'
 import { Player } from '../components/Player'
 import { Weapon } from '../components/Weapon'
+import { entityBarById } from './entityBar'
+import { KeyParticles, KeySound, TypeRound } from '../types'
 
 export const tanksById = new Map<number, TankObject>()
 export const towersById = new Map<number, TowerObject>()
@@ -84,6 +86,9 @@ export function createMatterSpriteSystem(scene: Phaser.Scene) {
         scene.setFollower(id)
       }
 
+      const weaponConfig = GameOptions.weaponObjects.find(
+        (x) => x.type == Tank.activeWeaponType[id]
+      )
       const muzzle = new MuzzleObject(
         id,
         world,
@@ -99,7 +104,8 @@ export function createMatterSpriteSystem(scene: Phaser.Scene) {
             category: tankAmunition,
             mask: mapObjectCategory | weaponCategory | bonusCategory
           }
-        }
+        },
+        weaponConfig
       )
       muzzlesById.set(id, muzzle)
 
@@ -140,8 +146,13 @@ export function createMatterSpriteSystem(scene: Phaser.Scene) {
 
       caterpillarLeft.setTint(GameOptions.colors.caterpillar)
       caterpillarRight.setTint(GameOptions.colors.caterpillar)
-      tank.setTint(configComplexTank.color.replace('#', '0x')) //0xf0e68c
-      tower.setTint(configComplexTank.color.replace('#', '0x')) //0x5a7733)
+
+      const colorTank =
+        scene.configRound.config.type == TypeRound.teams
+          ? GameOptions.configTeams[Entity.teamIndex[id]].color
+          : Phaser.Display.Color.ValueToColor(configComplexTank.color).color
+      tank.setTint(colorTank) //0xf0e68c
+      tower.setTint(colorTank) //0x5a7733)
       muzzle.setTint(GameOptions.colors.caterpillar)
 
       scene.matter.add.constraint(tank.body, caterpillarLeft.body, 0, 0, {
@@ -174,9 +185,27 @@ export function createMatterSpriteSystem(scene: Phaser.Scene) {
       const tower = towersById.get(id)
       const muzzle = muzzlesById.get(id)
       const caterpillars = caterpillarsById.get(id)
+      // for (let i = 0; i < 10; i++) {
+      //   const vec = new Phaser.Math.Vector2(tank.x, tank.y)
+      //   const azimut = Phaser.Math.FloatBetween(-Math.PI, Math.PI)
+      //   vec.setToPolar(azimut, 100)
+      //   const x2 = tank.x + vec.x
+      //   const y2 = tank.y + vec.y
+
+      //   const xVals = [tank.x, x2]
+      //   const yVals = [tank.y, y2]
+      //   scene.createEntityWithEffect(xVals, yVals, () => {})
+      // }
+      if (scene.cameras.main.cull([tank]).length && scene.isMute) {
+        // scene.sys.game.device.os.desktop &&
+        scene.emitterDestroyTank.explode(16, tank.x, tank.y)
+
+        scene.sound.play(KeySound.DestroyTank, { volume: 0.5 })
+      }
+
       tank.removeTank()
       tower.removeTower()
-      muzzle.removeMuzzle()
+      muzzle.removeObject()
       caterpillars.left.removeCatterpillar()
       caterpillars.right.removeCatterpillar()
 
@@ -292,6 +321,14 @@ export function createMatterPhysicsSystem(scene) {
         muzzle.setAngularVelocity(RotationTower.force[id])
         // muzzle.applyForceFrom(new Phaser.Math.Vector2({ x: Position.x[id], y: Position.y[id] }), RotationTower.force[id])
       }
+
+      const vec = new Phaser.Math.Vector2(muzzle.x, muzzle.y)
+      vec.setToPolar(muzzle.rotation, 20)
+      const x2 = muzzle.x + vec.x
+      const y2 = muzzle.y + vec.y
+      muzzle.indicatorWeapon.setPosition(x2, y2)
+      muzzle.indicatorWeapon.setAngle(muzzle.angle)
+
       // muzzle.angle = RotationTower.angle[id]
       // if (tower.angle != RotationTower.angle[id]) {
       //   // Phaser.Physics.Matter.Rotate(tower.body, RotationTower.angle[id])
@@ -302,6 +339,13 @@ export function createMatterPhysicsSystem(scene) {
 
       // set the velocity
       tank.setVelocity(Velocity.x[id], Velocity.y[id])
+      tank.areol.setPosition(tank.x, tank.y)
+      tank.arrow.setPosition(tank.x, tank.y)
+      tank.arrow.setAngle(tank.angle)
+
+      // const object = entityBarById.get(id)
+      // object.bar.x = tank.x
+      // object.bar.y = tank.y
 
       // set angle for tower.
       tower.setAngle(muzzle.angle)
@@ -318,55 +362,6 @@ export function createMatterPhysicsSystem(scene) {
         caterpillar.left.toggleEmitter(false, !!Input.up[id])
         caterpillar.right.toggleEmitter(false, !!Input.up[id])
       }
-
-      // if (!!Input.fire[id] && !!Entity.weapon[id]) {
-      //   Input.fire[id] = 0
-      //   const time = Tank.timeBeforeShoot[id]
-      //   Tank.timeBeforeShoot[id] = 0
-
-      //   scene.time.delayedCall(
-      //     !players.includes(id) ? time : 0,
-      //     () => {
-      //       Tank.timeBeforeShoot[id] = Phaser.Math.FloatBetween(
-      //         GameOptions.towers.items[Tank.levelTower[id]].maxTimeBeforeShoot.min,
-      //         GameOptions.towers.items[Tank.levelTower[id]].maxTimeBeforeShoot.max
-      //       )
-
-      //       const muzzleConfig = GameOptions.muzzles.items[Tank.levelMuzzle[id]]
-      //       muzzleConfig.game.distanceShot = Tank.distanceShot[id]
-      //       muzzleConfig.game.speedShot = Tank.speedShot[id]
-
-      //       if (!muzzle.active) {
-      //         return
-      //       }
-
-      //       // if (Weapon.count[] <= 0) {}
-
-      //       if (!players.includes(id) && Entity.target[id] == -1) {
-      //         return
-      //       }
-
-      //       tower.fire(GameOptions.maximum.timeRefreshWeapon - Tank.timeRefreshWeapon[id])
-      //       const { x, y } = muzzle
-      //       muzzle.fire(x, y, muzzle.rotation, muzzleConfig, 1)
-      //       if (muzzleConfig.countShot > 1) {
-      //         scene.time.delayedCall(
-      //           250,
-      //           () => {
-      //             if (!muzzle?.body?.position) {
-      //               return
-      //             }
-      //             muzzle.fire(muzzle.x, muzzle.y, muzzle.rotation, muzzleConfig, 2)
-      //           },
-      //           [],
-      //           scene
-      //         )
-      //       }
-      //     },
-      //     [],
-      //     this
-      //   )
-      // }
     }
 
     return world

@@ -7,7 +7,7 @@ import { StaticObject } from '../components/MatterStaticSprite'
 import { GameOptions, mapObjectCategory, tankAmunition, tankCategory } from '../options/gameOptions'
 import { DestroyObject } from '../objects/DestroyObject'
 
-export const matterStaticObjectsById = new Map<number, Phaser.Physics.Matter.Sprite>()
+export const matterStaticObjectsById = new Map<number, DestroyObject>()
 
 export function createDestroyObjectsSystem(scene: Phaser.Scene) {
   const query = defineQuery([Position, StaticObject])
@@ -40,6 +40,7 @@ export function createDestroyObjectsSystem(scene: Phaser.Scene) {
 
     const exitEntities = onQueryExit(world)
     for (const id of exitEntities) {
+      matterStaticObjectsById.get(id).removeObject()
       matterStaticObjectsById.delete(id)
     }
 

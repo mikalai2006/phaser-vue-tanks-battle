@@ -1,5 +1,5 @@
 import { GameOptions } from '../options/gameOptions'
-import { IComplexConfig, IGameDataTank } from '../types'
+import { IComplexConfig, IGameData, IGameDataTank } from '../types'
 
 export const shuffle = function (array) {
   let currentIndex = array.length,
@@ -16,6 +16,23 @@ export const shuffle = function (array) {
   }
 
   return array
+}
+
+export const isValidJSON = (str) => {
+  try {
+    JSON.parse(str)
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
+export const getTrimName = (name: string) => {
+  let trimName = name || ''
+  if (trimName.length > GameOptions.maxNameUser - 3) {
+    trimName = name.substring(0, GameOptions.maxNameUser - 3) + '...'
+  }
+  return trimName
 }
 
 export const getMaxOptionValue = (keyOption: string, id: string) => {
@@ -37,7 +54,7 @@ export const isProbability = function (n) {
   return !!n && Math.random() <= n
 }
 
-export const replaceRegexByArray = function (text: string, replacements: string[]) {
+export const replaceRegexByArray = function (text: string, replacements: (string | number)[]) {
   const regex = /(\%s)/g
   const _text = text.replace(regex, () => replacements.shift())
   return _text
@@ -2965,6 +2982,14 @@ export function getRank(score: number) {
     return score < max && score >= min
   })
   return rankResult.rank
+}
+
+export function getSupportWeapons(tankId: string) {
+  const configActiveTank = GameOptions.complexTanks.find((x) => x.id == tankId)
+  const supportWeapons = GameOptions.weaponObjects.filter((x) =>
+    GameOptions.muzzles.items[configActiveTank.muzzle].supportWeapons.includes(x.type)
+  )
+  return supportWeapons
 }
 
 export function getTankImage(scene: Phaser.Scene, id: string): Phaser.GameObjects.Container {

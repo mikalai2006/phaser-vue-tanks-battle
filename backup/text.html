@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script src="./names_en.js"></script>
+    <script src="./names_ru.js"></script>
+    <script>
+      const b = {}
+      for (const obj of en) {
+        b[`${obj.name.first} ${obj.name.last}`] = obj
+      }
+      console.log(ru.length, Object.keys(b))
+    </script>
+  </body>
+</html>

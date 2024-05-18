@@ -2,7 +2,7 @@ import { IWorld, addComponent, addEntity, defineQuery, removeEntity } from 'bite
 import { Bonus } from '../components/Bonus'
 import { Tank } from '../components/Tank'
 import { BonusType, GameOptions, bonusCategory } from '../options/gameOptions'
-import { IBonusConfig } from '../types'
+import { IBonusConfig, KeyParticles, KeySound } from '../types'
 import Position from '../components/Position'
 import { isProbability } from '../utils/utils'
 import { tanksById } from '../systems/matter'
@@ -55,18 +55,16 @@ export class BonusObject extends Phaser.Physics.Matter.Sprite {
       .setTint(
         Bonus.value[this.ecsId] >= -1
           ? bonusConfig.color
-          : GameOptions.ui.dangerText.replace('#', '0x')
+          : Phaser.Display.Color.ValueToColor(GameOptions.colors.danger).color
       )
 
     this.scene.add.existing(this)
     this.scene.minimap?.ignore([this, this.image])
 
-    this.explodeSound = this.scene.sound.add('get_bonus', {
-      volume: 0.2
-    })
+    this.explodeSound = this.scene.sound.get(KeySound.GetBonus)
 
     this.emitter = this.scene.add
-      .particles(0, 0, 'smokeBoom', {
+      .particles(0, 0, KeyParticles.SmokeBoom, {
         frame: 7,
         // quantity: 0.01,
         blendMode: 'ADD',
@@ -236,32 +234,32 @@ export class BonusObject extends Phaser.Physics.Matter.Sprite {
 
       const procent = ((Bonus.value[this.ecsId] * 100) / max).toFixed(1)
       if (ecsId == this.scene.idPlayer || this.scene.gameData.settings.showToast) {
-        const bgText = this.scene.add
-          .rectangle(
-            0,
-            0,
-            400,
-            50,
-            Bonus.value[this.ecsId] >= 0 || Bonus.value[this.ecsId] === -1
-              ? GameOptions.workshop.colorHighProgress
-              : GameOptions.workshop.colorLowProgress,
-            0.7
-          )
-          .setOrigin(0.5)
         const text = this.scene.add
           .text(
-            0,
-            0,
+            5,
+            5,
             Bonus.value[this.ecsId] === -1
               ? `${this.scene.lang.repair} ${this.scene.lang.options[keyBonus]}`
               : `${this.scene.lang.options[keyBonus]} ${procent >= 0 ? '+' : ''}${procent}%`,
             {
               color: '#ffffff',
               fontFamily: 'Arial',
-              fontSize: 25
+              fontSize: 20
             }
           )
-          .setOrigin(0.5)
+          .setOrigin(0)
+        const bgText = this.scene.add
+          .rectangle(
+            0,
+            0,
+            text.width + 10,
+            text.height + 10,
+            Bonus.value[this.ecsId] >= 0 || Bonus.value[this.ecsId] === -1
+              ? GameOptions.workshop.colorHighProgress
+              : GameOptions.workshop.colorLowProgress,
+            0.7
+          )
+          .setOrigin(0)
         const textContainer = this.scene.add
           .container(targetObject.x, targetObject.y, [bgText, text])
           .setDepth(999999)
@@ -306,9 +304,12 @@ export class BonusObject extends Phaser.Physics.Matter.Sprite {
   }
 
   hide() {
-    if (this.scene.cameras.main.cull([this]).length && this.scene.isMute) {
+    if (this.scene.cameras.main.cull([this]).length) {
       this.emitter.explode(16)
-      this.explodeSound.play()
+
+      if (this.scene.isMute) {
+        this.explodeSound.play()
+      }
     }
     this.setVisible(false)
     this.world.remove(this.body, true)
@@ -337,11 +338,12 @@ export class BonusObject extends Phaser.Physics.Matter.Sprite {
     // // this.bonusRefreshEvent?.destroy()
   }
 
-  removeTower() {
+  removeObject() {
     // this.world.remove(this.tower.body, true)
     this.world.remove(this.body, true)
     this.bonusRefreshEvent?.destroy()
     // this.tower.destroy(true)
+
     this.destroy(true)
   }
 
@@ -352,9 +354,8 @@ export class BonusObject extends Phaser.Physics.Matter.Sprite {
     this.image.setAngle(this.angle)
   }
 
-  destroy(fromScene?: boolean): void {
-    super.destroy(fromScene)
-
-    this.explodeSound.stop()
-  }
+  // destroy(fromScene?: boolean): void {
+  //   super.destroy(fromScene)
+  //   console.log('destroy bonus')
+  // }
 }

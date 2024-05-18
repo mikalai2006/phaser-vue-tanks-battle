@@ -25,6 +25,17 @@ export default function createInputSystem(
 
     for (let i = 0; i < entities.length; ++i) {
       const id = entities[i]
+
+      if (id == scene.idPlayer && (scene.isPauseAI || scene.isRoundEnd)) {
+        //!scene.input.keyboard.enabled
+        Input.down[id] = 0
+        Input.up[id] = 0
+        Input.left[id] = 0
+        Input.right[id] = 0
+        Input.fire[id] = 0
+        continue
+      }
+
       // set the left, right, up, down values
       Input.left[id] = scene.keys.a.isDown || scene.cursors.left.isDown ? 1 : 0
       Input.right[id] = scene.keys.d.isDown || scene.cursors.right.isDown ? 1 : 0

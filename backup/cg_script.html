@@ -1,0 +1,121 @@
+<!-- SDK START---------------------------------->
+<script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
+<script>
+  var sdk
+  window.tobData = true
+  window.defaultLang = 'en'
+  window.gameLocalStorageName = 'com.mikalai2006.crazytanks.5'
+
+  window.initSDK = function () {
+    return window.CrazyGames.SDK.init().then((r) => {
+      sdk = window.CrazyGames.SDK
+    })
+  }
+
+  window.getLang = function () {
+    const countryCode = sdk.user.systemInfo?.countryCode
+    countryCode && countryCode.toLowerCase()
+    return countryCode
+  }
+
+  // Events
+  window.onSdkGameLoadingStart = () => {
+    sdk.game.loadingStart()
+  }
+  window.onSdkGameLoadingStop = () => {
+    sdk.game.loadingStop()
+  }
+  window.onHappyTime = () => {
+    sdk.game.happytime()
+  }
+  window.onGameplayStart = () => {
+    sdk.game.gameplayStart()
+  }
+  window.onGameplayStop = () => {
+    sdk.game.gameplayStop()
+  }
+
+  // Player
+  window.initPlayer = async function () {
+    let playerData
+
+    if (sdk.user.isUserAccountAvailable) {
+      const userData = await sdk.user.getUser()
+      playerData = {
+        name: userData.username,
+        photo: userData.profilePictureUrl
+      }
+    }
+
+    return playerData
+  }
+
+  // AD
+  window.hasAdBlocker = async () => {
+    const statusADB = await sdk.ad.hasAdblock()
+    return statusADB
+  }
+
+  window.showRewardedAdv = function ({ successC, errorC }) {
+    const callbacks = {
+      adFinished: () => {
+        successC && successC()
+      },
+      adError: (error) => {
+        errorC && errorC()
+        console.error('Error rewarded: ', error)
+      },
+      adStarted: () => {}
+    }
+    sdk.ad.requestAd('rewarded', callbacks)
+  }
+
+  window.showFullSrcAdv = function (callback) {
+    const callbacks = {
+      adFinished: () => {
+        callback && callback()
+      },
+      adError: (error) => {
+        callback && callback()
+        console.error('Error midgame: ', error)
+      },
+      adStarted: () => {}
+    }
+    sdk.ad.requestAd('midgame', callbacks)
+  }
+
+  // Game data
+  window.saveGameData = function (data) {
+    sdk.data.setItem(gameLocalStorageName, JSON.stringify(data))
+  }
+
+  window.loadGameData = async function (data) {
+    try {
+      const gameData = await sdk.data.getItem(gameLocalStorageName)
+      return gameData
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  // Leader board
+  // window.setLB = () => {}
+
+  // window.onClearBanner = (containerId) => {
+  //   window.CrazyGames.SDK.banner.clearBanner(containerId)
+  // }
+  // window.onShowBanner = async (containerId, width, height, callback) => {
+  //   try {
+  //     // await is not mandatory when requesting banners, but it will allow you to catch errors
+  //     await window.CrazyGames.SDK.banner.requestBanner({
+  //       id: containerId,
+  //       width,
+  //       height
+  //     })
+  //     callback && callback()
+  //   } catch (e) {
+  //     // console.log('Banner request error', e)
+  //   }
+  // }
+</script>
+<!-- SDK END---------------------------------->

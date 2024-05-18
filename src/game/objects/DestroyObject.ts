@@ -1,5 +1,5 @@
 import { IWorld, addComponent, addEntity } from 'bitecs'
-import { IDestroyObject } from '../types'
+import { IDestroyObject, KeyParticles, KeySound } from '../types'
 import { GameOptions } from '../options/gameOptions'
 import { isProbability } from '../utils/utils'
 import { Bonus } from '../components/Bonus'
@@ -38,9 +38,10 @@ export class DestroyObject extends Phaser.Physics.Matter.Sprite {
       //   sprite: options.items[level].offset
       // }
     })
-    this.explodeSound = this.scene.sound.add('explode_build', {
-      volume: 0.5
-    })
+    this.explodeSound = this.scene.sound.get(KeySound.ExplodeBuild)
+    // .add('explode_build', {
+    //   volume: 0.5
+    // })
     this.config = config
     this.ecsId = ecsId
     this.setScale(1.2)
@@ -61,7 +62,7 @@ export class DestroyObject extends Phaser.Physics.Matter.Sprite {
     this.setDepth(3)
 
     this.emitter = this.scene.add
-      .particles(0, 0, 'smokeBoom', {
+      .particles(0, 0, KeyParticles.SmokeBoom, {
         frame: 1,
         // quantity: 0.01,
         blendMode: 'ADD',
@@ -104,11 +105,24 @@ export class DestroyObject extends Phaser.Physics.Matter.Sprite {
 
       destroyObject.setDestroy()
 
-      const bonus = GameOptions.bonuses[Phaser.Math.Between(0, GameOptions.bonuses.length - 1)]
-      const probability = isProbability(bonus.probability)
+      const maxProbabiltity = +Phaser.Math.FloatBetween(0, 1).toFixed(3)
+
+      const allowBonuses = GameOptions.bonuses
+        .filter((x) => x.probability <= maxProbabiltity)
+        .sort((a, b) => a.probability - b.probability)
+      const bonus = allowBonuses[allowBonuses.length - 1]
+      if (bonus) {
+        if (this.scene.prob[bonus.type]) {
+          this.scene.prob[bonus.type] += 1
+        } else {
+          this.scene.prob[bonus.type] = 1
+        }
+      }
+      // console.log(maxProbabiltity, this.scene.prob)
+      // const probability = isProbability(bonus.probability)
       // console.log(probability)
 
-      if (probability) {
+      if (bonus) {
         // const tile = scene.groundTilesLayer.getTileAtWorldXY(destroyObject.x, destroyObject.y)
 
         const bonusId = addEntity(ecsWorld)
@@ -137,10 +151,12 @@ export class DestroyObject extends Phaser.Physics.Matter.Sprite {
 
   setDestroy() {
     this.setDepth(0)
-    this.emitter.explode(16)
+    if (this.scene.cameras.main.cull([this]).length) {
+      this.emitter.explode(16)
 
-    if (this.scene.cameras.main.cull([this]).length && this.scene.isMute) {
-      this.explodeSound.play()
+      if (this.scene.isMute) {
+        this.explodeSound.play()
+      }
     }
     this.setFrame(this.config.frameEnd)
     // this.setActive(false)
@@ -149,6 +165,12 @@ export class DestroyObject extends Phaser.Physics.Matter.Sprite {
 
   removeObject() {
     this.world.remove(this.body, true)
+
     this.destroy(true)
   }
+
+  // destroy(fromScene?: boolean): void {
+  //   super.destroy(fromScene)
+  //   console.log('Destroy DestroyObject')
+  // }
 }

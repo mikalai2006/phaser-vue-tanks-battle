@@ -40,7 +40,7 @@ export function createEntityBarBonusesSystem(scene: Phaser.Scene) {
     fontFamily: 'Arial',
     fontStyle: 'bold',
     fontSize: 20,
-    color: GameOptions.ui.white,
+    color: GameOptions.colors.lightColor,
     stroke: '#000000',
     strokeThickness: 2,
     align: 'left'
@@ -82,7 +82,7 @@ export function createEntityBarBonusesSystem(scene: Phaser.Scene) {
         .text(50, 5, scene.lang.options[keyBonus], {
           fontFamily: 'Arial',
           fontSize: 18,
-          color: GameOptions.ui.primaryColor,
+          color: GameOptions.colors.lightColor,
           align: 'left'
         })
         .setOrigin(0)
@@ -92,7 +92,7 @@ export function createEntityBarBonusesSystem(scene: Phaser.Scene) {
           HEIGHT_ITEM - 20,
           WIDTH_ITEM - WIDTH_ITEM / 2,
           10,
-          GameOptions.ui.progressBgColor
+          Phaser.Display.Color.ValueToColor(GameOptions.colors.secondaryColorLight).color
         )
         .setOrigin(0)
       const maximumOptionValue = GameOptions.maximum[keyBonus]
@@ -153,15 +153,14 @@ export function createEntityBarBonusesSystem(scene: Phaser.Scene) {
             fontStyle: 'bold',
             color:
               Math.round(bonusValueProgress) == 0
-                ? GameOptions.ui.successColor
-                : GameOptions.ui.accent,
+                ? GameOptions.colors.success
+                : GameOptions.colors.accent,
             align: 'center'
           }
         )
         .setOrigin(1)
       const bonusConfig = GameOptions.bonuses.find((x) => x.type === Bonus.type[id])
       const bg = scene.add.rectangle(0, 0, WIDTH_ITEM, HEIGHT_ITEM, 0x000000, 0.6).setOrigin(0)
-      //circle(0, 0, 25, GameOptions.ui.panelBgColor, 0.5).setOrigin(0)
       const imgBonus = scene.add.image(25, 25, 'bonuses', bonusConfig.frame).setScale(0.7)
       const itemContainer = scene.add.container(0, 0, [
         bg,

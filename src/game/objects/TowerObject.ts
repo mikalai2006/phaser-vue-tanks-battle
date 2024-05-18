@@ -1,5 +1,5 @@
 import { Entity } from '../components/Entity'
-import { GameOptions } from '../options/gameOptions'
+import { GameOptions, SpriteKeys } from '../options/gameOptions'
 
 export class TowerObject extends Phaser.Physics.Matter.Sprite {
   key = 'tower'
@@ -33,10 +33,11 @@ export class TowerObject extends Phaser.Physics.Matter.Sprite {
     this.setScale(1.1)
     // this.setActive(false)
     this.gerbImage = this.scene.add
-      .image(x, y, 'gerb', Entity.gerbId[this.ecsId])
-      .setDepth(3)
-      .setAlpha(0.9)
-      .setScale(0.3)
+      .image(x, y, SpriteKeys.Gerb, Entity.gerbId[this.ecsId])
+      .setDepth(4)
+      // .setTint(0xadff2f)
+      .setAlpha(0.7)
+      .setScale(0.4)
 
     // if (this.scene.configRound.night) {
     //   this.setPipeline('Light2D')
@@ -47,7 +48,7 @@ export class TowerObject extends Phaser.Physics.Matter.Sprite {
 
     this.scene.add.existing(this)
 
-    this.setDepth(2)
+    this.setDepth(3)
     // // this.tank = this.add.container(0, 0, [tank]).setRotation(Math.PI / 2)
     // const container = scene.add.container(500, 500, [tank])
     // // container.setSize(128, 101)

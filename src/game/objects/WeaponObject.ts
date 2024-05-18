@@ -1,5 +1,5 @@
 import { bulletCategory, mapObjectCategory } from '../options/gameOptions'
-import { IMuzzleConfigItem, IWeaponObject } from '../types'
+import { IMuzzleConfigItem, IWeaponObject, KeyParticles } from '../types'
 
 export class WeaponObject extends Phaser.Physics.Matter.Sprite {
   isPlay: boolean
@@ -13,6 +13,8 @@ export class WeaponObject extends Phaser.Physics.Matter.Sprite {
   emitter: Phaser.GameObjects.Particles.ParticleEmitter
   start: boolean = false
   defaultConfig: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig
+  _velocityX: number
+  _velocityY: number
 
   constructor(
     world: Phaser.Physics.Matter.World,
@@ -54,7 +56,7 @@ export class WeaponObject extends Phaser.Physics.Matter.Sprite {
       emitting: false
     }
     this.emitter = this.scene.add
-      .particles(0, 0, 'smokeBoom', {
+      .particles(0, 0, KeyParticles.SmokeBoom, {
         ...this.defaultConfig,
         ...this.weaponConfig.configParticlesBoom
         // stopAfter: 15
@@ -69,7 +71,7 @@ export class WeaponObject extends Phaser.Physics.Matter.Sprite {
       .startFollow(this)
       .setDepth(9999)
     // .stop(true)
-
+    this.setVisible(false)
     this.world.remove(this.body, true)
   }
 
@@ -83,15 +85,16 @@ export class WeaponObject extends Phaser.Physics.Matter.Sprite {
     if (this.start) {
       return
     }
-
+    this.setVisible(true)
     this.start = true
     this.lifespan = 0
     this.muzzleConfig = muzzleConfig
+    this.weaponConfig = weaponConfig
 
     this.setTint(weaponConfig.color)
 
     const vec = new Phaser.Math.Vector2(x, y)
-    vec.setToPolar(angle, muzzleConfig.vert[0].x)
+    vec.setToPolar(angle, muzzleConfig.vert[0].x + 30)
     const x2 = x + vec.x
     const y2 = y + vec.y
 
@@ -104,8 +107,10 @@ export class WeaponObject extends Phaser.Physics.Matter.Sprite {
     this.setVisible(true)
 
     this.setRotation(angle)
-    this.setVelocityX(this.muzzleConfig.game.speedShot * Math.cos(angle))
-    this.setVelocityY(this.muzzleConfig.game.speedShot * Math.sin(angle))
+    this._velocityX = this.muzzleConfig.game.speedShot * Math.cos(angle)
+    this._velocityY = this.muzzleConfig.game.speedShot * Math.sin(angle)
+    this.setVelocityX(this._velocityX)
+    this.setVelocityY(this._velocityY)
 
     this.distance = 0
     this.isPlay = true
@@ -155,6 +160,8 @@ export class WeaponObject extends Phaser.Physics.Matter.Sprite {
     super.preUpdate(time, delta)
 
     this.lifespan += delta
+    this.body.velocity.x = this._velocityY * delta
+    this.body.velocity.y = this._velocityY * delta
     this.distance = Phaser.Math.Distance.Between(
       this.startPoint.x,
       this.startPoint.y,

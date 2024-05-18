@@ -2,10 +2,16 @@ import RexUIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin.js'
 
 import { EventBus } from '../EventBus'
 import { Scene } from 'phaser'
-import { BonusType, GameOptions, WeaponType } from '../options/gameOptions'
+import { BonusType, GameOptions, SpriteKeys, WeaponType } from '../options/gameOptions'
 import { Button } from '../objects/ui/Button'
-import { IComplexConfig, IGameData, IWeaponObject, TLang } from '../types'
-import { getEnumStringKey, getMaxOptionValue, getRank, getTankImage } from '../utils/utils'
+import { IComplexConfig, IGameData, IWeaponObject, KeySound, TLang } from '../types'
+import {
+  getEnumStringKey,
+  getMaxOptionValue,
+  getRank,
+  getTankImage,
+  getTrimName
+} from '../utils/utils'
 import { debounce } from 'lodash'
 import { getLocalStorage, setLocalStorage } from '../utils/storageUtils'
 
@@ -20,6 +26,7 @@ export class WorkShop extends Scene {
   lang: TLang
   generalContainer: Phaser.GameObjects.Container
   infoContainer: Phaser.GameObjects.Container
+  updateContainerBody: Phaser.GameObjects.Container
   updateContainer: Phaser.GameObjects.Container
   shopContainer: Phaser.GameObjects.Container
   shopPanel: any
@@ -38,29 +45,90 @@ export class WorkShop extends Scene {
   bg: Phaser.GameObjects.Container
   textTitleScene: Phaser.GameObjects.Text
 
-  click: Phaser.Sound.HTML5AudioSound | Phaser.Sound.NoAudioSound | Phaser.Sound.WebAudioSound
-
   create({ lang, gameData }: { lang: TLang; gameData: IGameData }) {
-    this.click = this.sound.add('click')
-
     this.generalContainer = this.add.container(0, 0, [])
 
-    const bgTankContainer = this.add
-      .rectangle(0, 0, GameOptions.workshop.sideWidth, GameOptions.screen.height, 0x000000, 0.7)
-      .setOrigin(0)
     this.infoContainer = this.add.container(
-      GameOptions.screen.width - GameOptions.workshop.sideWidth,
-      0,
-      [bgTankContainer]
-    )
-
-    this.updateContainer = this.add.container(
       GameOptions.screen.width -
         GameOptions.workshop.sideWidth -
         GameOptions.workshop.updateSideWidth,
       0,
       []
     )
+    // .setDepth(100)
+
+    const bgUpdateContainer = this.add
+      .rectangle(
+        0,
+        0,
+        GameOptions.workshop.updateSideWidth,
+        GameOptions.screen.height,
+        Phaser.Display.Color.ValueToColor(GameOptions.colors.darkColor).color,
+        1
+      )
+      .setOrigin(0)
+
+    this.textTitleScene = this.add
+      .text(20, 20, '#workShopTitle', {
+        fontFamily: 'Arial',
+        fontSize: 50,
+        fontStyle: 'bold',
+        color: GameOptions.colors.accent,
+        align: 'center',
+        lineSpacing: -25
+      })
+      .setDepth(1000)
+      .setOrigin(0)
+
+    this.updateContainerBody = this.add.container(0, 0, [])
+
+    this.buttonReturn = new Button(
+      this,
+      GameOptions.workshop.updateSideWidth - 160,
+      GameOptions.screen.height - 70,
+      200,
+      80,
+      Phaser.Display.Color.ValueToColor(GameOptions.colors.buttonSecondary).color,
+      this.lang?.return || '#return',
+      {
+        color: GameOptions.colors.darkColor
+      },
+      (pointer) => {
+        this.tooglePanel(false)
+
+        this.game.scene.getScene('Home')?.tooglePanel(true)
+      }
+    )
+
+    this.updateContainer = this.add.container(
+      GameOptions.screen.width -
+        // GameOptions.workshop.sideWidth -
+        GameOptions.workshop.updateSideWidth,
+      0,
+      [bgUpdateContainer, this.updateContainerBody, this.textTitleScene, this.buttonReturn]
+    )
+
+    if (GameOptions.isBank) {
+      this.buttonBank = new Button(
+        this,
+        GameOptions.workshop.updateSideWidth - GameOptions.workshop.updateSideWidth + 150,
+        GameOptions.screen.height - 70,
+        200,
+        80,
+        Phaser.Display.Color.ValueToColor(GameOptions.colors.accent).color,
+        this.lang?.bank || '#bank',
+        {
+          color: GameOptions.colors.darkColor
+        },
+        (pointer) => {
+          this.sound.play(KeySound.Click)
+          this.scene.get('Home').openBank()
+        }
+      )
+      this.updateContainer.add(this.buttonBank)
+      // walletContainer.add(this.buttonBank)
+    }
+
     this.shopContainer = this.add.container(
       0,
 
@@ -69,74 +137,48 @@ export class WorkShop extends Scene {
     )
 
     const bg = this.add
-      .image(GameOptions.screen.width / 2, GameOptions.screen.height / 2, 'bg')
-      .setScale(1.1)
-      .setDepth(-100)
 
-    const bgOverlay = this.add.rectangle(
-      GameOptions.screen.width / 2,
-      GameOptions.screen.height / 2,
-      GameOptions.screen.width,
-      GameOptions.screen.height,
-      GameOptions.ui.panelBgColor,
-      0.7
-    )
+      .image(this.game.scale.width / 2, this.game.scale.height / 2 + 50, 'bg')
+      .setScale(1.3)
+    // .setDepth(-100)
+
+    const bgOverlay = this.add
+      .rectangle(
+        GameOptions.screen.width / 2,
+        GameOptions.screen.height / 2,
+        GameOptions.screen.width,
+        GameOptions.screen.height,
+        Phaser.Display.Color.ValueToColor(GameOptions.colors.darkColor).color,
+        0.7
+      )
+      .setInteractive()
     this.bg = this.add.container(0, 0, [bg, bgOverlay])
     this.generalContainer.add(this.bg)
 
-    const bgUpdateContainer = this.add
+    const bgShopContainer = this.add
       .rectangle(
-        GameOptions.screen.width -
-          GameOptions.workshop.sideWidth -
-          GameOptions.workshop.updateSideWidth,
         0,
-        GameOptions.workshop.updateSideWidth,
+        0,
+        GameOptions.screen.width -
+          GameOptions.workshop.updateSideWidth -
+          GameOptions.workshop.sideWidth,
         GameOptions.screen.height,
-        GameOptions.ui.panelBgColor,
-        1
+        Phaser.Display.Color.ValueToColor(GameOptions.colors.darkColor).color,
+        0.7
       )
       .setOrigin(0)
-    this.generalContainer.add(bgUpdateContainer)
-    this.textTitleScene = this.add
-      .text(
-        GameOptions.screen.width -
-          GameOptions.workshop.sideWidth -
-          GameOptions.workshop.updateSideWidth / 2 -
-          150,
-        50,
-        '#workShopTitle',
-        {
-          fontFamily: 'Arial',
-          fontSize: 50,
-          fontStyle: 'bold',
-          color: GameOptions.ui.accent, //GameOptions.ui.accent,
-          align: 'center',
-          lineSpacing: -25
-        }
-      )
-      .setDepth(1000)
-      .setOrigin(0.5)
-    this.generalContainer.add(this.textTitleScene)
     this.textShopTitle = this.add
       .text(GameOptions.workshop.updateSideWidth / 2, 50, '#shopTitle', {
         fontFamily: 'Arial',
         fontSize: 50,
         fontStyle: 'bold',
-        color: GameOptions.ui.primaryColor, //GameOptions.ui.accent,
+        color: GameOptions.colors.accent,
         align: 'center',
         lineSpacing: -25
       })
       .setDepth(1000)
       .setOrigin(0.5)
-    this.generalContainer.add(this.textShopTitle)
-
-    // events.
-    this.events.on('pause', () => {
-      this.click.pause()
-    })
-    this.events.on('resume', () => {
-      this.tooglePanel(false)
-    })
+    this.generalContainer.add([bgShopContainer, this.textShopTitle])
 
     this.tooglePanel(false)
 
@@ -146,26 +188,20 @@ export class WorkShop extends Scene {
 
   drawPlayerInfo() {
     this.infoContainer.removeAll(true)
-    // this.rankContainer?.destroy()
 
-    this.buttonReturn = new Button(
-      this,
-      -160,
-      GameOptions.screen.height - 70,
-      300,
-      120,
-      GameOptions.ui.panelBgColor,
-      this.lang?.return || '#return',
-      {},
-      (pointer) => {
-        this.tooglePanel(false)
+    const bgTankContainer = this.add
+      .rectangle(
+        0,
+        0,
+        GameOptions.workshop.sideWidth,
+        GameOptions.screen.height,
+        Phaser.Display.Color.ValueToColor(GameOptions.colors.darkColor).color,
+        0.5
+      )
+      .setOrigin(0)
+    this.infoContainer.add(bgTankContainer)
 
-        this.game.scene.getScene('Home')?.tooglePanel(true)
-      }
-    )
-    this.infoContainer.add(this.buttonReturn)
-
-    const coinImage = this.add.image(0, 0, 'coin')
+    const coinImage = this.add.image(0, 0, SpriteKeys.Coin)
     this.textCoinValue = this.add.text(35, -18, this.gameData.coin.toString(), {
       fontFamily: 'Arial',
       fontSize: 35,
@@ -174,27 +210,16 @@ export class WorkShop extends Scene {
       align: 'left'
     })
     const walletContainer = this.add.container(140, 115, [coinImage, this.textCoinValue])
-    if (GameOptions.isBank) {
-      this.buttonBank = new Button(
-        this,
-        -GameOptions.screen.width / 2 - 380,
-        -65,
-        200,
-        100,
-        GameOptions.ui.primaryColor,
-        this.lang?.bank || '#bank',
-        {},
-        (pointer) => {
-          this.scene.get('Home').openBank()
-        }
-      )
-      walletContainer.add(this.buttonBank)
-    }
 
     // score and rank
     const rank = this.add
-      .image(-GameOptions.workshop.sideWidth / 2 + 60, 0, 'rank', getRank(this.gameData.score))
-      .setTint(GameOptions.ui.accent.replace('#', '0x'))
+      .image(
+        -GameOptions.workshop.sideWidth / 2 + 60,
+        0,
+        SpriteKeys.Ranks,
+        getRank(this.gameData.score)
+      )
+      .setTint(Phaser.Display.Color.ValueToColor(GameOptions.colors.accent).color)
       .setScale(2)
     // this.textScoreValue = this.add
     //   .text(-GameOptions.workshop.sideWidth / 2 + 120, 10, '', {
@@ -209,7 +234,7 @@ export class WorkShop extends Scene {
     //   .setOrigin(0)
     //   .setDepth(100)
     this.textNamePlayer = this.add
-      .text(-GameOptions.workshop.sideWidth / 2 + 120, -55, 'Mikalai Parakhnevich', {
+      .text(-GameOptions.workshop.sideWidth / 2 + 120, -55, getTrimName(this.gameData.name), {
         fontFamily: 'Arial',
         fontStyle: 'bold',
         fontSize: 35,
@@ -252,7 +277,7 @@ export class WorkShop extends Scene {
   }
 
   drawWorkShopContainer() {
-    this.updateContainer.removeAll(true)
+    this.updateContainerBody.removeAll(true)
     const optionsForGrid = []
     const tankData = this.gameData.tanks[this.gameData.activeTankIndex]
     const excludeOptions = GameOptions.excludeFromStretchOptions
@@ -270,11 +295,17 @@ export class WorkShop extends Scene {
           GameOptions.workshop.updateSideWidth,
           100,
           0x000000,
-          index % 2 == 0 ? 0.5 : 0
+          index % 2 == 0 ? 0.3 : 0
         )
         .setOrigin(0)
       const progressBg = this.add
-        .rectangle(0, 55, 300, 10, GameOptions.ui.progressBgColor)
+        .rectangle(
+          0,
+          55,
+          300,
+          10,
+          Phaser.Display.Color.ValueToColor(GameOptions.colors.secondaryColor).color
+        )
         .setOrigin(0)
       const maximumOptionValue = getMaxOptionValue(option, tankData.id)
       // console.log(option, maximumOptionValue, optionValue)
@@ -305,7 +336,7 @@ export class WorkShop extends Scene {
       const textNameOptions = this.add.text(0, -10, `${this.lang?.options[option]}`, {
         fontFamily: 'Arial',
         fontSize: 25,
-        color: GameOptions.ui.primaryColor, //GameOptions.ui.accent,
+        color: GameOptions.colors.lightColor,
         align: 'left',
         lineSpacing: -25
       })
@@ -316,7 +347,7 @@ export class WorkShop extends Scene {
         {
           fontFamily: 'Arial',
           fontSize: 20,
-          color: GameOptions.ui.primaryColor,
+          color: GameOptions.colors.lightColor,
           align: 'left',
           lineSpacing: -25
         }
@@ -333,11 +364,11 @@ export class WorkShop extends Scene {
       if (optionValue < getMaxOptionValue(option, tankData.id)) {
         const updateButton = new Button(
           this,
-          GameOptions.workshop.updateSideWidth - 130,
+          GameOptions.workshop.updateSideWidth - 160,
           30,
           200,
-          90,
-          GameOptions.ui.primaryColor,
+          70,
+          Phaser.Display.Color.ValueToColor(GameOptions.colors.buttonSecondary).color,
           '',
           {
             fontSize: 25
@@ -347,13 +378,13 @@ export class WorkShop extends Scene {
           }
         )
         const textUpdateButton = this.add.text(
-          GameOptions.workshop.updateSideWidth - 190,
+          updateButton.x - 60,
           15,
           this.lang?.update || '#textUpdate',
           {
             fontFamily: 'Arial',
             fontSize: 25,
-            color: GameOptions.ui.primaryColor,
+            color: GameOptions.colors.darkColor,
             fontStyle: 'bold',
             align: 'left'
           }
@@ -380,7 +411,7 @@ export class WorkShop extends Scene {
           {
             fontFamily: 'Arial',
             fontSize: 25,
-            color: GameOptions.ui.primaryColor,
+            color: GameOptions.colors.lightColor,
             fontStyle: 'bold',
             align: 'left'
           }
@@ -400,7 +431,7 @@ export class WorkShop extends Scene {
       x: 20,
       y: 150
     })
-    this.updateContainer.add(gridOptions)
+    this.updateContainerBody.add(gridOptions)
 
     // const fullOptionsValue = new Map()
     // for (let i = 0; i < GameOptions.complexTanks.length; i++) {
@@ -440,7 +471,7 @@ export class WorkShop extends Scene {
         90,
         300,
         20,
-        GameOptions.ui.progressBgColor
+        Phaser.Display.Color.ValueToColor(GameOptions.colors.secondaryColor).color
       )
       .setOrigin(0)
     const maximumOptionValue = Object.values(GameOptions.maximum).reduce((a, b) => a + b, 0)
@@ -465,27 +496,27 @@ export class WorkShop extends Scene {
           fontFamily: 'Arial',
           fontSize: 30,
           fontStyle: 'bold',
-          color: GameOptions.ui.primaryColor, //GameOptions.ui.accent,
+          color: GameOptions.colors.lightColor,
           align: 'right',
           lineSpacing: -25
         }
       )
       .setOrigin(1)
     const textNameTank = this.add.text(
-      GameOptions.workshop.updateSideWidth / 2 + 100,
+      GameOptions.workshop.updateSideWidth / 2,
       35,
-      GameOptions.complexTanks[configComplexTank.tank].name,
+      configComplexTank.name,
       {
         fontFamily: 'Arial',
         fontSize: 35,
         fontStyle: 'bold',
-        color: GameOptions.ui.primaryColor, //GameOptions.ui.accent,
+        color: GameOptions.colors.lightColor,
         align: 'left',
         lineSpacing: -25
       }
     )
     const cont = this.add.container(0, 0, [progressBg, currentProgress, textNameTank, textStretch])
-    this.updateContainer.add(cont)
+    this.updateContainerBody.add(cont)
 
     // const grid = Phaser.Actions.GridAlign(optionCards, {
     //   width: 1,
@@ -500,6 +531,7 @@ export class WorkShop extends Scene {
   createShopTanks() {
     if (this.shopPanel) {
       this.shopPanel?.removeAll(true)
+      this.shopPanel?.destroy(true)
     }
     var config = {
       x: 0,
@@ -558,9 +590,13 @@ export class WorkShop extends Scene {
       if (button === prevButton) {
         return
       }
-      button.getElement('background').setFillStyle(GameOptions.ui.panelBgColor)
+      button
+        .getElement('background')
+        .setFillStyle(Phaser.Display.Color.ValueToColor(GameOptions.colors.darkColor).color)
       if (prevButton) {
-        prevButton.getElement('background').setFillStyle(GameOptions.ui.panelBgColor, 0)
+        prevButton
+          .getElement('background')
+          .setFillStyle(Phaser.Display.Color.ValueToColor(GameOptions.colors.lightColor).color, 0)
       }
       prevButton = button
 
@@ -577,6 +613,7 @@ export class WorkShop extends Scene {
   createGarazTabs() {
     if (this.garazPanel) {
       this.garazPanel?.removeAll(true)
+      this.garazPanel?.destroy(true)
     }
     var configPlayer = {
       x: 0,
@@ -588,7 +625,11 @@ export class WorkShop extends Scene {
         left: 'left'
       },
       space: {
-        left: 1330,
+        left:
+          GameOptions.screen.width -
+          GameOptions.workshop.updateSideWidth -
+          GameOptions.workshop.sideWidth +
+          20,
         top: 150
       },
       orientation: 'y',
@@ -615,7 +656,9 @@ export class WorkShop extends Scene {
     } else {
       this.scene.moveUp('Control')
       this.shopPanel?.removeAll(true)
+      this.shopPanel?.destroy(true)
       this.garazPanel?.removeAll(true)
+      this.garazPanel?.destroy(true)
     }
 
     this.generalContainer.setVisible(status)
@@ -627,12 +670,12 @@ export class WorkShop extends Scene {
     // if (sceneControl) {
     //   sceneControl?.togglePause(!status)
     // }
-    // window.getLB && window.getLB()
   }
 
   onUpdateOption(option: string, value: number) {
     if (this.gameData.coin < GameOptions.costUpdate[option] * value) return
-    console.log('onUpdateOption: ', option, value)
+    // console.log('onUpdateOption: ', option, value)
+    this.sound.play(KeySound.Upgrade)
 
     this.gameData.coin -= Math.round(GameOptions.costUpdate[option] * value)
 
@@ -662,17 +705,6 @@ export class WorkShop extends Scene {
     this.drawWorkShopContainer()
     this.createGarazTabs()
     this.drawPlayerInfo()
-    // const sceneGame = this.game.scene.getScene('Game')
-    // if (window.showRewardedAdv) {
-    //   EventBus.emit('show-reward-adv', () => {
-    //     // console.log('SHOW show-reward-adv')
-    //     sceneGame.scene.resume()
-    //     this.scene.get('Game').onCreateBomb(true)
-    //   })
-    // } else {
-    //   sceneGame.scene.resume()
-    //   this.scene.get('Game').onCreateBomb(true)
-    // }
   }
   onCartTank(config: IComplexConfig, index: number) {
     if (this.gameData.coin < config.cost) {
@@ -681,7 +713,14 @@ export class WorkShop extends Scene {
           x: GameOptions.screen.width / 2,
           y: GameOptions.screen.height / 2,
 
-          background: this.rexUI.add.roundRectangle(0, 0, 2, 2, 20, GameOptions.ui.accentNumber),
+          background: this.rexUI.add.roundRectangle(
+            0,
+            0,
+            2,
+            2,
+            20,
+            Phaser.Display.Color.ValueToColor(GameOptions.colors.accent).color
+          ),
           text: this.add.text(0, 0, '', {
             fontFamily: 'Arial',
             fontSize: 35,
@@ -705,6 +744,7 @@ export class WorkShop extends Scene {
       return
     }
 
+    this.sound.play(KeySound.CartTank)
     this.gameData.coin -= config.cost
 
     this.gameData.tanks.push({
@@ -720,27 +760,23 @@ export class WorkShop extends Scene {
     this.createGarazTabs()
     this.createShopTanks()
     this.drawPlayerInfo()
-    // const sceneGame = this.game.scene.getScene('Game')
-    // if (window.showRewardedAdv) {
-    //   EventBus.emit('show-reward-adv', () => {
-    //     // console.log('SHOW show-reward-adv')
-    //     sceneGame.scene.resume()
-    //     this.scene.get('Game').onCreateBomb(true)
-    //   })
-    // } else {
-    //   sceneGame.scene.resume()
-    //   this.scene.get('Game').onCreateBomb(true)
-    // }
   }
 
-  onCartWeapon(config: IWeaponObject, value: number) {
+  onCartWeapon(config: IWeaponObject, value: number, callback: () => void) {
     if (this.gameData.coin < config.cost * value) {
       this.rexUI.add
         .toast({
           x: GameOptions.screen.width / 2,
           y: GameOptions.screen.height / 2,
 
-          background: this.rexUI.add.roundRectangle(0, 0, 2, 2, 20, GameOptions.ui.accentNumber),
+          background: this.rexUI.add.roundRectangle(
+            0,
+            0,
+            2,
+            2,
+            20,
+            Phaser.Display.Color.ValueToColor(GameOptions.colors.accent).color
+          ),
           text: this.add.text(0, 0, '', {
             fontFamily: 'Arial',
             fontSize: 35,
@@ -764,6 +800,7 @@ export class WorkShop extends Scene {
       return
     }
 
+    this.sound.play(KeySound.CartWeapon)
     this.gameData.coin -= config.cost * value
 
     const existWeaponIndex = this.gameData.weapons[config.type]
@@ -774,10 +811,7 @@ export class WorkShop extends Scene {
     }
 
     EventBus.emit('save-data', this.gameData)
-    this.drawWorkShopContainer()
-    this.createGarazTabs()
-    this.createShopTanks()
-    this.drawPlayerInfo()
+    callback && callback()
   }
 
   onCheckTank(index: number) {
@@ -870,8 +904,22 @@ export const CreateTankPage = (scene: Phaser.Scene, config: any) => {
     // clamplTableOXY: false,
 
     slider: {
-      track: scene.rexUI.add.roundRectangle(0, 0, 20, 10, 10, GameOptions.ui.panelBgColor),
-      thumb: scene.rexUI.add.roundRectangle(0, 0, 30, 60, 0, GameOptions.ui.primaryColorNumber),
+      track: scene.rexUI.add.roundRectangle(
+        0,
+        0,
+        20,
+        10,
+        10,
+        Phaser.Display.Color.ValueToColor(GameOptions.colors.secondaryColor).color
+      ),
+      thumb: scene.rexUI.add.roundRectangle(
+        0,
+        0,
+        50,
+        60,
+        0,
+        Phaser.Display.Color.ValueToColor(GameOptions.colors.lightColor).color
+      ),
       valuechangeCallback: function (newValue) {
         debounceUpdateScrollFn(scene, keyT, newValue)
       }
@@ -893,47 +941,23 @@ export const CreateTankPage = (scene: Phaser.Scene, config: any) => {
       const tankContainer = getTankImage(scene, configTank.id).setAngle(-90).setScale(1.2)
       tankContainer.setPosition(80, 20)
 
-      const bgPanel = scene.add
-        .nineslice(
-          0,
-          -120,
-          'shopPanel2',
-          0,
-          GameOptions.screen.width -
-            GameOptions.workshop.sideWidth -
-            GameOptions.workshop.updateSideWidth -
-            80,
-          250,
-          50,
-          50,
-          50,
-          50
-        )
-        .setOrigin(0)
-        .setScale(1)
-
-      const bgLb = scene.add
-        .nineslice(
-          0,
-          -115,
-          'buttons',
-          1,
-          GameOptions.screen.width -
-            GameOptions.workshop.sideWidth -
-            GameOptions.workshop.updateSideWidth -
-            80,
-          250,
-          50,
-          50,
-          50,
-          50
-        )
-        .setTint(GameOptions.ui.panelBgColorLight)
-        .setAlpha(0.9)
-        .setOrigin(0)
-      const containerImage = scene.add.container(0, 0, [bgLb, bgPanel, tankContainer])
+      const bgPanel = scene.add.rectangle(
+        0,
+        0,
+        width * 1.95,
+        height - 30,
+        Phaser.Display.Color.ValueToColor(GameOptions.colors.lightColor).color,
+        0.25
+      )
+      const containerImage = scene.add.container(0, 0, [bgPanel, tankContainer])
       const progressBg = scene.add
-        .rectangle(0, 45, 300, 10, GameOptions.ui.progressBgColor)
+        .rectangle(
+          0,
+          85,
+          300,
+          10,
+          Phaser.Display.Color.ValueToColor(GameOptions.colors.secondaryColor).color
+        )
         .setOrigin(0)
       const maximumOptionValue = Object.values(GameOptions.maximum).reduce((a, b) => a + b, 0) //Math.max(...fullOptionsValue.values())
       const currentOptions = {
@@ -946,7 +970,7 @@ export const CreateTankPage = (scene: Phaser.Scene, config: any) => {
       const currentProgress = scene.add
         .rectangle(
           0,
-          45,
+          85,
           currentValueProgress * 300 * 0.01,
           10,
           GameOptions.workshop.colorValueProgress
@@ -956,35 +980,47 @@ export const CreateTankPage = (scene: Phaser.Scene, config: any) => {
         fontFamily: 'Arial',
         fontSize: 35,
         fontStyle: 'bold',
-        color: GameOptions.ui.primaryColor, //GameOptions.ui.accent,
+        color: GameOptions.colors.lightColor,
         align: 'left',
         lineSpacing: -25
       })
       const textNameOptions = scene.add.text(
         0,
-        60,
+        100,
         `${scene.lang.stretch} - ${currentValueProgress.toFixed(1)}%`,
         {
           fontFamily: 'Arial',
           fontSize: 30,
-          color: GameOptions.ui.primaryColor, //GameOptions.ui.accent,
+          color: GameOptions.colors.lightColor,
           align: 'left',
           lineSpacing: -25
         }
       )
+      const textSupportWeapons = scene.add.text(0, 40, `${scene.lang.supportWeapons}:`, {
+        fontFamily: 'Arial',
+        fontSize: 30,
+        color: GameOptions.colors.lightColor,
+        align: 'left',
+        lineSpacing: -25
+      })
+      const supportWeapons = createListWeapons(scene, configTank.id)
+      supportWeapons.setPosition(width / 2 - 50, 10)
+
       const containerOptions = scene.add.container(0, 0, [
         progressBg,
         textNameOptions,
+        textSupportWeapons,
+        supportWeapons,
         textNameTank,
         currentProgress
       ])
 
       if (item.cost > 0) {
-        const priceImage = scene.add.image(20, 160, 'coin', 0)
+        const priceImage = scene.add.image(20, 160, SpriteKeys.Coin, 0)
         const priceText = scene.add.text(50, 140, item.cost, {
           fontFamily: 'Arial',
           fontSize: 35,
-          color: '#ffffff', //GameOptions.ui.accent,
+          color: '#ffffff',
           align: 'left',
           fontStyle: 'bold',
           lineSpacing: -25
@@ -994,10 +1030,10 @@ export const CreateTankPage = (scene: Phaser.Scene, config: any) => {
 
       if (scene.gameData.tanks.find((x) => x.id === item.id)) {
         const textInGaraz = scene.add
-          .text(340, 170, scene.lang.inGaraz, {
+          .text(width - 200, 170, scene.lang.inGaraz, {
             fontFamily: 'Arial',
             fontSize: 30,
-            color: GameOptions.ui.primaryColor, //GameOptions.ui.accent,
+            color: GameOptions.colors.buttonSecondary,
             align: 'right',
             lineSpacing: -25
           })
@@ -1006,14 +1042,14 @@ export const CreateTankPage = (scene: Phaser.Scene, config: any) => {
       } else if (item.rank <= getRank(scene.gameData.score)) {
         const buttonCart = new Button(
           scene,
-          280,
+          width - 260,
           140,
-          180,
-          100,
-          GameOptions.ui.panelBgColor,
+          150,
+          70,
+          Phaser.Display.Color.ValueToColor(GameOptions.colors.buttonPrimary).color,
           scene.lang.cart,
           {
-            color: GameOptions.ui.primaryColor
+            color: GameOptions.colors.darkColor
           },
           () => {
             scene.scene
@@ -1026,29 +1062,33 @@ export const CreateTankPage = (scene: Phaser.Scene, config: any) => {
 
       if (item.rank > getRank(scene.gameData.score)) {
         const lockImage = scene.add
-          .image(-50, 70, 'rank', item.rank)
-          .setTint(GameOptions.ui.accentNumber)
+          .image(width / 2 - 100, 30, SpriteKeys.Ranks, item.rank)
+          .setTint(Phaser.Display.Color.ValueToColor(GameOptions.colors.accent).color)
           .setScale(1.5)
           .setInteractive()
         const lockPanel = scene.add
-          .rectangle(-140, -30, 520, 235, GameOptions.ui.panelBgColor, 0.8)
+          .rectangle(
+            -5,
+            -30,
+            width - 160,
+            220,
+            Phaser.Display.Color.ValueToColor(GameOptions.colors.darkColor).color,
+            0.95
+          )
           .setOrigin(0)
           .setScale(1)
-        const lockText = scene.add.text(
-          0,
-          20,
-          `${scene.lang.norank}${scene.lang.rank[item.rank]}`,
-          {
+        const lockText = scene.add
+          .text(width / 2 - 100, 120, `${scene.lang.norank}${scene.lang.rank[item.rank]}`, {
             fontFamily: 'Arial',
             fontSize: 30,
-            color: GameOptions.ui.primaryColor, //GameOptions.ui.accent,
+            color: GameOptions.colors.lightColor,
             align: 'center',
             lineSpacing: 5,
             wordWrap: {
               width: 400
             }
-          }
-        )
+          })
+          .setOrigin(0.5)
         const lockContainer = scene.add
           .container(0, 0, [lockPanel, lockImage, lockText])
           .setDepth(99999)
@@ -1102,8 +1142,22 @@ export const CreateWeaponsPage = (scene, config) => {
     },
 
     slider: {
-      track: scene.rexUI.add.roundRectangle(0, 0, 20, 10, 10, GameOptions.ui.panelBgColor),
-      thumb: scene.rexUI.add.roundRectangle(0, 0, 30, 60, 0, GameOptions.ui.primaryColorNumber),
+      track: scene.rexUI.add.roundRectangle(
+        0,
+        0,
+        20,
+        10,
+        10,
+        Phaser.Display.Color.ValueToColor(GameOptions.colors.secondaryColor).color
+      ),
+      thumb: scene.rexUI.add.roundRectangle(
+        0,
+        0,
+        50,
+        60,
+        0,
+        Phaser.Display.Color.ValueToColor(GameOptions.colors.lightColor).color
+      ),
       valuechangeCallback: function (newValue) {
         debounceUpdateScrollFn(scene, keyT, newValue)
       }
@@ -1123,19 +1177,17 @@ export const CreateWeaponsPage = (scene, config) => {
         index = cell.index
 
       const scale = 1.3
-      const image = scene.add.image(70, 30, 'weapon', item.frame).setScale(scale)
+      const image = scene.add.image(70, 30, SpriteKeys.Weapon, item.frame).setScale(scale)
 
-      const bgPanel = scene.add
-        .nineslice(0, -120, 'shopPanel2', 0, width, 250, 50, 50, 50, 50)
-        .setOrigin(0)
-        .setScale(1)
-
-      const bgLb = scene.add
-        .nineslice(0, -115, 'buttons', 1, width, 250, 50, 50, 50, 50)
-        .setTint(GameOptions.ui.panelBgColorLight)
-        .setAlpha(0.9)
-        .setOrigin(0)
-      const containerImage = scene.add.container(0, 0, [bgLb, bgPanel, image])
+      const bgPanel = scene.add.rectangle(
+        0,
+        0,
+        width * 1.95,
+        height - 30,
+        Phaser.Display.Color.ValueToColor(GameOptions.colors.lightColor).color,
+        0.2
+      )
+      const containerImage = scene.add.container(0, 0, [bgPanel, image])
       const textNameTank = scene.add.text(
         -80,
         0,
@@ -1144,7 +1196,7 @@ export const CreateWeaponsPage = (scene, config) => {
           fontFamily: 'Arial',
           fontSize: 30,
           fontStyle: 'bold',
-          color: GameOptions.ui.primaryColor, //GameOptions.ui.accent,
+          color: GameOptions.colors.lightColor,
           align: 'left',
           lineSpacing: -25
         }
@@ -1155,15 +1207,15 @@ export const CreateWeaponsPage = (scene, config) => {
         const textDamage = scene.add.text(0, 60, `${scene.lang.damage} - ${item.damage}HP`, {
           fontFamily: 'Arial',
           fontSize: 30,
-          color: GameOptions.ui.primaryColor, //GameOptions.ui.accent,
+          color: GameOptions.colors.lightColor,
           align: 'left',
           lineSpacing: -25
         })
-        const priceImage = scene.add.image(20, 140, 'coin', 0)
+        const priceImage = scene.add.image(20, 140, SpriteKeys.Coin, 0)
         const priceText = scene.add.text(50, 120, item.cost, {
           fontFamily: 'Arial',
           fontSize: 35,
-          color: '#ffffff', //GameOptions.ui.accent,
+          color: '#ffffff',
           align: 'left',
           fontStyle: 'bold',
           lineSpacing: -25
@@ -1172,15 +1224,21 @@ export const CreateWeaponsPage = (scene, config) => {
           scene,
           width - 230,
           140,
-          180,
-          100,
-          GameOptions.ui.panelBgColor,
+          150,
+          70,
+          Phaser.Display.Color.ValueToColor(GameOptions.colors.buttonPrimary).color,
           scene.lang.cart,
           {
-            color: GameOptions.ui.primaryColor
+            color: GameOptions.colors.darkColor,
+            strokeThickness: 0
           },
           () => {
-            scene.scene.get('Message').showCartWeapon(item, cell.index)
+            scene.scene.get('Message').showCartWeapon(item, () => {
+              scene.drawWorkShopContainer()
+              scene.createGarazTabs()
+              scene.createShopTanks()
+              scene.drawPlayerInfo()
+            })
           }
         )
         containerOptions.add([buttonCart, priceImage, priceText, textDamage])
@@ -1189,7 +1247,7 @@ export const CreateWeaponsPage = (scene, config) => {
           .text(width - 160, 110, scene.lang.exist, {
             fontFamily: 'Arial',
             fontSize: 35,
-            color: GameOptions.ui.primaryColor,
+            color: GameOptions.colors.lightColor,
             align: 'right',
             lineSpacing: -25
           })
@@ -1198,7 +1256,7 @@ export const CreateWeaponsPage = (scene, config) => {
           .text(width - 160, 170, cell.item.count, {
             fontFamily: 'Arial',
             fontSize: 60,
-            color: GameOptions.ui.accent,
+            color: GameOptions.colors.lightColor,
             align: 'left',
             fontStyle: 'bold',
             lineSpacing: -25
@@ -1245,9 +1303,6 @@ export const CreatePages = (scene: Phaser.Scene, config, keys) => {
   var pages = scene.rexUI.add.pages({
     space: { left: 0, right: 0, top: 10, bottom: 10 }
   })
-  // .addBackground(
-  //   scene.rexUI.add.roundRectangle(0, 0, 10, 10, 0, GameOptions.ui.panelBgColor, 0.5)
-  // )
 
   var createPageCallback = {
     tanksPage: CreateTankPage,
@@ -1269,7 +1324,15 @@ export const CreateButtons = (scene, config, keys) => {
   for (var i = 0, cnt = keys.length; i < cnt; i++) {
     buttons.push(
       scene.rexUI.add.label({
-        background: scene.rexUI.add.roundRectangle(0, 0, 10, 10, 0, GameOptions.ui.panelBgColor, 0),
+        background: scene.rexUI.add.roundRectangle(
+          0,
+          0,
+          10,
+          10,
+          0,
+          Phaser.Display.Color.ValueToColor(GameOptions.colors.buttonSecondary).color,
+          0
+        ),
         text: scene.add.text(
           0,
           0,
@@ -1324,9 +1387,16 @@ export const CreateGarazPanel = (scene, config) => {
     if (button === prevButton) {
       return
     }
-    button.getElement('background').setFillStyle(GameOptions.ui.panelBgColor)
+    button
+      .getElement('background')
+      .setFillStyle(Phaser.Display.Color.ValueToColor(GameOptions.colors.darkColor).color)
     if (prevButton) {
-      prevButton.getElement('background').setFillStyle(GameOptions.ui.panelBgColor, 0)
+      prevButton
+        .getElement('background')
+        .setFillStyle(
+          Phaser.Display.Color.ValueToColor(GameOptions.colors.buttonSecondary).color,
+          0
+        )
     }
     prevButton = button
 
@@ -1344,9 +1414,6 @@ export const CreateGarazPages = (scene: Phaser.Scene, config, keys) => {
     width: config.width - 20,
     space: { left: 0, right: 0, top: 10, bottom: 10 }
   })
-  // .addBackground(
-  //   scene.rexUI.add.roundRectangle(0, 0, 10, 10, 0, GameOptions.ui.panelBgColor, 0.5)
-  // )
 
   var createPageCallback = {
     tanksPage: CreateGarazTankPage,
@@ -1375,8 +1442,22 @@ export const CreateGarazTankPage = (scene: Phaser.Scene, config: any) => {
     },
 
     slider: {
-      track: scene.rexUI.add.roundRectangle(0, 0, 20, 10, 10, GameOptions.ui.panelBgColor),
-      thumb: scene.rexUI.add.roundRectangle(0, 0, 30, 60, 0, GameOptions.ui.primaryColorNumber),
+      track: scene.rexUI.add.roundRectangle(
+        0,
+        0,
+        20,
+        10,
+        10,
+        Phaser.Display.Color.ValueToColor(GameOptions.colors.secondaryColor).color
+      ),
+      thumb: scene.rexUI.add.roundRectangle(
+        0,
+        0,
+        50,
+        60,
+        0,
+        Phaser.Display.Color.ValueToColor(GameOptions.colors.lightColor).color
+      ),
       valuechangeCallback: function (newValue) {
         debounceUpdateScrollFn(scene, keyT, newValue)
       }
@@ -1399,39 +1480,26 @@ export const CreateGarazTankPage = (scene: Phaser.Scene, config: any) => {
       const tankContainer = getTankImage(scene, configTank.id).setAngle(-90).setScale(1.2)
       tankContainer.setPosition(80, 20)
 
-      const bgBorder = scene.add
-        .nineslice(0, -120, 'shopPanel2', 0, width, height, 50, 50, 50, 50)
-        .setOrigin(0)
-        .setScale(1)
-      const bgPanel = scene.add
-        .nineslice(0, -115, 'buttons', 1, width, 250, 50, 50, 50, 50)
-        .setTint(
-          cell.index === scene.gameData.activeTankIndex
-            ? GameOptions.ui.accentNumber
-            : GameOptions.ui.panelBgColorLight
-        )
-        .setAlpha(0.9)
-        .setOrigin(0)
-      const containerImage = scene.add.container(0, 0, [bgPanel, bgBorder, tankContainer])
-
-      const buttonCheck = new Button(
-        scene,
-        width - 260,
-        140,
-        180,
-        100,
-        GameOptions.ui.panelBgColor,
-        scene.lang?.check,
-        {
-          color: GameOptions.ui.primaryColor,
-          fontSize: 25
-        },
-        () => {
-          scene.onCheckTank(cell.index)
-        }
+      const bgPanel = scene.add.rectangle(
+        0,
+        0,
+        width * 1.95,
+        height - 30,
+        cell.index === scene.gameData.activeTankIndex
+          ? Phaser.Display.Color.ValueToColor(GameOptions.colors.accent).color
+          : Phaser.Display.Color.ValueToColor(GameOptions.colors.lightColor).color,
+        cell.index === scene.gameData.activeTankIndex ? 0.2 : 0.2
       )
+      const containerImage = scene.add.container(0, 0, [bgPanel, tankContainer])
+
       const progressBg = scene.add
-        .rectangle(0, 45, width / 2, 10, GameOptions.ui.progressBgColor)
+        .rectangle(
+          0,
+          85,
+          width / 2,
+          10,
+          Phaser.Display.Color.ValueToColor(GameOptions.colors.secondaryColor).color
+        )
         .setOrigin(0)
       const maximumOptionValue = Object.values(GameOptions.maximum).reduce((a, b) => a + b, 0)
       //Math.max(...fullOptionsValue.values())
@@ -1448,7 +1516,7 @@ export const CreateGarazTankPage = (scene: Phaser.Scene, config: any) => {
       const currentProgress = scene.add
         .rectangle(
           0,
-          45,
+          85,
           currentValueProgress * progressBg.width * 0.01,
           10,
           GameOptions.workshop.colorValueProgress
@@ -1458,41 +1526,76 @@ export const CreateGarazTankPage = (scene: Phaser.Scene, config: any) => {
         fontFamily: 'Arial',
         fontSize: 35,
         fontStyle: 'bold',
-        color: GameOptions.ui.primaryColor, //GameOptions.ui.accent,
+        color: GameOptions.colors.lightColor,
         align: 'left',
         lineSpacing: -25
       })
       const textNameOptions = scene.add.text(
         0,
-        60,
+        100,
         `${scene.lang?.stretch} - ${currentValueProgress.toFixed(1)}%`,
         {
           fontFamily: 'Arial',
           fontSize: 30,
-          color: GameOptions.ui.primaryColor, //GameOptions.ui.accent,
+          color: GameOptions.colors.lightColor,
           align: 'left',
           lineSpacing: -25
         }
       )
+
+      const textSupportWeapons = scene.add.text(0, 40, `${scene.lang.supportWeapons}:`, {
+        fontFamily: 'Arial',
+        fontSize: 30,
+        color: GameOptions.colors.lightColor,
+        align: 'left',
+        lineSpacing: -25
+      })
+      const supportWeapons = createListWeapons(scene, configTank.id)
+      supportWeapons.setPosition(width / 2 - (config.keyScroll == 'scrollG' ? 15 : 50), 10)
+
       const containerOptions = scene.add.container(0, 0, [
         progressBg,
         textNameOptions,
         textNameTank,
         currentProgress,
-        buttonCheck
+        supportWeapons,
+        textSupportWeapons
+
+        // buttonUpdate
       ])
+
+      if (scene.gameData.activeTankIndex != index) {
+        const buttonCheck = new Button(
+          scene,
+          width - 260,
+          140,
+          150,
+          70,
+          Phaser.Display.Color.ValueToColor(GameOptions.colors.buttonSecondary).color,
+          scene.lang?.check,
+          {
+            color: GameOptions.colors.darkColor,
+            fontSize: 25
+          },
+          () => {
+            scene.sound.play(KeySound.Click)
+            scene.onCheckTank(cell.index)
+          }
+        )
+        containerOptions.add(buttonCheck)
+      }
 
       if (config.workshop && configTank.cost > 0) {
         const buttonSell = new Button(
           scene,
           width - 420,
           140,
-          180,
-          100,
-          GameOptions.ui.panelBgColor,
+          150,
+          70,
+          Phaser.Display.Color.ValueToColor(GameOptions.colors.darkColor).color,
           scene.lang?.sell,
           {
-            color: GameOptions.ui.primaryColor,
+            color: GameOptions.colors.lightColor,
             fontSize: 25
           },
           () => {
@@ -1559,8 +1662,22 @@ export function createTableGerb(scene: Phaser.Scene, callback: () => void) {
     },
 
     slider: {
-      track: scene.rexUI.add.roundRectangle(0, 0, 20, 10, 10, GameOptions.ui.panelBgColor),
-      thumb: scene.rexUI.add.roundRectangle(0, 0, 60, 60, 0, GameOptions.ui.primaryColorNumber),
+      track: scene.rexUI.add.roundRectangle(
+        0,
+        0,
+        20,
+        10,
+        10,
+        Phaser.Display.Color.ValueToColor(GameOptions.colors.secondaryColor).color
+      ),
+      thumb: scene.rexUI.add.roundRectangle(
+        0,
+        0,
+        60,
+        60,
+        0,
+        Phaser.Display.Color.ValueToColor(GameOptions.colors.lightColor).color
+      ),
       valuechangeCallback: function (newValue) {
         // debounceUpdateScrollFn(scene, keyT, newValue)
       }
@@ -1581,12 +1698,19 @@ export function createTableGerb(scene: Phaser.Scene, callback: () => void) {
       const container = scene.add.container(0, 0, [])
 
       if (scene.gameData.gerbId == item) {
-        const bg = scene.add.rectangle(0, 0, width, height, GameOptions.ui.accentNumber, 0.3)
+        const bg = scene.add.rectangle(
+          0,
+          0,
+          width,
+          height,
+          Phaser.Display.Color.ValueToColor(GameOptions.colors.accent).color,
+          0.3
+        )
         container.add(bg)
       }
 
       const image = scene.add
-        .image(0, 0, 'gerb', item)
+        .image(0, 0, SpriteKeys.Gerb, item)
         .setInteractive({ useHandCursor: true })
         .on('pointerdown', () => {
           scene.scene.get('WorkShop').changeGerb(item)
@@ -1640,4 +1764,28 @@ export function createTableGerb(scene: Phaser.Scene, callback: () => void) {
       )
       .layout()
   )
+}
+
+function createListWeapons(scene: Phaser.Scene, id: string) {
+  const configComplexTank = GameOptions.complexTanks.find((x) => x.id == id)
+  const muzzleConfig = GameOptions.muzzles.items[configComplexTank.muzzle]
+  const supportWeapons = GameOptions.weaponObjects.filter((x) =>
+    muzzleConfig.supportWeapons.includes(x.type)
+  )
+
+  const items = []
+
+  for (const weaponConfig of supportWeapons) {
+    const image = scene.add.image(0, 0, SpriteKeys.Weapon, weaponConfig.frame)
+    items.push(image)
+  }
+
+  const grid = Phaser.Actions.GridAlign(items, {
+    width: 5,
+    height: 1,
+    cellWidth: 25
+  })
+
+  const container = scene.add.container(0, 0, grid)
+  return container
 }

@@ -27,13 +27,14 @@ export default function createAIMoveRandomSystem(scene: Phaser.Scene) {
 
       AI.accumulatedTime[id] += dt
 
-      if (Input.obstacle[id]) {
+      if (!!Input.obstacle[id]) {
         AI.accumulatedTime[id] += AI.timeBetweenActions[id]
+        Input.obstacle[id] = 0
 
-        Input.left[id] = 0
-        Input.right[id] = 0
-        Input.up[id] = 0
-        Input.down[id] = 0
+        // Input.left[id] = 0
+        // Input.right[id] = 0
+        // Input.up[id] = 0
+        // Input.down[id] = 0
         // Input.obstacle[id] = 0
       }
       // // check collisions.
@@ -60,7 +61,6 @@ export default function createAIMoveRandomSystem(scene: Phaser.Scene) {
       if (AI.accumulatedTime[id] < AI.timeBetweenActions[id]) {
         continue
       }
-      Input.obstacle[id] = 0
 
       Input.left[id] = 0
       Input.right[id] = 0

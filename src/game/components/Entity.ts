@@ -13,6 +13,10 @@ export const Entity = defineComponent({
   teamIndex: Types.i32,
   gerbId: Types.i32,
   /**
+   * ID сущности, которая уничтожила
+   */
+  targetDeath: Types.i32,
+  /**
    * ID захваченной сущности
    */
   target: Types.i32,

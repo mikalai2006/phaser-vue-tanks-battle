@@ -4,7 +4,7 @@ import { Tank } from '../components/Tank'
 import Position from '../components/Position'
 import { EntityBar } from '../components/EntityBar'
 import { Entity } from '../components/Entity'
-import { GameOptions } from '../options/gameOptions'
+import { GameOptions, SpriteKeys } from '../options/gameOptions'
 import { towersById } from './matter'
 
 const WIDTH_BAR = 100
@@ -55,15 +55,15 @@ export function createEntityBarSystem(scene: Phaser.Scene) {
           : GameOptions.configTeams[Entity.teamIndex[id]].color
 
       const bg1 = scene.add.rectangle(0, 0, WIDTH_BAR + 10, 30, colorTeam).setOrigin(0, 0.5)
-      const imageBrandBg = scene.add.image(-17, 0, 'marker', 0).setTint(colorTeam)
-      const imageGerb = scene.add
-        .image(-16, 3, 'gerb', Entity.gerbId[id])
-        .setTint(0xffffff)
-        .setScale(0.3)
+      // const imageBrandBg = scene.add.image(-17, 0, 'marker', 0).setTint(colorTeam)
+      // const imageGerb = scene.add
+      //   .image(-16, 3,SpriteKeys.Gerb, Entity.gerbId[id])
+      //   .setTint(0xffffff)
+      //   .setScale(0.3)
 
       const imageRankBg = scene.add.rectangle(WIDTH_BAR + 20, 2, 28, 30, 0x111111)
       const imageRank = scene.add
-        .image(WIDTH_BAR + 20, 3, 'rank', Entity.rank[id])
+        .image(WIDTH_BAR + 20, 3, SpriteKeys.Ranks, Entity.rank[id])
         .setTint(0xffffff)
         .setScale(0.7)
       const bg = scene.add.rectangle(3, 0, WIDTH_BAR + 4, 22, 0x111111).setOrigin(0, 0.5)
@@ -71,7 +71,7 @@ export function createEntityBarSystem(scene: Phaser.Scene) {
         -40,
         -45,
 
-        scene.names.get(id)?.substring(0, GameOptions.maxNameUser),
+        scene.names.get(id),
         {
           fontFamily: 'Arial',
           // fontStyle: 'bold',
@@ -120,8 +120,8 @@ export function createEntityBarSystem(scene: Phaser.Scene) {
           bg1,
           bg,
           textName,
-          imageBrandBg,
-          imageGerb,
+          // imageBrandBg,
+          // imageGerb,
           healthImageBg,
           healthImage,
           weaponImageBg,
@@ -152,8 +152,8 @@ export function createEntityBarSystem(scene: Phaser.Scene) {
         bg1,
         bg,
         textName,
-        imageBrandBg,
-        imageGerb,
+        // imageBrandBg,
+        // imageGerb,
         healthImageBg,
         healthImage,
         weaponImageBg,
@@ -213,32 +213,6 @@ export function createEntityBarSyncSystem(scene) {
         }
         object.weaponImage.displayWidth = WIDTH_BAR * progress
       }
-
-      // if (Entity.teamIndex[id] != Entity.teamIndex[scene.idFollower]) {
-      //   object.bg1.removePostPipeline('Light2D'),
-      //     object.bg.removePostPipeline('Light2D'),
-      //     object.textName.removePostPipeline('Light2D'),
-      //     object.imageBrandBg.removePostPipeline('Light2D'),
-      //     object.imageGerb.removePostPipeline('Light2D'),
-      //     object.healthImageBg.removePostPipeline('Light2D'),
-      //     object.healthImage.removePostPipeline('Light2D'),
-      //     object.weaponImageBg.removePostPipeline('Light2D'),
-      //     object.weaponImage.removePostPipeline('Light2D'),
-      //     object.imageRankBg.removePostPipeline('Light2D'),
-      //     object.imageRank.removePostPipeline('Light2D')
-      // } else {
-      //   object.bg1.setPipeline('Light2D'),
-      //     object.bg.setPipeline('Light2D'),
-      //     object.textName.setPipeline('Light2D'),
-      //     object.imageBrandBg.setPipeline('Light2D'),
-      //     object.imageGerb.setPipeline('Light2D'),
-      //     object.healthImageBg.setPipeline('Light2D'),
-      //     object.healthImage.setPipeline('Light2D'),
-      //     object.weaponImageBg.setPipeline('Light2D'),
-      //     object.weaponImage.setPipeline('Light2D'),
-      //     object.imageRankBg.setPipeline('Light2D'),
-      //     object.imageRank.setPipeline('Light2D')
-      // }
     }
 
     return world

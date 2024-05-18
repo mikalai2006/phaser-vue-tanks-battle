@@ -4,10 +4,10 @@ import { defineSystem, defineQuery } from 'bitecs'
 
 import { Weapon } from '../components/Weapon'
 import { GameOptions, WeaponType } from '../options/gameOptions'
-import { Player } from '../components/Player'
 import { groupBy } from 'lodash'
 import { Tank } from '../components/Tank'
-import { replaceRegexByArray } from '../utils/utils'
+import { getSupportWeapons, replaceRegexByArray } from '../utils/utils'
+import { KeySound } from '../types'
 
 const WIDTH_CELL = 120
 const HEIGHT_CELL = 100
@@ -32,14 +32,24 @@ export function createWeaponBarSystem(scene: Phaser.Scene) {
     .setScrollFactor(0)
 
   const cells = []
+
+  const supportWeapons = getSupportWeapons(
+    scene.gameData.tanks[scene.gameData.activeTankIndex].id
+  ).map((x) => x.type)
+
   for (let i = 0; i < GameOptions.weaponObjects.length; i++) {
     const weapon = GameOptions.weaponObjects[i]
+
+    if (!supportWeapons.includes(weapon.type)) {
+      continue
+    }
+
     const text = scene.add
       .text(25, 0, '-', {
         fontFamily: 'Arial',
         fontStyle: 'bold',
         fontSize: 25,
-        color: GameOptions.ui.buttonTextColor,
+        color: GameOptions.colors.lightColor,
         stroke: '#000000',
         strokeThickness: 3,
         align: 'center'
@@ -59,21 +69,29 @@ export function createWeaponBarSystem(scene: Phaser.Scene) {
         // )
       } else {
         if (!scene.gameData.settings.autoCheckWeapon) {
+          if (scene.isMute) {
+            scene.sound.play(KeySound.CheckWeapon, {
+              volume: 0.5
+            })
+          }
           Tank.activeWeaponType[scene.idFollower] = weapon.type
           scene.scene
             .get('Message')
             .showToast(
               replaceRegexByArray(scene.lang.activeWeapon, [scene.lang.weapons[keyWeapon]]),
-              GameOptions.ui.panelBgColor
+              Phaser.Display.Color.ValueToColor(GameOptions.colors.darkColor).color
             )
         } else {
           scene.scene
             .get('Message')
-            .showToast(scene.lang.enableAutoCheckWeapon, GameOptions.ui.panelBgColor)
+            .showToast(
+              scene.lang.enableAutoCheckWeapon,
+              Phaser.Display.Color.ValueToColor(GameOptions.colors.danger).color
+            )
         }
       }
     }
-    button.on('pointerup', funcCallback)
+    button.on('pointerdown', funcCallback)
     var keyboardKey = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[arrayKeys[i]])
     keyboardKey.on('up', funcCallback)
     // new Button(scene, 0, 0, WIDTH_CELL, HEIGHT_CELL, 0x000000, '', {}, () => {
@@ -108,50 +126,11 @@ export function createWeaponBarSystem(scene: Phaser.Scene) {
 
     const groupWeapons = groupBy(entitiesPlayer, (v) => Weapon.type[v])
 
-    // const cells = []
-    // for (const weaponKey in groupWeapons) {
-    //   // const idFirst = groupWeapons[weaponKey][0]
-    //   // const keyWeapon = Object.keys(WeaponType).find((key) => WeaponType[key] === Weapon.type[idFirst])
-    //   const weapon = GameOptions.weaponObjects.find((x) => x.type.toString() == weaponKey)
-    //   const weaponCount = groupWeapons[weaponKey].reduce((ac, el) => {
-    //     const value = ac + Weapon.count[el]
-    //     return value
-    //   }, 0)
-    //   const button = new Button(scene, 0, 0, WIDTH_CELL, HEIGHT_CELL, 0xff0000, '', {}, () => {
-    //     console.log('Check ', weapon.type)
-    //   }).setDepth(99999)
-    //   const countText = scene.add.text(WIDTH_CELL - 15, 0, weaponCount.toString(), {
-    //     fontFamily: 'Arial',
-    //     fontStyle: 'bold',
-    //     fontSize: 25,
-    //     color: GameOptions.ui.buttonTextColor,
-    //     stroke: '#000000',
-    //     strokeThickness: 3,
-    //     align: 'center'
-    //   })
-    //   const image = scene.add.image(0, 0, weapon.texture, weapon.frame)
-
-    //   const container = scene.add.container(0, 0, [button, image, countText]) //.setAlpha(i == 0 ? 1 : 0.5)
-    //   cells.push(container)
-    //   // if (i != 0) {
-    //   //   buttons.set(weapon.type, container)
-    //   // }
-    // }
-    // const gridWeapons = Phaser.Actions.GridAlign(cells, {
-    //   width: 10,
-    //   height: 1,
-    //   cellWidth: WIDTH_CELL,
-    //   cellHeight: HEIGHT_CELL,
-    //   x: -(WIDTH_CELL * GameOptions.weaponObjects.length) / 3,
-    //   y: 0
-    // })
-
-    // weaponsBar.add(gridWeapons)
-
     const typeActiveWeapon = Tank.activeWeaponType[idPlayer]
 
     buttons.forEach((value, key, map) => {
       const button = buttons.get(key)
+
       if (groupWeapons[key]) {
         const weaponCount = groupWeapons[key].reduce((ac, el) => {
           const value = ac + Weapon.count[el]
@@ -168,7 +147,7 @@ export function createWeaponBarSystem(scene: Phaser.Scene) {
         button.text.setText(key == WeaponType.default ? '∞' : '0')
       }
       if (typeActiveWeapon == key) {
-        button.button.fillColor = GameOptions.ui.accent.replace('#', '0x')
+        button.button.fillColor = Phaser.Display.Color.ValueToColor(GameOptions.colors.accent).color
         button.container.setAlpha(1)
       } else {
         button.button.fillColor = 0x000000

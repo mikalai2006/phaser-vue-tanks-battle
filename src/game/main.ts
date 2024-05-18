@@ -16,9 +16,9 @@ import { Control } from './scenes/Control'
 
 // object to initialize the Scale Manager
 const scaleObject: Phaser.Types.Core.ScaleConfig = {
+  parent: 'game-container',
   mode: Phaser.Scale.FIT,
   autoCenter: Phaser.Scale.CENTER_BOTH,
-  parent: 'game-container',
   width: GameOptions.screen.width,
   height: GameOptions.screen.height
 }
@@ -26,7 +26,7 @@ const scaleObject: Phaser.Types.Core.ScaleConfig = {
 // game configuration object
 const configObject: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
-  backgroundColor: GameOptions.ui.panelBgColor,
+  backgroundColor: 0x000000,
   scale: scaleObject,
   scene: [
     Boot,
@@ -56,7 +56,8 @@ const configObject: Phaser.Types.Core.GameConfig = {
     matter: {
       // enableSleeping: true,
       gravity: {
-        y: 0
+        y: 0,
+        x: 0
       },
       debug: true
       // {
@@ -72,7 +73,6 @@ const configObject: Phaser.Types.Core.GameConfig = {
         plugin: RexUIPlugin,
         mapping: 'rexUI'
       }
-      // ...
     ],
     global: [
       {

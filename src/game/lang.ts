@@ -3,7 +3,7 @@ export const langs = {
     code: 'ru',
     codeName: 'Ру',
     name: 'Русский',
-    name_game: 'Battle of tanks',
+    name_game: 'Crazy tanks',
     workShopTitle: 'Мастерская',
     options: {
       health: 'HP',
@@ -40,7 +40,12 @@ export const langs = {
       'Полковник'
     ],
     update: 'Улучшить',
-    damage: 'Урон',
+    giftHint: 'До получения подарка осталось %s мин. %s сек.',
+    giftTitle: 'Ежедневный подарок',
+    giftGet: 'Получить подарок',
+    giftDescription:
+      'Вы получаете небольшой подарок! Такой подарок будет доступен вам каждый день!',
+    damage: 'Базовый урон',
     my: 'Мои ',
     updateTitle: 'Улучшение ТТХ',
     updateText: 'Вы хотите улучшить %s на ~%s% за %s монет?',
@@ -64,8 +69,7 @@ export const langs = {
     maxValue: 'Максимум',
     notMany: 'Не хватает монет',
     bank: 'Банк',
-    bankDescription: 'Здесь можно получить монеты за портальную валюту или просмотр рекламы',
-    bankGetMoneyByAdv: 'Получить 100 монет за просмотр рекламы',
+    bankDescription: 'Здесь можно получить монеты',
     return: 'Назад',
     getAdv: 'Получить за просмотр рекламы',
     getYan: 'Получить за %s янов',
@@ -76,32 +80,36 @@ export const langs = {
     gameOverPlayer: 'Ваш танк подбит, но не отчаивайтесь, вы всегда можете начать новый раунд!',
     winTeam: 'Ваша команда одержала победу',
     winAlone: 'Вы одержали победу',
-    roundReward: 'За эту битву вы заработали %s монет!',
+    roundReward: 'В этом бою вы заработали %s монет!',
     gameOverTitle: 'Поражение',
     winTitle: 'Победа',
     getReward: 'Забрать награду',
-    getReward2: 'Забрать удвоенную награду, просмотрев рекламу',
+    getReward2: 'Забрать удвоенную награду, посмотрев рекламу',
     settings: {
-      showArrow: 'Показывать стрелку направления движения прямо',
+      showArrow: 'Показывать стрелку направления движения прямо для вашего танка',
       showAreol: 'Подсвечивать ваш танк',
-      autoShot: 'Автовыстрел при успешном наведении',
+      autoShot: 'Автоматическая стрельба при успешном наведении',
       showBar: 'Показать информацию о HP и перезарядке около танка на карте',
-      autoCheckWeapon: 'Автоматически устанавливать активными - сильнейшие снаряды, при наличии',
+      autoCheckWeapon:
+        'Автоматическое управление снарядами. Если включено - будет устанавливать активными сильнейшие снаряды из тех что есть',
       friendlyFire:
-        'Дружественный огонь (снаряды наносят урон всем танкам, а не только из другой команды)',
-      towerForward: 'Башня вперед при пассиве',
-      showToast: 'Показывать всплывающие сообщения для всех участников боя',
-      showAllEnemyEye: 'Показывать сектора обстрела и наведения для всех врагов'
+        'Дружественный огонь. Если включено - снаряды наносят урон всем танкам, в том числе и дружественным',
+      towerForward: 'Поворачивать башню вперед в походном режиме',
+      showToast:
+        'Показывать всплывающие сообщения для всех участников боя. Если включено - вы будете видеть сообщения других танков обо всех действиях с объектами карты',
+      showAllEnemyEye:
+        'Показывать сектора обстрела и наведения для всех врагов. Если включено - вы будете видеть сектора наблюдения и обстрела не только ближайшего танка, а всех',
+      showHintKill: 'Показывать список сообщений об уничтожении техники на карте'
     },
     typeRound: [
       {
-        title: 'Один против всех',
+        title: 'Одиночный бой',
         description: 'Вам нужно победить всех противников на карте. Здесь каждый сам за себя!'
       },
       {
-        title: 'Команда на команду',
+        title: 'Командный бой',
         description:
-          'Вам нужно победить всех участников команды соперников. Не подстрелите участников вашей команды!'
+          'Вам нужно победить команду соперников. Не подстрелите участников вашей команды!'
       }
     ],
     exitFromBattleTitle: 'Уход с поля боя',
@@ -163,17 +171,35 @@ export const langs = {
       },
       checkWeapon: {
         title: 'Смена снарядов',
-        text: 'При наличии снарядов, вы всегда можете сменить тип активных снарядов, используя кнопки 0-9 или нажав на выбранные снаряды в правой части экрана.\r\n\r\nВ настройках можно включить автоматический выбор сильнейшего снаряда.'
+        text: 'При наличии снарядов, вы всегда можете сменить тип активных снарядов, используя кнопки 1-5 или нажав на выбранные снаряды в правой части экрана.\r\n\r\nВ настройках можно включить автоматический выбор сильнейшего снаряда.'
       },
       markers: {
         title: 'Маркеры',
-        text: 'Маркеры, которые расположены по краям экрана, позволят вам видеть где находятся другие танки'
+        text: 'Маркеры, которые расположены по краям экрана, позволяют вам видеть где находятся другие танки'
       },
       refreshWeapon: {
         title: 'Перезарядка',
         text: 'После каждого выстрела, каждый танк делает перезарядку. Оранжевая полоска в панели над каждым танком, показывает процесс перезарядки.'
       }
     },
+    hint: 'Подсказка',
+    hints: [
+      'В магазине всегда можно купить различные снаряды',
+      'Каждый танк имеет определенный потенциал прокачки(как правило все параметры прокачиваются на 100% от начального значения). При выборе танка обращайте внимание на его силу.',
+      'Прокачивая танк, вы получаете тактическое преимущество перед противником',
+      'Разрушая тараном объекты на карте, будьте осторожны! Вы можете автоматически получить бонус, который понижает параметры вашего танка',
+      'Установив в настройках автоматические выстрелы, вы можете больше внимания уделить управлению танком',
+      'Ручное управление снарядами способствует экономии арсенала',
+      'Каждый танк автоматически наводит башню на ближайшую вражескую технику',
+      'Улучшение маневренности позволит быстрее совершать повороты при управлении танком',
+      'Улучшение скорости передвижения позволит быстрее передвигаться по карте и собрать все лучшие бонусы и снаряды',
+      'Улучшение скорости вращения башни позволит быстрее наводить башню на танк противника',
+      'Улучшение точности наведения позволит более точно наводить башню на противника',
+      'Улучшение времени перезарядки позволит сократить время между выстрелами',
+      'Улучшение дистанции наведения позволит увеличить радиус наблюдения за техникой противника',
+      'Улучшение дистанции стрельбы позволит увеличить радиус обстрела техники противника',
+      'Улучшение начальной скорости полета снарядов сделает ваши снаряды быстрее'
+    ],
     sell: 'Продать',
     sellTitle: 'Продажа танка %s',
     sellDescription: 'Вы действительно хотите продать танк %s?',
@@ -181,114 +207,256 @@ export const langs = {
     gerbEdit: 'Изменить лого',
     gerbCheckDescription: 'Лого будет использовано на карте для информации.',
     gerbToast: 'Лого успешно изменено!',
-
-    record: 'Ваш рекорд',
-    level: 'Раунд',
-    level_completed: 'Раунд завершен',
-    pause: 'Пауза',
-    create_bomb_help: 'У вас нет доступных молний! Хотите создать молнию за просмотр рекламы?',
     ok: 'Да',
+    well: 'Хорошо',
+    countBattle: 'Всего боев - %s',
     cancel: 'Нет',
-    gameover_title: 'Игра проиграна',
-    gameover_btn_continue_by_adv: 'Продолжить за просмотр рекламы',
-    gameover_btn_new_game: 'Начать новую игру',
-    current_score: 'Текущий счет',
     btnToBattle: 'В бой',
-    btn_continue: 'Продолжить игру',
     leaderboard_title: 'Лидеры в игре',
-    lang_title: 'Язык в игре',
-    close: 'Закрыть',
-    add_bomb_max: 'За уничтожение самых больших шаров, вы получаете бонус - огненную молнию!',
-    add_bomb_seria: 'За большую серию уничтожений шаров, вы получаете бонус - огненную молнию!',
-    next: 'Далее',
-    bonusText: [
-      '',
-      '',
-      'Отлично',
-      'Прекрасно',
-      'Здорово',
-      'Блестяще',
-      'Так держать',
-      'Круто',
-      'Искусно',
-      'Браво',
-      'Фантастика',
-      'Чудесно',
-      'Ты талант',
-      'Ты звезда'
-    ],
-    job: 'Задание: Уничтожить следующие шары'
+    langTitle: 'Язык в игре',
+    newRankTitle: 'Новое звание',
+    newRankDescription: 'Ваш опыт, полученный на поле боя, способствует повышению до звания - %s!',
+    aloneTextBar: 'Танков на карте: %s',
+    kills: 'уничтожил',
+    fill: 'Пополнить',
+    notName: 'Безымянный',
+    supportWeapons: 'Использует снаряды',
+    adbMessage:
+      'К сожалению функционал банка ограничен, так как у вас включен блокировщик рекламы. Отключите блокировщик, чтобы воспользоваться всеми услугами!',
+    notAvailable: 'Не доступно',
+    initPlayer: 'Инициализация пользователя',
+    loadingLB: 'Инициализация лидерборда',
+    loadingScenes: 'Подготовка игры',
+    coinByDestroy: 'Бонус за уничтожение +%s монет'
   },
   en: {
     code: 'en',
     codeName: 'En',
     name: 'English',
-    name_game: 'Battle of tanks',
+    name_game: 'Crazy tanks',
     workShopTitle: 'Workshop',
     options: {
-      health: 'Максимальное HP',
-      speed: 'Максимальная скорость',
-      speedRotate: 'Максимальная маневренность'
+      health: 'HP',
+      speed: 'Movement speed',
+      speedRotate: 'Maneuverability',
+      speedRotateTower: 'Tower rotation speed',
+      accuracy: 'Pointing accuracy',
+      timeRefreshWeapon: 'Recharge time',
+      distanceView: 'Targeting distance',
+      speedShot: 'Projectile speed',
+      distanceShot: 'Firing distance'
     },
-
-    level: 'Level',
-    level_completed: 'Level completed',
-    pause: 'Pause',
-    create_bomb_help:
-      "You don't have any lightning bolts available! Want to create a lightning bolt for viewing an ad?",
-    ok: 'Yes',
-    cancel: 'No',
-    gameover_title: 'The game is lost',
-    gameover_btn_continue_by_adv: 'Continue to view ads',
-    gameover_btn_new_game: 'Start a new game',
-    current_score: 'Current score',
-    btnToBattle: 'To battle',
-    btn_continue: 'Continue game',
-    leaderboard_title: 'Leaders in the game',
-    lang_title: 'Language in the game',
-    close: 'Close',
-    add_bomb_max: 'For destroying the largest balls, you get a bonus - fire lightning!',
-    add_bomb_seria: 'For a large series of destruction of balls, you get a bonus - fire lightning!',
-    next: 'Далее',
-    bonusText: [
-      '',
-      '',
-      'Great',
-      'Wonderful',
-      'Well done',
-      'Brilliantly',
-      'Keep it up',
-      'Good job',
-      'Artfully',
-      'Bravo',
-      'Fantastic',
-      'Very cool',
-      'Right On',
-      'You are a star'
+    weapons: {
+      default: 'Ordinary',
+      cumulative: 'Cumulative',
+      armor: 'Armor-piercing',
+      energy: 'Energy',
+      subcaliber: 'Sub-caliber',
+      explosive: 'Armor-piercing high-explosive'
+    },
+    weapon: 'projectile',
+    activeWeapon: 'Active projectile - %s',
+    noneWeapon: 'Out of %s projectile!',
+    norank: 'Rank required - \r\n',
+    rank: [
+      'Corporal',
+      'Jr. sergeant',
+      'Sergeant',
+      'Lieutenant',
+      'Art. lieutenant',
+      'Captain',
+      'Major',
+      'Lieutenant colonel',
+      'Colonel'
     ],
-    job: 'Objective: Destroy the following balls',
-    help: {
-      help_move: {
-        title: 'Aim and throw the ball',
-        text: 'Move the carriage - move the mouse over the field of balls (press your finger on the field of balls and move on mobile devices). Click the mouse button over the field of balls (release your finger on mobile devices) to throw the ball.'
+    update: 'Upgrade',
+    giftHint: 'There are %s min. %s sec. left before receiving the gift.',
+    giftTitle: 'Daily gift',
+    giftGet: 'Receive a gift',
+    giftDescription: 'You receive a small gift! Such a gift will be available to you every day!',
+    damage: 'Base damage',
+    my: 'My ',
+    updateTitle: 'Upgrade characteristics',
+    updateText: 'Do you want to upgrade %s by ~%s% for %s coins?',
+    updateTextSlider: 'Drag the slider (white circle) to select the desired level of improvement',
+    cartWeaponsText: 'You want to make a purchase: %s %s - %s pcs. for %s coins?',
+    cartWeaponsTextSlider:
+      'Drag the slider (white circle) to indicate how many shells you want to buy',
+    shopTitle: 'Shop',
+    pc: 'pc.',
+    stretch: 'Force',
+    check: 'Choose',
+    cart: 'Buy',
+    cartTitle: 'Purchase',
+    cartText: 'Do you want to buy %s for %s coins?',
+    inGaraz: 'In the garage',
+    tanksPage: 'Tanks',
+    weaponsPage: 'Shells',
+    exist: 'In stock:',
+    repair: 'Recovery',
+    maxValue: 'Maximum',
+    notMany: 'Not enough coins',
+    bank: 'Bank',
+    bankDescription: 'Here you can get coins',
+    return: 'Back',
+    getAdv: 'Get paid for watching ads',
+    getYan: 'Receive for %s yang',
+    getCoinSuccess: '%s coins have been successfully added to your account!',
+    backToBank: 'Come in for coins anytime!',
+    controlTitle: 'Settings',
+    exitFromRound: 'Complete a round',
+    gameOverPlayer:
+      "Your tank is knocked out, but don't despair, you can always start a new round!",
+    winTeam: 'Your team won',
+    winAlone: 'You have won',
+    roundReward: 'You earned %s coins for this battle!',
+    gameOverTitle: 'Defeat',
+    winTitle: 'Victory',
+    getReward: 'Collect your reward',
+    getReward2: 'Get a double reward by watching an ad',
+    settings: {
+      showArrow: 'Show direction arrow straight ahead',
+      showAreol: 'Highlight your tank',
+      autoShot: 'Auto-shot upon successful aiming',
+      showBar: 'Show information about HP and reload near the tank on the map',
+      autoCheckWeapon:
+        'Automatic projectile control. If enabled, it will install the strongest projectiles that are active',
+      friendlyFire:
+        'Friendly fire. If enabled, shells cause damage to all tanks, including friendly ones',
+      towerForward: 'Rotate the tower forward in traveling mode',
+      showToast:
+        'Show pop-up messages for all participants in the battle. If enabled, you will see messages from other tanks about all actions with map objects',
+      showAllEnemyEye:
+        'Show firing and targeting sectors for all enemies. If enabled, you will see the observation and firing sectors not only of the nearest tank, but of all',
+      showHintKill: 'Show a list of messages about the destruction of equipment on the map'
+    },
+    typeRound: [
+      {
+        title: 'Single battle',
+        description: "You need to defeat all opponents on the map. It's every man for himself here!"
       },
-      help_floor: {
-        title: 'Floor Movement',
-        text: 'When completing the task, the floor will rise according to the timer. When performing a series of broken balls (combos), the floor will go down'
-      },
-      help_rotate_zoom: {
-        title: 'Change next ball',
-        text: 'Press the carriage or the arrow button to swap the positions of the balls in the carriage (also the SPACEBAR button).'
-      },
-      help_bomb: {
-        title: 'Wreck the Balls',
-        text: 'To destroy the balls on the field, use the close button.'
-      },
-      help_general: {
-        title: 'About the game',
-        text: 'In each round of the game it is necessary to remove balls from the task. The game continues until no ball falls out of the basket.'
+      {
+        title: 'Team fight',
+        description: "You need to defeat the opposing team. Don't shoot your team members!"
       }
-    }
+    ],
+    exitFromBattleTitle: 'Leaving the battlefield',
+    exitFromBattleDescription:
+      'If you leave the battlefield now, you will not receive any reward! Do you want to leave?',
+    sound: 'Sound %s',
+    on: 'on',
+    off: 'off',
+    enableAutoCheckWeapon:
+      'Automatic change of projectiles is enabled, disable in settings to manually manage projectiles',
+    loading: 'Loading',
+    loadingAssets: 'Loading resources',
+    loadingData: 'Loading data',
+    init: 'Initializing the SDK',
+    inputName: 'Enter your name',
+    yourTeam: 'My team',
+    enemyTeam: 'Opposing team',
+    bonusBar: 'My current bonuses:',
+    help: {
+      move: {
+        title: 'Tank control',
+        text: "In the game, you control the tank's base and shooting. The tower is aimed automatically if enemies approach you at a certain distance.\r\n\r\nUse the keys:\r\nW,A,S,D (or arrows) - to move and rotate the tank base\r\nSpace - for a shot."
+      },
+      moveMobile: {
+        title: 'Moving the tank',
+        text: 'Use the virtual joystick to move and rotate the tank base. Press the round button at the bottom right of the screen to fire.'
+      },
+      friendly: {
+        title: 'Friendly fire',
+        text: 'If friendly fire mode is activated in the game settings, the shells of all team members will cause damage to friendly tanks. \r\nBe careful when hitting friendly tanks, you will lose coins!'
+      },
+      distanceView: {
+        title: 'Targeting distance of an enemy tank',
+        text: 'If an enemy tank spots an enemy, the targeting range boundary appears on the screen in the form of a purple circle and it begins to point the tower at the spotted tank.'
+      },
+      distanceViewMy: {
+        title: 'Targeting distance',
+        text: "When your tank approaches an enemy tank at a distance equal to the aiming distance, the tank's tower automatically begins to aim at this tank. \r\nA yellow circle border appears on the screen, which shows the maximum aiming distance.\r\n\r\nThe aiming distance can be improved in the workshop."
+      },
+      distanceShotMy: {
+        title: 'Firing distance',
+        text: 'After aiming the tower, you can fire, but take into account the firing distance, which is shown on the screen by a white circle and the white sector shows the place where the projectile will fly. \r\n\r\nFiring distance can be improved in the workshop.'
+      },
+      distanceShot: {
+        title: 'Firing distance of an enemy tank',
+        text: "The red circle shows the limit of the enemy tank's firing range. The red sector marks the affected area. Try to avoid the red sector, otherwise you may get shot."
+      },
+      destroyObject: {
+        title: 'Destruction',
+        text: 'Many buildings on the map can be destroyed by a ram or a shell. After destruction, each building can give out some kind of bonus'
+      },
+      bonus: {
+        title: 'Bonuses',
+        text: 'After the destruction of the building, a bonus may appear to improve (lower) the characteristics of the tank.\r\n\r\nATTENTION: the bonus can either increase or decrease the characteristics of the tank! \r\nRed indicators - lower the characteristic\r\nYellow and green indicators - increase the characteristic\r\nBonuses are temporary and permanent. At the top left of the screen, you can see the status of your bonuses.'
+      },
+      weapon: {
+        title: 'Shells',
+        text: "At each location you can find shells.\r\n\r\nATTENTION: Don't count too much on shells on the map, because other tanks can pick them up too! \r\n\r\nYou can always buy shells in the store before the battle."
+      },
+      checkWeapon: {
+        title: 'Changing shells',
+        text: 'If you have projectiles, you can always change the type of active projectiles using buttons 1-5 or by clicking on the selected projectiles on the right side of the screen.\r\n\r\nIn the settings you can enable automatic selection of the strongest projectile.'
+      },
+      markers: {
+        title: 'Markers',
+        text: 'Markers that are located along the edges of the screen allow you to see where other tanks are'
+      },
+      refreshWeapon: {
+        title: 'Reloading the tank',
+        text: 'After each shot, each tank reloads. An orange stripe in the panel above each tank shows the reloading process.'
+      }
+    },
+    hint: 'Hint',
+    hints: [
+      'You can always buy various shells in the store',
+      'Each tank has a certain pumping potential (usually all parameters are pumped to 100% of the initial value). When choosing a tank, pay attention to its strength.',
+      'By upgrading your tank, you gain a tactical advantage over the enemy',
+      'When destroying objects on the map with a ram, be careful! You can automatically receive a bonus that lowers the parameters of your tank',
+      'By setting the settings to automatic shots, you can pay more attention to controlling the tank',
+      'Manual control of projectiles helps save arsenal',
+      'Each tank automatically points its tower at the nearest enemy vehicle',
+      'Improving maneuverability will allow you to make turns faster when driving a tank',
+      'Improving movement speed will allow you to move around the map faster and collect all the best bonuses and shells',
+      'Improving the rotation speed of the tower will allow the tower to be aimed at the enemy tank faster',
+      'Improving the targeting accuracy will allow the tower to be more accurately aimed at the enemy',
+      'Improving the reload time will reduce the time between shots',
+      'Improving the targeting distance will increase the observation radius of enemy equipment',
+      'Improving the firing distance will increase the firing radius of enemy equipment',
+      'Improving the muzzle velocity of projectiles will make your projectiles faster'
+    ],
+    sell: 'Sell',
+    sellTitle: 'Selling tank %s',
+    sellDescription: 'Are you sure you want to sell tank %s?',
+    gerbCheckTitle: 'Choose logo',
+    gerbEdit: 'Change logo',
+    gerbCheckDescription: 'The logo will be used on the map for information.',
+    gerbToast: 'Logo changed successfully!',
+    ok: 'Ok',
+    well: 'Ok',
+    countBattle: 'Total battles - %s',
+    cancel: 'No',
+    btnToBattle: 'To battle',
+    leaderboard_title: 'Leaders in the game',
+    langTitle: 'Language in the game',
+    newRankTitle: 'New rank',
+    newRankDescription:
+      'Your experience gained on the battlefield contributes to promotion to the rank - %s!',
+    aloneTextBar: 'Tanks on the map:: %s',
+    kills: 'kills',
+    fill: 'Replenish',
+    notName: 'Anonymous',
+    supportWeapons: 'Uses projectiles',
+    adbMessage:
+      "Unfortunately, the bank's functionality is limited because you have an ad blocker enabled. Disable the blocker to use all services!",
+    notAvailable: 'Not available',
+    initPlayer: 'User initialization',
+    loadingLB: 'Leaderboard initialization',
+    loadingScenes: 'Game preparation',
+    coinByDestroy: 'Destroy Bonus +%s couns'
   }
   // tr: {
   //   code: 'tr',

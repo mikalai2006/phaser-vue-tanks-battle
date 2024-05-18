@@ -6,12 +6,46 @@ export enum TypeRound {
   teams = 1
 }
 
+export enum KeyParticles {
+  SmokePuff = 'smoke-puff',
+  SmokeBoom = 'smoke-boom'
+}
+
+export enum KeySound {
+  Move = 'motor_run',
+  ExplodeBuild = 'explode_build',
+  GetBonus = 'get_bonus',
+  Muzzle1 = 'muzzle1',
+  Muzzle2 = 'muzzle2',
+  Muzzle5 = 'muzzle5',
+  Click = 'click',
+  DestroyTank = 'destroy_tank',
+  AddCoin = 'add_coin',
+  NewRank = 'new_rank',
+  CheckWeapon = 'check_weapon',
+  Upgrade = 'updgrade',
+  Clock = 'clock',
+  CartWeapon = 'cart_weapon',
+  CartTank = 'cart_tank'
+}
+
 export type TLang = (typeof langs)['ru']
 
-export interface IUserData {
+export interface IPlayerData {
   uid?: string
   name?: string
   photo?: string
+  mode?: string
+  /**
+   * paying — пользователь купил яны на сумму более 500 рублей за последний месяц.
+   *
+   *  partially_paying — у пользователя была хотя бы одна покупка янов реальными деньгами за последний год.
+   *
+   *  not_paying — пользователь не делал покупок янов реальными деньгами за последний год.
+   *
+   *  unknown — пользователь не из РФ или он не разрешил передачу такой информации разработчику.
+   */
+  payStatus?: 'paying' | 'partially_paying' | 'not_paying' | 'unknown'
 }
 
 export interface IGameDataTank
@@ -44,6 +78,7 @@ export interface IUserSettings {
   friendlyFire: boolean
   towerForward: boolean
   showAllEnemyEye: boolean
+  showHintKill: boolean
 }
 
 export interface IUIGameSettings {
@@ -69,10 +104,27 @@ export interface IHelpData {
 }
 
 export interface IGameData {
+  playDay: number
+  lastDay: Date
   lang: string
+  giftDay: Date
+  giftWeek: boolean
   name: string
+  /**
+   * Включен ли блокировщик рекламы у пользователя
+   */
+  adb: boolean
   gerbId: number
+  /**
+   * Количество боев
+   */
+  cb: number
+  /**
+   * Количество побед
+   */
+  cw: number
   settings: IUserSettings
+  rank: number
   score: number
   activeTankIndex: number
   tanks: IGameDataTank[]
@@ -109,8 +161,8 @@ export interface IBonusConfig {
   color: number
   /**
    * Вероятность создания бонуса
-   * 1 - 100%
-   * 0.1 - 10%
+   *
+   * Управляется разрывами, берется случайное число, берутся все записи, что меньше или равно и из них выбирается максимальное
    */
   probability: number
   /**
@@ -122,12 +174,31 @@ export interface IBonusConfig {
 }
 
 export interface IMuzzleConfigItem {
+  /**
+   * Звук выстрела
+   */
+  sound: KeySound
   frame: number
   /**
    * Название анимации
    */
   keyAnimation: string
   center: { x: number; y: number }
+  /**
+   * Поддерживаемые снаряды
+   */
+  supportWeapons: WeaponType[]
+  /**
+   * Коэфициент усиления снарядов
+   */
+  weaponKoof: number
+  /**
+   * Время реакции перед выстрелом, мсек
+   */
+  maxTimeBeforeShoot: {
+    min: number
+    max: number
+  }
   game: IMuzzleConfigGameOptions
   centerConstraint: { x: number; y: number }
   offset: { xOffset: number; yOffset?: number }
@@ -247,13 +318,6 @@ export interface IComplexConfig {
   muzzle: number
   cost: number
   rank: number
-  /**
-   * Время реакции перед выстрелом, мсек
-   */
-  maxTimeBeforeShoot: {
-    min: number
-    max: number
-  }
 }
 
 export interface IWeaponObject {
@@ -335,24 +399,56 @@ export interface ITypeRoundConfig {
   /**
    * Количество игроков в команде
    */
-  countPlayers: number
+  maxCountPlayers: number
+  /**
+   * Карта
+   */
+  mapKey: string
 }
 
 export interface IGameOptions {
+  /**
+   * Сохранять ли снаряды, подобранные на поле
+   */
+  saveWeapons: boolean
+  /**
+   * Количество монет в подарок за один день
+   */
+  countCoinByPlayDay: number
   /**
    * Сложность раундов
    * @min 1
    * @max 3
    */
   complexity: number
+  /**
+   * Время сеанса до вручения подарка
+   */
+  timeBeforeGift: number
+  /**
+   * Звания
+   */
   ranks: IRankItem[]
+  /**
+   * Шаг рангов
+   */
   destroyObjects: IDestroyObject[]
   weaponObjects: IWeaponObject[]
-  localStorageName: string
   localStorageSettingsName: string
-  lang: string
   /**
-   * Пакеты для покупки монет
+   * Время показа заставки в начале раунда
+   */
+  timeHelloRound: number
+  /**
+   * Время показа сообщений на поле боя
+   */
+  timeShowHints: number
+  /**
+   * Пакеты для покупки монет за рекламу
+   */
+  packetPaymentsAd: IPacketPaymentsItem[]
+  /**
+   * Пакеты для покупки монет за портальную валюту
    */
   packetPayments: IPacketPaymentsItem[]
   /**
@@ -363,6 +459,17 @@ export interface IGameOptions {
    * Будет ли в игре реклама
    */
   isAdv: boolean
+  /**
+   * Будет ли в игре кнопка удвоить награду за раунд за рекламу
+   */
+  isDoubleRewardAdv: boolean
+  /**
+   * Будут ли в игре монеты за портальную валюту
+   */
+  isPacketPortal: boolean
+  /**
+   * Будет ли в игре лидерборд
+   */
   isLeaderBoard: boolean
   /**
    * Добавочное смещение для зоны атаки, учитывая точку вылета снаряда
@@ -372,6 +479,10 @@ export interface IGameOptions {
    * Минимальный угол для сектора стрельбы, если точность абсолютная
    */
   minAngleArc: number
+  /**
+   * Ширина границы зоны наведения и обстрела
+   */
+  widthLineArea: number
   /**
    * Тип раунда
    */
@@ -465,6 +576,17 @@ export interface IGameOptions {
      * Цвет гусениц
      */
     caterpillar: number
+    buttonPrimary: string
+    buttonSecondary: string
+    darkColor: string
+    lightColor: string
+    secondaryColor: string
+    accent: string
+    danger: string
+    secondaryColorLight: string
+    colorWeaponBg: string
+    success: string
+    ad: string
   }
   /**
    * Количество гербов (Зависит от спрайтов)
@@ -582,20 +704,6 @@ export interface IGameOptions {
   }
 
   /**
-   * Шаг рангов
-   */
-  rankStep: {
-    /**
-     * Номер ранга
-     */
-    level: number
-    /**
-     * Минимальное количество баллов для получения ранга
-     */
-    minScore: number
-  }[]
-
-  /**
    * Перечислены, какие опции не могут качаться до максимума возможного, а только до начального уровня - восстанавливаться
    */
   optionsOnlyRepair: string[]
@@ -617,6 +725,31 @@ export interface ILeaderBoard {
 
 declare global {
   interface Window {
+    gameLocalStorageName: string
+    /**
+     * Шифровать ли данные игры в строку при сохранении
+     */
+    tobData: boolean
+    /**
+     * Язык по умолчанию
+     */
+    defaultLang: string
+    /**
+     * SDK
+     */
+    sdk: any
+    /**
+     * Объект, передаваемый сценам при создании
+     */
+    game: {
+      currentLang?: TLang
+      gameData?: IGameData
+      playerData?: IPlayerData
+    }
+    /**
+     * Вернуть статус авторизации пользователя
+     */
+    getModePlayer: () => 'auth' | 'lite'
     /**
      * Старт загрузки игры
      * @returns
@@ -628,32 +761,30 @@ declare global {
      */
     onSdkGameLoadingStop: () => void
     /**
+     * Стоп геймплея
+     * @returns
+     */
+    onGameplayStop: () => void
+    /**
+     * Старт геймплея
+     * @returns
+     */
+    onGameplayStart: () => void
+    /**
      * Получить данные профиля пользователя
      * @returns
      */
-    getPlayerData: () => Promise<IUserData>
+    //getPlayerData: () => Promise<IPlayerData>
     /**
      * Инициализация лидерборда
      * @returns
      */
-    initLB: () => Promise<any>
+    initLB: () => Promise<unknown>
     /**
      * Инициализация пользователя
-     * @returns player
+     * @returns playerData
      */
-    initPlayer: () => Promise<any>
-    /**
-     * Проверка авторизации пользователя
-     * @returns player auth status
-     */
-    getModePlayer: () => string
-    /**
-     * Объект, передаваемый сценам при создании
-     */
-    game: {
-      currentLang: TLang
-      gameData: IGameData
-    }
+    initPlayer: () => Promise<IPlayerData>
     /**
      * Возвращает язык локализации
      * @returns string
@@ -683,6 +814,16 @@ declare global {
      */
     setLB: (number) => void
     /**
+     * Торжественное событие в игре
+     */
+    onHappyTime: () => void
+    /**
+     * Проверяем блокировщик рекламы
+     * @param callback
+     * @returns
+     */
+    hasAdBlocker: () => Promise<boolean>
+    /**
      * Показывает полноэкранную рекламу
      * @param callback
      * @returns
@@ -690,19 +831,15 @@ declare global {
     showFullSrcAdv: (callback: () => void) => void
     /**
      * Показывает рекламу по запросу
-     * @param callback
+     * @param adCallbacks: IADCallbacks
      * @returns
      */
-    showRewardedAdv: (callback: () => void) => void
+    showRewardedAdv: (adCallbacks: IADCallbacks) => void
     /**
      * Запрашивает и возвращает в ответе данные из лидерборда
      * @returns ILeaderBoard
      */
     getLB: () => Promise<ILeaderBoard>
-    /**
-     * SDK
-     */
-    ysdk: any
     /**
      * Получение монет за портальную валюту
      * @param id - id покупки
@@ -711,6 +848,11 @@ declare global {
      */
     onPurchase: (id: string, callback: () => void) => void
   }
+}
+
+export interface IADCallbacks {
+  successC: () => void
+  errorC: () => void
 }
 
 export interface IConfigRoundTeamPlayer {

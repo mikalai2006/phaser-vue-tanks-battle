@@ -69,12 +69,13 @@ export function createFireSystem(scene) {
         scene.time.delayedCall(
           !players.includes(id) ? time : 0,
           () => {
+            const configComplexTank = GameOptions.complexTanks[Tank.index[id]]
+
             Tank.timeBeforeShoot[id] = Phaser.Math.FloatBetween(
-              GameOptions.complexTanks[Tank.index[id]].maxTimeBeforeShoot.min,
-              GameOptions.complexTanks[Tank.index[id]].maxTimeBeforeShoot.max
+              GameOptions.muzzles.items[configComplexTank.muzzle].maxTimeBeforeShoot.min,
+              GameOptions.muzzles.items[configComplexTank.muzzle].maxTimeBeforeShoot.max
             )
 
-            const configComplexTank = GameOptions.complexTanks[Tank.index[id]]
             const muzzleConfig = GameOptions.muzzles.items[configComplexTank.muzzle]
             muzzleConfig.game.distanceShot = Tank.distanceShot[id]
             muzzleConfig.game.speedShot = Tank.speedShot[id]
@@ -99,7 +100,12 @@ export function createFireSystem(scene) {
             if (Tank.activeWeaponType[id] != 0) {
               Weapon.count[weaponByIdAndType[0]] -= 1
               const existWeaponValue = scene.gameData.weapons[Tank.activeWeaponType[id]]
-              if (id == scene.idPlayer && existWeaponValue) {
+
+              if (
+                id == scene.idPlayer &&
+                existWeaponValue &&
+                Weapon.count[weaponByIdAndType[0]] < existWeaponValue
+              ) {
                 scene.gameData.weapons[Tank.activeWeaponType[id]] = Phaser.Math.Clamp(
                   existWeaponValue - 1,
                   0,
@@ -134,7 +140,12 @@ export function createFireSystem(scene) {
                   if (Tank.activeWeaponType[id] != 0) {
                     Weapon.count[weaponByIdAndType[0]] -= 1
                     const existWeaponValue = scene.gameData.weapons[Tank.activeWeaponType[id]]
-                    if (id == scene.idPlayer && existWeaponValue) {
+
+                    if (
+                      id == scene.idPlayer &&
+                      existWeaponValue &&
+                      Weapon.count[weaponByIdAndType[0]] < existWeaponValue
+                    ) {
                       scene.gameData.weapons[Tank.activeWeaponType[id]] = Phaser.Math.Clamp(
                         existWeaponValue - 1,
                         0,
