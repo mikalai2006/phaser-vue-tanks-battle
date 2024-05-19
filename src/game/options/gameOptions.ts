@@ -1158,7 +1158,7 @@ export const GameOptions: IGameOptions = {
       tank: 5,
       tower: 2,
       muzzle: 3,
-      cost: 2000,
+      cost: 20000,
       rank: 2
     },
     {
@@ -1168,7 +1168,7 @@ export const GameOptions: IGameOptions = {
       tank: 4,
       tower: 4,
       muzzle: 2,
-      cost: 20000,
+      cost: 22500,
       rank: 3
     },
     {
