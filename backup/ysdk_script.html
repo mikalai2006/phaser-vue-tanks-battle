@@ -1,0 +1,185 @@
+<!-- SDK START---------------------------------->
+<script src="https://yandex.ru/games/sdk/v2"></script>
+<script>
+  var sdk
+  var player = null
+  var lb = null
+  window.tobData = true
+  window.defaultLang = 'ru'
+  const nameLeaderBoard = 'Total'
+  window.gameLocalStorageName = 'com.mikalai2006.crazytanks.1'
+
+  window.initSDK = function () {
+    return YaGames.init().then((ysdk) => {
+      sdk = ysdk
+      window.showFullSrcAdv(() => {})
+    })
+  }
+
+  window.getLang = function () {
+    var lang = sdk.environment.i18n.lang
+    return lang
+  }
+
+  // Events
+  window.onSdkGameLoadingStart = () => {}
+  window.onSdkGameLoadingStop = () => {}
+  window.onHappyTime = () => {}
+  window.onGameplayStart = () => {}
+  window.onGameplayStop = () => {}
+
+  // Player
+  window.initPlayer = async function () {
+    player = await sdk.getPlayer()
+    let playerData
+
+    if (player) {
+      playerData = {
+        uid: player.getUniqueID(),
+        name: player.getName(),
+        photo: player.getPhoto('medium'),
+        mode: player.getMode()
+        // payStatus: player.getPayingStatus()
+      }
+    }
+
+    return playerData
+  }
+
+  // Game data
+  window.saveGameData = function (data) {
+    player.setData({ data })
+  }
+
+  window.loadGameData = async function (data) {
+    try {
+      const data = await player.getData()
+      return JSON.stringify(data.data)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  // Leader board
+  window.initLB = async function () {
+    lb = sdk.getLeaderboards().then((_lb) => {
+      lb = _lb
+    })
+    return lb
+  }
+
+  window.setLB = function (data) {
+    sdk.getLeaderboards().then((lb) => {
+      sdk.isAvailableMethod('leaderboards.setLeaderboardScore').then((status) => {
+        if (status) {
+          lb.setLeaderboardScore(nameLeaderBoard, data)
+        }
+      })
+    })
+  }
+  window.getLB = async function () {
+    let result = {}
+    if (!sdk) {
+      return result
+    }
+    return await sdk.getLeaderboards().then((lb) => {
+      // Получение 10 топов и 3 записей возле пользователя
+      return lb
+        .getLeaderboardEntries(nameLeaderBoard, {
+          quantityTop: 5
+          // includeUser: true,
+          // quantityAround: 3
+        })
+        .then((res) => {
+          result.leaderboard = {
+            title: []
+          }
+          for (var key of Object.keys(res.leaderboard.title)) {
+            result.leaderboard.title.push({
+              lang: key,
+              value: res.leaderboard.title[key]
+            })
+          }
+
+          result.userRank = res.userRank
+          result.entries = []
+
+          for (let i = 0; i < res.entries.length; i++) {
+            const userData = res.entries[i]
+            result.entries.push({
+              rank: userData.rank,
+              score: userData.score,
+              name: userData.player.publicName,
+              lang: userData.player.lang,
+              photo: userData.player.getAvatarSrc('middle')
+            })
+          }
+          return result
+        })
+    })
+  }
+
+  // AD
+  window.hasAdBlocker = async () => {}
+
+  window.showRewardedAdv = function ({ successC, errorC }) {
+    sdk.adv.showRewardedVideo({
+      callbacks: {
+        onOpen: () => {
+          // console.log("Video ad open.");
+        },
+        onRewarded: () => {
+          // console.log("Rewarded for scramble!");
+        },
+        onClose: () => {
+          console.log('Video ad closed.')
+          successC && successC()
+        },
+        onError: function (error) {
+          console.log('Video error.')
+          errorC && errorC()
+        }
+      }
+    })
+  }
+
+  window.showFullSrcAdv = function (callback) {
+    sdk.adv.showFullscreenAdv({
+      callbacks: {
+        onOpen: () => {
+          // console.log("Video ad open.");
+        },
+        onClose: function (wasShown) {
+          // console.log('ShowAdvFullScreen onClose ', wasShown)
+          callback && callback()
+        },
+        onError: function (error) {
+          // console.log('ShowAdvFullScreen onError ', error)
+          callback && callback()
+        },
+        onOffline: function (error) {
+          // console.log('ShowAdvFullScreen onOffline ', error)
+        }
+      }
+    })
+  }
+
+  // Banners
+  // window.onClearBanner = (containerId) => {
+  //   window.CrazyGames.SDK.banner.clearBanner(containerId)
+  // }
+  // window.onShowBanner = async (containerId, width, height, callback) => {
+  //   try {
+  //     // await is not mandatory when requesting banners, but it will allow you to catch errors
+  //     await window.CrazyGames.SDK.banner.requestBanner({
+  //       id: containerId,
+  //       width,
+  //       height
+  //     })
+  //     callback && callback()
+  //   } catch (e) {
+  //     // console.log('Banner request error', e)
+  //   }
+  // }
+</script>
+<!-- SDK END---------------------------------->

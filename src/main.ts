@@ -221,67 +221,67 @@ if (!window.initSDK) {
   // /**
   //  * Leaderboard
   //  */
-  // window.initLB = async function () {
-  //   lb = await resolveAfter2Seconds(0.1, null, 'initLB')
-  //   return lb
-  //   // return resolveAfter2Seconds(0.1, 'initLB')
-  // }
+  window.initLB = async function () {
+    lb = await resolveAfter2Seconds(0.1, null, 'initLB')
+    return lb
+    // return resolveAfter2Seconds(0.1, 'initLB')
+  }
 
-  // window.setLB = function (data) {
-  //   // sdk.getLeaderboards().then((lb) => {
-  //   //   sdk.isAvailableMethod('leaderboards.setLeaderboardScore').then((status) => {
-  //   //     if (status) {
-  //   //       lb.setLeaderboardScore('Total', data)
-  //   //     }
-  //   //   })
-  //   // })
+  window.setLB = function (data) {
+    // sdk.getLeaderboards().then((lb) => {
+    //   sdk.isAvailableMethod('leaderboards.setLeaderboardScore').then((status) => {
+    //     if (status) {
+    //       lb.setLeaderboardScore('Total', data)
+    //     }
+    //   })
+    // })
 
-  //   console.log('setLB', data)
-  // }
+    console.log('setLB', data)
+  }
 
-  // window.getLB = async function () {
-  //   // const result = {}
-  //   // if (!sdk) {
-  //   //   return result
-  //   // }
-  //   //   // Получение 10 топов и 3 записей возле пользователя
-  //   //   const res =  lb.getLeaderboardEntries('Total', {
-  //   //     quantityTop: 5
-  //   //     // includeUser: true,
-  //   //     // quantityAround: 3
-  //   //   })
+  window.getLB = async function () {
+    // const result = {}
+    // if (!sdk) {
+    //   return result
+    // }
+    //   // Получение 10 топов и 3 записей возле пользователя
+    //   const res =  lb.getLeaderboardEntries('Total', {
+    //     quantityTop: 5
+    //     // includeUser: true,
+    //     // quantityAround: 3
+    //   })
 
-  //   //     result.leaderboard = {
-  //   //       title: []
-  //   //     }
-  //   //     for (var key of Object.keys(res.leaderboard.title)) {
-  //   //       result.leaderboard.title.push({
-  //   //         lang: key,
-  //   //         value: res.leaderboard.title[key]
-  //   //       })
-  //   //     }
+    //     result.leaderboard = {
+    //       title: []
+    //     }
+    //     for (var key of Object.keys(res.leaderboard.title)) {
+    //       result.leaderboard.title.push({
+    //         lang: key,
+    //         value: res.leaderboard.title[key]
+    //       })
+    //     }
 
-  //   //     result.userRank = res.userRank
-  //   //     result.entries = []
+    //     result.userRank = res.userRank
+    //     result.entries = []
 
-  //   //     for (let i = 0; i < res.entries.length; i++) {
-  //   //       const userData = res.entries[i]
-  //   //       result.entries.push({
-  //   //         rank: userData.rank,
-  //   //         score: userData.score,
-  //   //         name: userData.player.publicName,
-  //   //         lang: userData.player.lang,
-  //   //         photo: userData.player.getAvatarSrc('middle')
-  //   //       })
-  //   //     }
+    //     for (let i = 0; i < res.entries.length; i++) {
+    //       const userData = res.entries[i]
+    //       result.entries.push({
+    //         rank: userData.rank,
+    //         score: userData.score,
+    //         name: userData.player.publicName,
+    //         lang: userData.player.lang,
+    //         photo: userData.player.getAvatarSrc('middle')
+    //       })
+    //     }
 
-  //   //     // console.group('GetLeaderBoard')
-  //   //     // console.log(result)
-  //   //     // console.groupEnd()
-  //   //     return result
+    //     // console.group('GetLeaderBoard')
+    //     // console.log(result)
+    //     // console.groupEnd()
+    //     return result
 
-  //   return getLBTestData(10)
-  // }
+    return getLBTestData(10)
+  }
 
   // /**
   //  * ADV

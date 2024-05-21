@@ -42,10 +42,10 @@ export const mapObjectCategory = 0x0001,
   sensorCategory = 0x0008
 
 export const GameOptions: IGameOptions = {
-  isLeaderBoard: false,
+  isLeaderBoard: true,
   isBank: true,
   isAdv: true,
-  isDoubleRewardAdv: false,
+  isDoubleRewardAdv: true,
   isPacketPortal: false,
   countCoinByPlayDay: 500,
   timeBeforeGift: 300000, // 5min

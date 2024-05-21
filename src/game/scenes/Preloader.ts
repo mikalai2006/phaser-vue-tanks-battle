@@ -23,8 +23,8 @@ export class Preloader extends Scene {
     //this.add.image(512, 384, 'background')
     // this.cameras.main.setBackgroundColor(0x050505)
     this.add
-      .sprite(GameOptions.screen.width / 2, GameOptions.screen.height / 2 - 300, SpriteKeys.LogoCG)
-      .setScale(0.3)
+      .sprite(GameOptions.screen.width / 2, GameOptions.screen.height / 2 - 100, SpriteKeys.Logo)
+      .setScale(0.5)
       .setOrigin(0.5)
     // this.add
     //   .sprite(GameOptions.screen.width / 2, GameOptions.screen.height / 2 - 100, SpriteKeys.Logo)

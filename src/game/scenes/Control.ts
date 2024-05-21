@@ -310,6 +310,8 @@ export class Control extends Scene {
         // this.gameData.score += roundCoin
         // EventBus.emit('save-data', this.gameData)
 
+        this.scene.pause()
+
         window?.showFullSrcAdv(() => {
           this.scene.resume()
           this.moveCoinToWallet(
@@ -326,8 +328,6 @@ export class Control extends Scene {
           this.game.scene.getScene('Home').stopGame()
           this.tooglePanel(false)
         })
-
-        this.scene.pause()
       }
     )
 

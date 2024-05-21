@@ -60,6 +60,23 @@ export class Home extends Scene {
       this.game.events.off(Phaser.Core.Events.FOCUS)
       this.game.events.off(Phaser.Core.Events.BLUR)
     })
+
+    const scrButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P)
+    scrButton.on('down', () => this.saveScreenShot(this))
+  }
+
+  saveScreenShot(scene: Phaser.Scene) {
+    scene.game.renderer.snapshot((image: HTMLImageElement) => {
+      image.style.width = '160px'
+      image.style.height = '120px'
+      image.style.paddingLeft = '2px'
+
+      const link = document.createElement('a')
+      link.setAttribute('download', 'screenshot.png')
+      link.setAttribute('href', image.src)
+      link.click()
+      link.remove()
+    })
   }
 
   onFocus() {}
