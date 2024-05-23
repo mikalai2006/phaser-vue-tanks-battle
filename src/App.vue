@@ -288,7 +288,7 @@ const currentScene = (scene) => {}
     <div class="overlay"></div>
     <div class="form">
       <h3 class="title">{{ currentLang.inputName }}</h3>
-      <input v-model="userName" class="input" />
+      <input v-model="userName" class="input noselect" />
       <button class="button" @click="onSetUserName">ok</button>
     </div>
   </div>
@@ -297,14 +297,15 @@ const currentScene = (scene) => {}
 <style>
 .noselect,
 body,
+html,
+input,
 canvas {
   -webkit-touch-callout: none; /* iOS Safari */
   -webkit-user-select: none; /* Safari */
   -khtml-user-select: none; /* Konqueror HTML */
   -moz-user-select: none; /* Old versions of Firefox */
   -ms-user-select: none; /* Internet Explorer/Edge */
-  user-select: none; /* Non-prefixed version, currently
-                                  supported by Chrome, Edge, Opera and Firefox */
+  user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
 }
 .title {
   margin: 0;

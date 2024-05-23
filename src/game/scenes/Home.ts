@@ -609,7 +609,7 @@ export class Home extends Scene {
         .image(40, 0, SpriteKeys.Ranks, getRank(itemData.score))
         .setTint(Phaser.Display.Color.ValueToColor(GameOptions.colors.accent).color)
       const text = this.add
-        .text(170, -32, itemData.name, {
+        .text(170, -32, itemData.name || this.lang.notName, {
           fontFamily: 'Arial',
           fontSize: 26,
           color: GameOptions.colors.lightColor,
