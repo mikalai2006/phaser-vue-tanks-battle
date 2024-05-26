@@ -1,5 +1,3 @@
 import { Types, defineComponent } from 'bitecs'
 
-export const AreaEye = defineComponent({
-  idTank: Types.ui32
-})
+export const AreaEye = defineComponent()

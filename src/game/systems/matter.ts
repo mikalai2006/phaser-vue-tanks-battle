@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 
-import { defineSystem, defineQuery, enterQuery, exitQuery } from 'bitecs'
+import { defineSystem, defineQuery, enterQuery, exitQuery, removeComponent } from 'bitecs'
 
 import { Position } from '../components/Position'
 import { Rotation } from '../components/Rotation'
@@ -39,6 +39,22 @@ export const caterpillarsById = new Map<
     right: Caterpillar
   }
 >()
+
+// export const destroyMap = () => {
+//   tanksById.forEach((value, key) => {
+//     tanksById.delete(key)
+//   })
+//   towersById.forEach((value, key) => {
+//     towersById.delete(key)
+//   })
+//   muzzlesById.forEach((value, key) => {
+//     muzzlesById.delete(key)
+//   })
+//   caterpillarsById.forEach((value, key) => {
+//     caterpillarsById.delete(key)
+//   })
+//   console.log('destroyMap: ', tanksById.size, towersById.size, muzzlesById.size)
+// }
 
 export function createMatterSpriteSystem(scene: Phaser.Scene) {
   const query = defineQuery([Position, Tank])
@@ -80,6 +96,7 @@ export function createMatterSpriteSystem(scene: Phaser.Scene) {
       //   // console.log('collise', d)
       //   Input.obstacle[id] = 1
       // }
+      // console.log('tanksById size=', tanksById.size)
 
       tanksById.set(id, tank)
       if (id === scene.idFollower) {
@@ -180,7 +197,6 @@ export function createMatterSpriteSystem(scene: Phaser.Scene) {
 
     const exitEntities = onQueryExit(world)
     for (const id of exitEntities) {
-      // console.log('remove tank and tower: ', id)
       const tank = tanksById.get(id)
       const tower = towersById.get(id)
       const muzzle = muzzlesById.get(id)
@@ -200,7 +216,7 @@ export function createMatterSpriteSystem(scene: Phaser.Scene) {
         // scene.sys.game.device.os.desktop &&
         scene.emitterDestroyTank.explode(16, tank.x, tank.y)
 
-        scene.sound.play(KeySound.DestroyTank, { volume: 0.5 })
+        !scene.isRoundEnd && scene.sound.play(KeySound.DestroyTank, { volume: 0.4 })
       }
 
       tank.removeTank()
@@ -213,6 +229,8 @@ export function createMatterSpriteSystem(scene: Phaser.Scene) {
       towersById.delete(id)
       caterpillarsById.delete(id)
       muzzlesById.delete(id)
+
+      // console.log('remove tank and tower: ', id, tanksById.size)
       scene.onCheckWinTeam()
     }
 
@@ -226,7 +244,7 @@ export function createMatterSpriteSystem(scene: Phaser.Scene) {
   })
 }
 
-export function createMatterPhysicsSyncSystem() {
+export function createMatterPhysicsSyncSystem(scene: Phaser.Scene) {
   // create query
   const query = defineQuery([Position, Tank])
 

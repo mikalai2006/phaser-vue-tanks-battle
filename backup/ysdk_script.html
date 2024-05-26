@@ -86,7 +86,7 @@
       // Получение 10 топов и 3 записей возле пользователя
       return lb
         .getLeaderboardEntries(nameLeaderBoard, {
-          quantityTop: 5
+          quantityTop: 10
           // includeUser: true,
           // quantityAround: 3
         })
@@ -122,7 +122,7 @@
   // AD
   window.hasAdBlocker = async () => {}
 
-  window.showRewardedAdv = function ({ successC, errorC }) {
+  window.showRewardedAdv = function ({ successC, errorC, rewardC }) {
     sdk.adv.showRewardedVideo({
       callbacks: {
         onOpen: () => {
@@ -130,13 +130,14 @@
         },
         onRewarded: () => {
           // console.log("Rewarded for scramble!");
+          rewardC && rewardC()
         },
         onClose: () => {
-          console.log('Video ad closed.')
+          // console.log('Video ad closed.')
           successC && successC()
         },
         onError: function (error) {
-          console.log('Video error.')
+          console.error(error)
           errorC && errorC()
         }
       }
@@ -149,37 +150,19 @@
         onOpen: () => {
           // console.log("Video ad open.");
         },
-        onClose: function (wasShown) {
+        onClose: (wasShown) => {
           // console.log('ShowAdvFullScreen onClose ', wasShown)
           callback && callback()
         },
-        onError: function (error) {
-          // console.log('ShowAdvFullScreen onError ', error)
+        onError: (error) => {
+          console.error(error)
           callback && callback()
         },
-        onOffline: function (error) {
+        onOffline: (error) => {
           // console.log('ShowAdvFullScreen onOffline ', error)
         }
       }
     })
   }
-
-  // Banners
-  // window.onClearBanner = (containerId) => {
-  //   window.CrazyGames.SDK.banner.clearBanner(containerId)
-  // }
-  // window.onShowBanner = async (containerId, width, height, callback) => {
-  //   try {
-  //     // await is not mandatory when requesting banners, but it will allow you to catch errors
-  //     await window.CrazyGames.SDK.banner.requestBanner({
-  //       id: containerId,
-  //       width,
-  //       height
-  //     })
-  //     callback && callback()
-  //   } catch (e) {
-  //     // console.log('Banner request error', e)
-  //   }
-  // }
 </script>
 <!-- SDK END---------------------------------->

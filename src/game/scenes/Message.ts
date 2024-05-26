@@ -100,7 +100,7 @@ export class Message extends Scene {
       () => {
         this.sound.play(KeySound.Click)
         this.messageBox.setVisible(false)
-        const sceneGame = this.game.scene.getScene('Game')
+        const sceneGame = this.scene.get('Game')
         sceneGame?.scene.resume()
       }
     )
@@ -118,7 +118,7 @@ export class Message extends Scene {
       () => {
         this.sound.play(KeySound.Click)
         this.messageBox.setVisible(false)
-        const sceneGame = this.game.scene.getScene('Game')
+        const sceneGame = this.scene.get('Game')
         sceneGame?.scene.resume()
       }
     )

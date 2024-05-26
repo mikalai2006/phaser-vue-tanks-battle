@@ -1,5 +1,5 @@
 {
-    "activeFile": "E:/phaser/tanks-battle/backup/maps/level_1_30x30.tmx",
+    "activeFile": "E:/phaser/tanks-battle/backup/maps/level_3_40x40.tmx",
     "expandedProjectPaths": [
         "E:/phaser/tanks-battle/backup/maps",
         "."
@@ -16,8 +16,8 @@
             "scale": 0.20756510416666665,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 1919.8795558622423,
-                "y": 2599.1844928172636
+                "x": 1924.6973213725614,
+                "y": 1919.879555862242
             }
         },
         "E:/phaser/tanks-battle/backup/maps/level_1_30x30.tmx#effects": {
@@ -48,11 +48,11 @@
             "scaleInDock": 1
         },
         "E:/phaser/tanks-battle/backup/maps/level_3_40x40.tmx": {
-            "scale": 0.155673828125,
-            "selectedLayer": 0,
+            "scale": 0.25,
+            "selectedLayer": 6,
             "viewCenter": {
-                "x": 2566.2630951634146,
-                "y": 2566.263095163415
+                "x": 2898,
+                "y": 3006
             }
         },
         "E:/phaser/tanks-battle/backup/maps/level_3_40x40.tmx#effects": {
@@ -68,11 +68,11 @@
             "scaleInEditor": 1
         },
         "E:/phaser/tanks-battle/backup/maps/level_4_40x40.tmx": {
-            "scale": 0.155673828125,
+            "scale": 0.5,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 2566.2630951634146,
-                "y": 2566.263095163415
+                "x": 4109,
+                "y": 1029
             }
         },
         "E:/phaser/tanks-battle/backup/maps/level_4_40x40.tmx#effects": {
@@ -82,7 +82,7 @@
             "scaleInDock": 1
         },
         "E:/phaser/tanks-battle/backup/maps/level_4_40x40.tmx#tiles": {
-            "scaleInDock": 1
+            "scaleInDock": 0.5
         },
         "level1.tmx": {
             "scale": 0.125,
@@ -284,18 +284,19 @@
             "scaleInEditor": 1
         }
     },
+    "last.exportedFilePath": "E:/phaser/tanks-battle/public/assets",
+    "map.lastUsedExportFilter": "Все файлы (*)",
     "openFiles": [
         "E:/phaser/tanks-battle/backup/maps/level_1_30x30.tmx",
         "E:/phaser/tanks-battle/backup/maps/level_2_30x30.tmx",
-        "E:/phaser/tanks-battle/backup/maps/level_3_40x40.tmx",
-        "E:/phaser/tanks-battle/backup/maps/level_4_40x40.tmx"
+        "E:/phaser/tanks-battle/backup/maps/level_3_40x40.tmx"
     ],
     "project": "tile.tiled-project",
     "recentFiles": [
-        "E:/phaser/tanks-battle/backup/maps/level_4_40x40.tmx",
-        "E:/phaser/tanks-battle/backup/maps/level_3_40x40.tmx",
-        "E:/phaser/tanks-battle/backup/maps/level_2_30x30.tmx",
         "E:/phaser/tanks-battle/backup/maps/level_1_30x30.tmx",
+        "E:/phaser/tanks-battle/backup/maps/level_2_30x30.tmx",
+        "E:/phaser/tanks-battle/backup/maps/level_3_40x40.tmx",
+        "E:/phaser/tanks-battle/backup/maps/level_4_40x40.tmx",
         "level_4_40x40.tmx",
         "level_2_30x30.tmx",
         "level_3_40x40.tmx",

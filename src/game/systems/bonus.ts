@@ -1,13 +1,5 @@
 import Phaser from 'phaser'
-import {
-  defineSystem,
-  defineQuery,
-  enterQuery,
-  exitQuery,
-  addEntity,
-  addComponent,
-  removeEntity
-} from 'bitecs'
+import { defineSystem, defineQuery, enterQuery, exitQuery, removeEntity } from 'bitecs'
 import { GameOptions, bonusCategory, tankAmunition, tankCategory } from '../options/gameOptions'
 import { Bonus } from '../components/Bonus'
 import Position from '../components/Position'
@@ -48,26 +40,12 @@ export function createBonusSystem(scene: Phaser.Scene) {
       bonusesById.set(id, bonus)
     }
 
-    // const entities = query(world)
-    // for (let i = 0; i < entities.length; ++i) {
-    //   const id = entities[i]
-
-    // }
-
     const exitEntities = onQueryExit(world)
     for (const id of exitEntities) {
-      // console.log('remove bonus: ', id)
-      // const tank = bonusesById.get(id)
-      // const tower = towersById.get(id)
-      // const caterpillars = caterpillarsById.get(id)
-      // tank.removeTank()
-      // tower.removeTower()
-      // caterpillars.left.removeCatterpillar()
-      // caterpillars.right.removeCatterpillar()
       bonusesById.get(id).removeObject()
       bonusesById.delete(id)
-      // towersById.delete(id)
-      // caterpillarsById.delete(id)
+
+      // console.log('Remove bonus: ', id, bonusesById.size)
     }
 
     return world
@@ -80,12 +58,6 @@ export function createBonusSyncSystem(scene) {
   const onQueryExitTank = exitQuery(queryTanks)
 
   return defineSystem((world, dt) => {
-    // const entities = query(world)
-
-    // for (const id of entities) {
-
-    // }
-
     const bonusIds = query(world)
     const exitTanks = onQueryExitTank(world)
     for (const id of exitTanks) {

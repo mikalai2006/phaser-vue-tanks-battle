@@ -7,7 +7,7 @@ import { StaticObject } from '../components/MatterStaticSprite'
 import { GameOptions, mapObjectCategory, tankAmunition, tankCategory } from '../options/gameOptions'
 import { DestroyObject } from '../objects/DestroyObject'
 
-export const matterStaticObjectsById = new Map<number, DestroyObject>()
+export const destroyObjectsById = new Map<number, DestroyObject>()
 
 export function createDestroyObjectsSystem(scene: Phaser.Scene) {
   const query = defineQuery([Position, StaticObject])
@@ -35,20 +35,14 @@ export function createDestroyObjectsSystem(scene: Phaser.Scene) {
         }
       })
 
-      matterStaticObjectsById.set(id, obj)
+      destroyObjectsById.set(id, obj)
     }
 
     const exitEntities = onQueryExit(world)
     for (const id of exitEntities) {
-      matterStaticObjectsById.get(id).removeObject()
-      matterStaticObjectsById.delete(id)
+      destroyObjectsById.get(id).removeObject()
+      destroyObjectsById.delete(id)
     }
-
-    // const entities = query(world)
-    // for (let i = 0; i < entities.length; ++i) {
-    //   const id = entities[i]
-    //   console.log(`${Position.x[id]}, ${Position.y[id]}`)
-    // }
 
     return world
   })

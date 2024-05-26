@@ -37,7 +37,11 @@ export const langs = {
       'Капитан',
       'Майор',
       'Подполковник',
-      'Полковник'
+      'Полковник',
+      'Генерал-майор',
+      'Генерал-лейтенант',
+      'Генерал-полковник',
+      'Маршал'
     ],
     update: 'Улучшить',
     giftHint: 'До получения подарка осталось %s мин. %s сек.',
@@ -267,7 +271,11 @@ export const langs = {
       'Captain',
       'Major',
       'Lieutenant colonel',
-      'Colonel'
+      'Colonel',
+      'Major General',
+      'Lieutenant General',
+      'Colonel General',
+      'Marshal'
     ],
     update: 'Upgrade',
     giftHint: 'There are %s min. %s sec. left before receiving the gift.',

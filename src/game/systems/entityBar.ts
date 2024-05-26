@@ -165,16 +165,16 @@ export function createEntityBarSystem(scene: Phaser.Scene) {
 
     const exitEntities = onQueryExit(world)
     for (const id of exitEntities) {
-      if (Tank.health[id] <= 0) {
-        // console.log('remove bar: ', id)
-        const barObject = entityBarById.get(id)
-        if (barObject) {
-          barObject.bar?.destroy(true)
-        }
-        // barObject.imgMaskHealth?.destroy(true)
-        // barObject.imgMaskWeapon?.destroy(true)
-        entityBarById.delete(id)
+      // if (Tank.health[id] <= 0) {
+      const barObject = entityBarById.get(id)
+      if (barObject) {
+        barObject.bar?.destroy(true)
       }
+      // barObject.imgMaskHealth?.destroy(true)
+      // barObject.imgMaskWeapon?.destroy(true)
+      entityBarById.delete(id)
+      // console.log('remove entityBar: ', id, entityBarById.size)
+      // }
     }
 
     return world

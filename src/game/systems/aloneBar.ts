@@ -16,6 +16,7 @@ export const aloneBarById = new Map<
 
 export function createAloneBarSystem(scene: Phaser.Scene) {
   const query = defineQuery([Position, Tank])
+  const onQueryExit = exitQuery(query)
   const onQueryEnter = enterQuery(query)
 
   return defineSystem((world) => {
@@ -47,6 +48,12 @@ export function createAloneBarSystem(scene: Phaser.Scene) {
         text
       })
     }
+
+    // const exitEntities = onQueryExit(world)
+    // if (exitEntities.length > 0) {
+    //   aloneBarById.delete(0)
+    //   console.log('Delete alone: ', aloneBarById.size)
+    // }
 
     return world
   })

@@ -51,11 +51,12 @@ export const GameOptions: IGameOptions = {
   timeBeforeGift: 300000, // 5min
   timeHelloRound: 5000,
   timeShowHints: 10000,
+  timeShowNextAd: 61,
 
   complexity: 3,
   saveWeapons: true,
   localStorageSettingsName: 'uiSettings',
-  widthLineArea: 2,
+  widthLineArea: 5,
   typesRound: [
     // {
     //   type: TypeRound.alone,
@@ -274,8 +275,8 @@ export const GameOptions: IGameOptions = {
         ],
         countShot: 1,
         maxTimeBeforeShoot: {
-          min: 1000,
-          max: 2000
+          min: 500,
+          max: 1200
         }
       },
       {
@@ -299,8 +300,8 @@ export const GameOptions: IGameOptions = {
         ],
         countShot: 1,
         maxTimeBeforeShoot: {
-          min: 800,
-          max: 1800
+          min: 400,
+          max: 1100
         }
       },
       {
@@ -329,8 +330,8 @@ export const GameOptions: IGameOptions = {
         ],
         countShot: 1,
         maxTimeBeforeShoot: {
-          min: 800,
-          max: 1600
+          min: 300,
+          max: 1000
         }
       },
       {
@@ -359,8 +360,8 @@ export const GameOptions: IGameOptions = {
         ],
         countShot: 1,
         maxTimeBeforeShoot: {
-          min: 700,
-          max: 1500
+          min: 200,
+          max: 900
         }
       },
       {
@@ -390,8 +391,8 @@ export const GameOptions: IGameOptions = {
         ],
         countShot: 1,
         maxTimeBeforeShoot: {
-          min: 500,
-          max: 1000
+          min: 100,
+          max: 800
         }
       },
       {
@@ -421,8 +422,8 @@ export const GameOptions: IGameOptions = {
         ],
         countShot: 2,
         maxTimeBeforeShoot: {
-          min: 300,
-          max: 800
+          min: 100,
+          max: 200
         }
       }
     ]
@@ -564,6 +565,24 @@ export const GameOptions: IGameOptions = {
           accuracy: 75,
           timeRefreshWeapon: 2700,
           distanceView: 560
+        }
+      },
+      {
+        frame: 15,
+        game: {
+          speedRotateTower: 360,
+          accuracy: 100,
+          timeRefreshWeapon: 3800,
+          distanceView: 900
+        }
+      },
+      {
+        frame: 16,
+        game: {
+          speedRotateTower: 360,
+          accuracy: 100,
+          timeRefreshWeapon: 3800,
+          distanceView: 1000
         }
       }
       // {
@@ -899,6 +918,26 @@ export const GameOptions: IGameOptions = {
           { x: 0, y: 20 },
           { x: 20, y: 0 }
         ]
+      },
+      {
+        frame: 16,
+        game: {
+          speedRotate: 120,
+          speed: 500,
+          health: 1000
+        },
+        catYOffset: 29,
+        offset: { yOffset: 0, xOffset: 0 },
+        vert: [
+          { x: 108, y: 0 },
+          { x: 128, y: 20 },
+          { x: 128, y: 50 },
+          { x: 108, y: 70 },
+          { x: 20, y: 70 },
+          { x: 0, y: 50 },
+          { x: 0, y: 20 },
+          { x: 20, y: 0 }
+        ]
       }
       // {
       //   frame: 9,
@@ -1100,15 +1139,15 @@ export const GameOptions: IGameOptions = {
   },
   optionsOnlyRepair: ['health'],
   costUpdate: {
-    health: 20,
-    speed: 10,
-    speedRotate: 25,
-    speedRotateTower: 15,
-    accuracy: 40,
-    timeRefreshWeapon: 10,
-    distanceView: 10,
+    health: 100,
+    speed: 100,
+    speedRotate: 250,
+    speedRotateTower: 100,
+    accuracy: 300,
+    timeRefreshWeapon: 20,
+    distanceView: 50,
     speedShot: 200,
-    distanceShot: 20
+    distanceShot: 200
   },
   complexTanks: [
     {
@@ -1339,7 +1378,7 @@ export const GameOptions: IGameOptions = {
       tower: 14,
       muzzle: 5,
       cost: 140000,
-      rank: 7
+      rank: 8
     },
     {
       id: '026',
@@ -1349,7 +1388,7 @@ export const GameOptions: IGameOptions = {
       tower: 13,
       muzzle: 5,
       cost: 170000,
-      rank: 7
+      rank: 8
     },
     {
       id: '025',
@@ -1359,17 +1398,27 @@ export const GameOptions: IGameOptions = {
       tower: 14,
       muzzle: 5,
       cost: 190000,
-      rank: 8
+      rank: 9
     },
     {
       id: '027',
-      name: 'D-15145 Killer',
+      name: 'D-15155 Killer',
       color: '#555555',
       tank: 15,
-      tower: 14,
+      tower: 15,
       muzzle: 5,
       cost: 200000,
-      rank: 8
+      rank: 11
+    },
+    {
+      id: '100',
+      name: 'F-16165 Fury',
+      color: '#556B2F',
+      tank: 16,
+      tower: 16,
+      muzzle: 5,
+      cost: 500000,
+      rank: 12
     }
   ],
   excludeFromStretchOptions: ['levelTower', 'levelTank', 'levelMuzzle', 'cb', 'id'],
@@ -1638,7 +1687,23 @@ export const GameOptions: IGameOptions = {
     },
     {
       rank: 8,
-      range: [1000000, 10000000000000]
+      range: [1000000, 2000000]
+    },
+    {
+      rank: 9,
+      range: [2000000, 4000000]
+    },
+    {
+      rank: 10,
+      range: [4000000, 6000000]
+    },
+    {
+      rank: 11,
+      range: [6000000, 10000000]
+    },
+    {
+      rank: 12,
+      range: [10000000, 10000000000000000]
     }
   ]
 }

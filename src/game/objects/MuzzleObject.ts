@@ -220,7 +220,7 @@ export class MuzzleObject extends Phaser.Physics.Matter.Sprite {
               const coinByDestroy = Phaser.Math.Clamp(
                 Math.ceil(GameOptions.complexTanks[Tank.index[enemy.ecsId]].cost * 0.01),
                 50,
-                3000
+                1000
               )
               Entity.roundCoin[this.ecsId] += coinByDestroy
               const text = this.scene.add

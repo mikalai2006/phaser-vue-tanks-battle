@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import PF from 'pathfinding'
-import { defineSystem, defineQuery } from 'bitecs'
+import { defineSystem, defineQuery, exitQuery } from 'bitecs'
 
 import AI, { StatusAI } from '../components/AI'
 import Input from '../components/Input'
@@ -11,9 +11,16 @@ import { tanksById } from './matter'
 
 export const pathEntityById = new Map<number, number[][]>()
 
+export const destroyMap = () => {
+  pathEntityById.forEach((value, key) => {
+    pathEntityById.delete(key)
+  })
+}
+
 export default function createAIManagerSystem(scene: Phaser.Scene) {
   const cpuQuery = defineQuery([AI])
   const queryEntities = defineQuery([Tank, Position])
+  const onQueryExit = exitQuery(cpuQuery)
 
   return defineSystem((world) => {
     if (scene.isPauseAI) {
@@ -21,8 +28,15 @@ export default function createAIManagerSystem(scene: Phaser.Scene) {
     }
     const minTanksForFollow = 5
 
+    const aiExits = onQueryExit(world)
     const entities = cpuQuery(world)
     const tanks = queryEntities(world)
+
+    for (let i = 0; i < aiExits.length; ++i) {
+      const id = aiExits[i]
+      pathEntityById.delete(id)
+      // console.log('Remove AI manager ', id)
+    }
 
     for (let i = 0; i < entities.length; ++i) {
       const id = entities[i]

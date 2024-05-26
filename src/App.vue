@@ -94,8 +94,8 @@ const setData = (stringData: string) => {
 
   if (typeof data == 'object') {
     // set user name
-    if (!data.name && playerData.value?.name) {
-      data.name = playerData.value.name
+    if (!data.name && (playerData.value?.name || userName.value)) {
+      data.name = playerData.value.name || userName.value
     }
 
     // set lang from data
@@ -175,7 +175,7 @@ const setLang = (code: string) => {
   }
   langCode.value = code
 
-  userName.value = `${currentLang.value.notName}${Math.floor(Math.random() * 1000000)}`
+  userName.value = `${currentLang.value.notName}` // ${Math.floor(Math.random() * 1000000)}
 }
 
 const onToggleLang = (code: string) => {
@@ -221,7 +221,8 @@ const onGetLB = async () => {
     _lb && onLoadLB(_lb)
 
     const scene = toRaw(phaserRef.value)
-    const homeScene = toRaw(scene.game.scene.getScene('Home'))
+
+    const homeScene = toRaw(scene.scene.scene.get('Home'))
     if (homeScene) {
       homeScene.onSetLeaderBoard(toRaw(lb.value))
     }

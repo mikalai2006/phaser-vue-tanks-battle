@@ -8,7 +8,9 @@ import {
   resetWorld,
   defineQuery,
   getAllEntities,
-  removeEntity
+  removeEntity,
+  setDefaultSize,
+  getWorldComponents
 } from 'bitecs'
 import PF from 'pathfinding'
 
@@ -477,7 +479,14 @@ export default class Game extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
 
     // Create ecs world.
+    setDefaultSize(10000)
     this.world = createWorld()
+    // console.log(
+    //   'Create World: entities=',
+    //   getAllEntities(this.world),
+    //   ' world components',
+    //   getWorldComponents(this.world)
+    // )
 
     // // bonuses.
     // const spawnPointsBonuses = this.map.filterObjects(
@@ -621,7 +630,7 @@ export default class Game extends Phaser.Scene {
         // add weapons
         for (const weapon in this.gameData.weapons) {
           if (
-            (+weapon == WeaponType.energy && !configPlayer.isPlayer) ||
+            // (+weapon == WeaponType.energy && !configPlayer.isPlayer) ||
             this.gameData.weapons[weapon] <= 0
           ) {
             continue
@@ -651,6 +660,8 @@ export default class Game extends Phaser.Scene {
         Entity.targetGridX[tank] = -1
         Entity.targetGridY[tank] = -1
         Entity.gerbId[tank] = configPlayer.gerbId
+        Entity.targetDeath[tank] = -1
+        Entity.roundCoin[tank] = 0
 
         addComponent(this.world, Position, tank)
         Position.x[tank] = configPlayer.spawnTile.x
@@ -664,8 +675,9 @@ export default class Game extends Phaser.Scene {
           : Phaser.Math.Clamp(
               Phaser.Math.Between(
                 GameOptions.tanks.items[complexTankConfig.tank].game.health,
-                GameOptions.tanks.items[complexTankConfig.tank].game.health +
-                  Phaser.Math.Between(0, GameOptions.complexity) * GameOptions.steps.health
+                // GameOptions.tanks.items[complexTankConfig.tank].game.health +
+                //   Phaser.Math.Between(0, GameOptions.complexity) * GameOptions.steps.health
+                playerTankData.health
               ),
               GameOptions.tanks.items[complexTankConfig.tank].game.health,
               playerTankData.health //GameOptions.tanks.items[complexTankConfig.tank].game.health * 2
@@ -675,8 +687,9 @@ export default class Game extends Phaser.Scene {
           : Phaser.Math.Clamp(
               Phaser.Math.Between(
                 GameOptions.tanks.items[complexTankConfig.tank].game.speed,
-                GameOptions.tanks.items[complexTankConfig.tank].game.speed +
-                  Phaser.Math.Between(0, GameOptions.complexity) * GameOptions.steps.speed
+                // GameOptions.tanks.items[complexTankConfig.tank].game.speed +
+                //   Phaser.Math.Between(0, GameOptions.complexity) * GameOptions.steps.speed
+                playerTankData.speed
               ),
               GameOptions.tanks.items[complexTankConfig.tank].game.speed,
               playerTankData.speed //GameOptions.tanks.items[complexTankConfig.tank].game.speed * 2
@@ -686,8 +699,9 @@ export default class Game extends Phaser.Scene {
           : Phaser.Math.Clamp(
               Phaser.Math.Between(
                 GameOptions.tanks.items[complexTankConfig.tank].game.speedRotate,
-                GameOptions.tanks.items[complexTankConfig.tank].game.speedRotate +
-                  Phaser.Math.Between(0, GameOptions.complexity) * GameOptions.steps.speedRotate
+                // GameOptions.tanks.items[complexTankConfig.tank].game.speedRotate +
+                //   Phaser.Math.Between(0, GameOptions.complexity) * GameOptions.steps.speedRotate
+                playerTankData.speedRotate
               ),
               GameOptions.tanks.items[complexTankConfig.tank].game.speedRotate,
               playerTankData.speedRotate //GameOptions.tanks.items[complexTankConfig.tank].game.speedRotate * 2
@@ -699,8 +713,9 @@ export default class Game extends Phaser.Scene {
           : Phaser.Math.Clamp(
               Phaser.Math.Between(
                 GameOptions.muzzles.items[muzzleLevel].game.distanceShot,
-                GameOptions.muzzles.items[muzzleLevel].game.distanceShot +
-                  Phaser.Math.Between(0, GameOptions.complexity) * GameOptions.steps.distanceShot
+                // GameOptions.muzzles.items[muzzleLevel].game.distanceShot +
+                //   Phaser.Math.Between(0, GameOptions.complexity) * GameOptions.steps.distanceShot
+                playerTankData.distanceShot
               ),
               GameOptions.muzzles.items[muzzleLevel].game.distanceShot,
               playerTankData.distanceShot //GameOptions.muzzles.items[muzzleLevel].game.distanceShot * 2
@@ -710,8 +725,9 @@ export default class Game extends Phaser.Scene {
           : Phaser.Math.Clamp(
               Phaser.Math.Between(
                 GameOptions.muzzles.items[muzzleLevel].game.speedShot,
-                GameOptions.muzzles.items[muzzleLevel].game.speedShot +
-                  Phaser.Math.Between(0, GameOptions.complexity) * GameOptions.steps.speedShot
+                // GameOptions.muzzles.items[muzzleLevel].game.speedShot +
+                //   Phaser.Math.Between(0, GameOptions.complexity) * GameOptions.steps.speedShot
+                playerTankData.speedShot
               ),
               GameOptions.muzzles.items[muzzleLevel].game.speedShot,
               playerTankData.speedShot //GameOptions.muzzles.items[muzzleLevel].game.speedShot * 2
@@ -732,9 +748,10 @@ export default class Game extends Phaser.Scene {
           : Phaser.Math.Clamp(
               Phaser.Math.Between(
                 GameOptions.towers.items[levelTower].game.timeRefreshWeapon,
-                GameOptions.towers.items[levelTower].game.timeRefreshWeapon +
-                  Phaser.Math.Between(0, GameOptions.complexity) *
-                    GameOptions.steps.timeRefreshWeapon
+                // GameOptions.towers.items[levelTower].game.timeRefreshWeapon +
+                //   Phaser.Math.Between(0, GameOptions.complexity) *
+                //     GameOptions.steps.timeRefreshWeapon
+                playerTankData.timeRefreshWeapon
               ),
               GameOptions.towers.items[levelTower].game.timeRefreshWeapon,
               playerTankData.timeRefreshWeapon //GameOptions.towers.items[levelTower].game.timeRefreshWeapon * 2
@@ -744,9 +761,10 @@ export default class Game extends Phaser.Scene {
           : Phaser.Math.Clamp(
               Phaser.Math.Between(
                 GameOptions.towers.items[levelTower].game.speedRotateTower,
-                GameOptions.towers.items[levelTower].game.speedRotateTower +
-                  Phaser.Math.Between(0, GameOptions.complexity) *
-                    GameOptions.steps.speedRotateTower
+                // GameOptions.towers.items[levelTower].game.speedRotateTower +
+                //   Phaser.Math.Between(0, GameOptions.complexity) *
+                //     GameOptions.steps.speedRotateTower
+                playerTankData.speedRotateTower
               ),
               GameOptions.towers.items[levelTower].game.speedRotateTower,
               playerTankData.speedRotateTower //GameOptions.towers.items[levelTower].game.speedRotateTower * 2
@@ -756,8 +774,9 @@ export default class Game extends Phaser.Scene {
           : Phaser.Math.Clamp(
               Phaser.Math.Between(
                 GameOptions.towers.items[levelTower].game.accuracy,
-                GameOptions.towers.items[levelTower].game.accuracy +
-                  Phaser.Math.Between(0, GameOptions.complexity) * GameOptions.steps.accuracy
+                // GameOptions.towers.items[levelTower].game.accuracy +
+                //   Phaser.Math.Between(0, GameOptions.complexity) * GameOptions.steps.accuracy
+                playerTankData.accuracy
               ),
               GameOptions.towers.items[levelTower].game.accuracy,
               playerTankData.accuracy //GameOptions.towers.items[levelTower].game.accuracy * 2
@@ -767,8 +786,9 @@ export default class Game extends Phaser.Scene {
           : Phaser.Math.Clamp(
               Phaser.Math.Between(
                 GameOptions.towers.items[levelTower].game.distanceView,
-                GameOptions.towers.items[levelTower].game.distanceView +
-                  Phaser.Math.Between(0, GameOptions.complexity) * GameOptions.steps.distanceView
+                // GameOptions.towers.items[levelTower].game.distanceView +
+                //   Phaser.Math.Between(0, GameOptions.complexity) * GameOptions.steps.distanceView
+                playerTankData.distanceView
               ),
               GameOptions.towers.items[levelTower].game.distanceView,
               playerTankData.distanceView //GameOptions.towers.items[levelTower].game.distanceView * 2
@@ -790,9 +810,24 @@ export default class Game extends Phaser.Scene {
         // )
 
         addComponent(this.world, Rotation, tank)
+        Rotation.angle[tank] = 0
+        Rotation.force[tank] = 0
         addComponent(this.world, RotationTower, tank)
+        RotationTower.angle[tank] = 0
+        RotationTower.angleMuzzle[tank] = 0
+        RotationTower.force[tank] = 0
         addComponent(this.world, Velocity, tank)
+        Velocity.x[tank] = 0
+        Velocity.y[tank] = 0
         addComponent(this.world, Input, tank)
+        Input.countRandom[tank] = 0
+        Input.direction[tank] = 0
+        Input.down[tank] = 0
+        Input.fire[tank] = 0
+        Input.up[tank] = 0
+        Input.left[tank] = 0
+        Input.right[tank] = 0
+        Input.obstacle[tank] = 0
 
         if (configPlayer.isPlayer) {
           addComponent(this.world, Player, tank)
@@ -804,6 +839,7 @@ export default class Game extends Phaser.Scene {
             GameOptions.ai.timeActions.max
           )
           AI.accumulatedPathTime[tank] = 0
+          AI.accumulatedTime[tank] = 0
         }
       }
     }
@@ -965,7 +1001,7 @@ export default class Game extends Phaser.Scene {
     )
 
     this.afterPhysicsPipeline = pipe(
-      createMatterPhysicsSyncSystem(),
+      createMatterPhysicsSyncSystem(this),
       createAreaEyeSyncSystem(this),
       createMarkersSyncSystem(this),
       createLightSyncSystem(this),
@@ -1110,7 +1146,7 @@ export default class Game extends Phaser.Scene {
           Math.round((GameOptions.timeHelloRound - tween.totalElapsed) / 1000) + 1
         ).toString()
         if (newNumber != text.text && text.text && this.isMute) {
-          this.sound.play(KeySound.Clock)
+          this.sound.play(KeySound.Clock, { volume: 0.3 })
         }
         text.setText(newNumber)
         graphics.clear()
@@ -1247,15 +1283,19 @@ export default class Game extends Phaser.Scene {
     // }
     // this.gameData.weapons =
 
-    // console.log(getAllEntities(this.world), this.sound.sounds)
-    // for (const id of getAllEntities(this.world)) {
-    //   removeEntity(this.world, id)
-    // }
-    deleteWorld(this.world)
-    resetWorld(this.world)
+    // console.log(getAllEntities(this.world))
+    this.isRoundEnd = true
+    for (const id of getAllEntities(this.world)) {
+      removeEntity(this.world, id)
+    }
+    // resetWorld(this.world)
+    // deleteWorld(this.world)
   }
 
   onCheckWinTeam() {
+    if (this.isRoundEnd) {
+      return
+    }
     const query = defineQuery([Tank])
     const tanks = query(this.world)
 
@@ -1330,17 +1370,16 @@ export default class Game extends Phaser.Scene {
 
   update(t: number, dt: number) {
     if (!this.world || !this.pipeline) {
+      //console.log('Not found world!')
       return
     }
 
     // const t0 = performance.now()
 
     this.pipeline(this.world)
-    // run each system in desired order
-    // this.playerSystem(this.world)
-    // this.cpuSystem(this.world)
     this.steerSystem(this.world, dt)
     this.matterSystem(this.world)
+
     if (!this.sys.game.device.os.desktop) {
       if (this.isFire) {
         Input.fire[this.idPlayer] = 1
@@ -1353,8 +1392,11 @@ export default class Game extends Phaser.Scene {
       `fps: ${Math.round(this.game.loop.actualFps)}` //, ecs: ${Math.round(t1 - t0)} ms. isFire=${Input.fire[this.idPlayer]}
     )
 
+    if (getAllEntities(this.world).length == 0) {
+      deleteWorld(this.world)
+      this.scene.remove('Game')
+      // console.log('Remove scene')
+    }
     // t1 - t0 > 1 && console.log(`${t1 - t0} ms.`)
-
-    // this.spriteSystem(this.world)
   }
 }

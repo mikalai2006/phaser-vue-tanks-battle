@@ -127,20 +127,22 @@ export class DestroyObject extends Phaser.Physics.Matter.Sprite {
 
         const bonusId = addEntity(ecsWorld)
 
-        addComponent(ecsWorld, Bonus, bonusId)
-        // Bonus.gridX[bonusId] = tile.x
-        // Bonus.gridY[bonusId] = tile.y
-        Bonus.type[bonusId] = bonus.type
-        Bonus.value[bonusId] = isProbability(0.5) || bonus.value == -1 ? bonus.value : -bonus.value
+        if (bonusId) {
+          addComponent(ecsWorld, Bonus, bonusId)
+          // Bonus.gridX[bonusId] = tile.x
+          // Bonus.gridY[bonusId] = tile.y
+          Bonus.type[bonusId] = bonus.type
+          Bonus.value[bonusId] =
+            isProbability(0.5) || bonus.value == -1 ? bonus.value : -bonus.value
+          Bonus.duration[bonusId] = bonus.duration
+          Bonus.entityId[bonusId] = -1
 
-        Bonus.duration[bonusId] = bonus.duration
-        Bonus.entityId[bonusId] = -1
+          addComponent(ecsWorld, Position, bonusId)
+          Position.x[bonusId] = destroyObject.x
+          Position.y[bonusId] = destroyObject.y
 
-        addComponent(ecsWorld, Position, bonusId)
-        Position.x[bonusId] = destroyObject.x
-        Position.y[bonusId] = destroyObject.y
-
-        // console.log(destroyObject, target)
+          // console.log(destroyObject, target)
+        }
       }
     })
   }

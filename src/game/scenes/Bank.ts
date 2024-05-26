@@ -126,7 +126,8 @@ export class Bank extends Scene {
       const pictoImage = this.add.image(0, -90, packet.texture, packet.frame).setScale(1.7)
       const walletContainer = this.add.container(0, 0, [pictoImage])
       const coinImage = this.add.image(-50, 0, SpriteKeys.Coin)
-      const textCoinValue = this.add.text(-20, -18, packet.countCoin.toString(), {
+      const totalCoin = packet.countCoin + packet.countCoin * this.gameData.rank
+      const textCoinValue = this.add.text(-20, -18, totalCoin.toString(), {
         fontFamily: 'Arial',
         fontSize: 35,
         color: '#ffffff',
@@ -161,16 +162,20 @@ export class Bank extends Scene {
             () => {
               this.sound.play(KeySound.Click)
               if (window?.showRewardedAdv) {
+                let coins = 0
                 window.showRewardedAdv({
                   successC: () => {
-                    this.addCoin(packet.countCoin)
+                    this.addCoin(coins)
+                  },
+                  rewardC: () => {
+                    coins = totalCoin
                   },
                   errorC: () => {
                     // TODO
                   }
                 })
               } else {
-                this.addCoin(packet.countCoin)
+                this.addCoin(totalCoin)
               }
             }
           )
@@ -269,43 +274,45 @@ export class Bank extends Scene {
   }
 
   addCoin(value: number) {
-    this.gameData.coin += value
-    this.sound.play(KeySound.AddCoin)
-    this.rexUI.add
-      .toast({
-        x: GameOptions.screen.width / 2,
-        y: GameOptions.screen.height / 2,
+    if (value) {
+      this.gameData.coin += value
+      this.sound.play(KeySound.AddCoin)
+      this.rexUI.add
+        .toast({
+          x: GameOptions.screen.width / 2,
+          y: GameOptions.screen.height / 2,
 
-        background: this.rexUI.add.roundRectangle(
-          0,
-          0,
-          2,
-          2,
-          20,
-          Phaser.Display.Color.ValueToColor(GameOptions.colors.accent).color
-        ),
-        text: this.add.text(0, 0, '', {
-          fontFamily: 'Arial',
-          fontSize: 35,
-          color: GameOptions.colors.darkColor,
-          fontStyle: 'bold'
-        }),
-        space: {
-          left: 50,
-          right: 50,
-          top: 50,
-          bottom: 50
-        },
-        duration: {
-          in: 200,
-          hold: 2000,
-          out: 200
-        }
-      })
-      .setDepth(999999)
-      .showMessage(replaceRegexByArray(this.lang.getCoinSuccess, [value.toString()]))
-      .showMessage(this.lang.backToBank)
-    EventBus.emit('save-data', this.gameData)
+          background: this.rexUI.add.roundRectangle(
+            0,
+            0,
+            2,
+            2,
+            20,
+            Phaser.Display.Color.ValueToColor(GameOptions.colors.accent).color
+          ),
+          text: this.add.text(0, 0, '', {
+            fontFamily: 'Arial',
+            fontSize: 35,
+            color: GameOptions.colors.darkColor,
+            fontStyle: 'bold'
+          }),
+          space: {
+            left: 50,
+            right: 50,
+            top: 50,
+            bottom: 50
+          },
+          duration: {
+            in: 200,
+            hold: 2000,
+            out: 200
+          }
+        })
+        .setDepth(999999)
+        .showMessage(replaceRegexByArray(this.lang.getCoinSuccess, [value.toString()]))
+        .showMessage(this.lang.backToBank)
+      EventBus.emit('save-data', this.gameData)
+    }
   }
 
   // showMessageAddBonusBomb(text: string) {

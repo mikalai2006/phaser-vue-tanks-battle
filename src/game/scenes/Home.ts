@@ -52,9 +52,21 @@ export class Home extends Scene {
   widthGeneralPanel: number
   widthLeaderPanel: number
 
+  timerSeconds: number = 0
+
   init() {
     this.game.events.on(Phaser.Core.Events.FOCUS, this.onFocus, this)
     this.game.events.on(Phaser.Core.Events.BLUR, this.onBlur, this)
+
+    this.time.addEvent({
+      delay: 1000,
+      callback: () => {
+        this.timerSeconds += 1
+        // console.log(this.timerSeconds)
+      },
+      callbackScope: this,
+      repeat: -1
+    })
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.game.events.off(Phaser.Core.Events.FOCUS)
@@ -63,6 +75,11 @@ export class Home extends Scene {
 
     const scrButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P)
     scrButton.on('down', () => this.saveScreenShot(this))
+  }
+
+  onResetTimer() {
+    this.timerSeconds = 0
+    // console.log(this.timerSeconds)
   }
 
   saveScreenShot(scene: Phaser.Scene) {
@@ -501,7 +518,7 @@ export class Home extends Scene {
 
     this.sound.play(KeySound.Click)
 
-    const sceneWorkshop = this.game.scene.getScene('WorkShop')
+    const sceneWorkshop = this.scene.get('WorkShop')
     sceneWorkshop?.tooglePanel(true)
   }
 
@@ -521,7 +538,7 @@ export class Home extends Scene {
     // this.scene.start('Game')
     // sceneGame?.scene.start()
 
-    const sceneControl = this.game.scene.getScene('Control')
+    const sceneControl = this.scene.get('Control')
     sceneControl?.tooglePanel(false)
     // sceneControl?.createHelloMessage()
     // EventBus.emit('toggle-lang-list')
@@ -530,11 +547,11 @@ export class Home extends Scene {
   stopGame() {
     window?.onGameplayStop && window.onGameplayStop()
 
-    EventBus.emit('get-lb')
-
-    const sceneGame = this.game.scene.getScene('Game')
+    const sceneGame = this.scene.get('Game')
     sceneGame.onShutdown()
-    this.scene.remove('Game')
+    // this.scene.remove('Game')
+
+    EventBus.emit('get-lb')
 
     // console.log(this.sys.displayList.list)
 
@@ -551,7 +568,7 @@ export class Home extends Scene {
   openBank() {
     // this.tooglePanel(false)
     this.scene.bringToTop('Bank')
-    this.game.scene.getScene('Bank').toggle(true)
+    this.scene.get('Bank').toggle(true)
   }
 
   onSetLeaderBoard(data: ILeaderBoard) {
@@ -560,6 +577,8 @@ export class Home extends Scene {
   }
 
   drawLeaderBoard() {
+    const scene = this
+
     this.leaderBoardList?.removeAll(true)
     if (!this.lbData.entries.length) {
       return
@@ -628,7 +647,7 @@ export class Home extends Scene {
         .setDepth(111)
         .setOrigin(0)
 
-      const nameImage = `image-${i}`
+      const nameImage = `img${i}`
       if (this.textures.exists(nameImage)) {
         this.textures.remove(nameImage)
       }
@@ -639,11 +658,26 @@ export class Home extends Scene {
         itemData.photo
         //'https://avatars.mds.yandex.net/get-yapic/21493/enc-949461d55ad8e9deb5fb42767a562a9cb258976f2c3ad874aa76c9afbae08952/islands-middle'
       )
-      this.load.once(Phaser.Loader.Events.COMPLETE, () => {
-        // texture loaded so use instead of the placeholder
-        img.setTexture(nameImage)
-      })
-      this.load.start()
+      this.load.once(
+        `filecomplete-image-${nameImage}`,
+        (key, file) => {
+          // console.log(key, file)
+          if (key == nameImage && scene.textures.exists(nameImage)) {
+            img.setTexture(nameImage)
+          } else {
+            console.log('Not found texture ', nameImage)
+          }
+        },
+        scene
+      )
+      // this.load.once(
+      //   Phaser.Loader.Events.COMPLETE,
+      //   () => {
+      //     // texture loaded so use instead of the placeholder
+      //     img.setTexture(nameImage)
+      //   },
+      //   scene
+      // )
       // this.toDataUrl(
       //   'https://avatars.mds.yandex.net/get-yapic/21493/enc-949461d55ad8e9deb5fb42767a562a9cb258976f2c3ad874aa76c9afbae08952/islands-middle',
       //   (myBase64) => {
@@ -661,7 +695,22 @@ export class Home extends Scene {
       //     })
       //   }
       // )
-      const item = this.add.container(0, i * 120, [rankImage, text, img, score]).setDepth(100)
+      const item = this.add.container(0, i * 120, []).setDepth(100)
+      if (this.lbData.userRank == itemData.rank) {
+        const bg = this.add
+          .rectangle(
+            0,
+            0,
+            this.widthLeaderPanel - 60,
+            90,
+            Phaser.Display.Color.ValueToColor(GameOptions.colors.accent).color,
+            0.1
+          )
+          .setOrigin(0, 0.5)
+        item.add(bg)
+      }
+      item.add([rankImage, text, img, score])
+
       gridItems.push(item)
     }
 
@@ -674,21 +723,22 @@ export class Home extends Scene {
       y: -bgLeaderBoard.height / 2 + 130
     })
     this.leaderBoardList.add(gridOptions)
+    this.load.start()
   }
 
-  toDataUrl(url, callback) {
-    var xhr = new XMLHttpRequest()
-    xhr.onload = function () {
-      var reader = new FileReader()
-      reader.onloadend = function () {
-        callback(reader.result)
-      }
-      reader.readAsDataURL(xhr.response)
-    }
-    xhr.open('GET', url)
-    xhr.responseType = 'blob'
-    xhr.send()
-  }
+  // toDataUrl(url, callback) {
+  //   var xhr = new XMLHttpRequest()
+  //   xhr.onload = function () {
+  //     var reader = new FileReader()
+  //     reader.onloadend = function () {
+  //       callback(reader.result)
+  //     }
+  //     reader.readAsDataURL(xhr.response)
+  //   }
+  //   xhr.open('GET', url)
+  //   xhr.responseType = 'blob'
+  //   xhr.send()
+  // }
 
   onCheckTank(index: number) {
     this.gameData.activeTankIndex = index

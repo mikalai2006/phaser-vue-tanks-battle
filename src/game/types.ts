@@ -444,6 +444,10 @@ export interface IGameOptions {
    */
   timeShowHints: number
   /**
+   * Время в секундах, через которое снова можно показывать рекламу fullScreen
+   */
+  timeShowNextAd: number
+  /**
    * Пакеты для покупки монет за рекламу
    */
   packetPaymentsAd: IPacketPaymentsItem[]
@@ -853,6 +857,7 @@ declare global {
 export interface IADCallbacks {
   successC: () => void
   errorC: () => void
+  rewardC: () => void
 }
 
 export interface IConfigRoundTeamPlayer {

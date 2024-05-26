@@ -3,13 +3,10 @@ import { defineSystem, defineQuery } from 'bitecs'
 
 import Velocity from '../components/Velocity'
 import Rotation from '../components/Rotation'
-import { Player } from '../components/Player'
 import Input from '../components/Input'
 import Position from '../components/Position'
-import { GameOptions } from '../options/gameOptions'
 import { Entity } from '../components/Entity'
 import { Tank } from '../components/Tank'
-import { tanksById } from './matter'
 
 export default function createRaycastSystem(scene: Phaser.Scene) {
   const debugGraphics = scene.add

@@ -194,15 +194,19 @@ export class WeaponMapObject extends Phaser.Physics.Matter.Sprite {
           weaponObject.config.timeRefresh,
           () => {
             const weaponId = addEntity(ecsWorld)
-            addComponent(ecsWorld, Weapon, weaponId)
-            Weapon.type[weaponId] = this.config.type
-            Weapon.count[weaponId] = this.config.count
-            Weapon.entityId[weaponId] = -1
-            Weapon.isRefresh[weaponId] = this.config.timeRefresh > 0 ? 1 : 0
+            if (weaponId) {
+              addComponent(ecsWorld, Weapon, weaponId)
+              Weapon.type[weaponId] = this.config.type
+              Weapon.count[weaponId] = this.config.count
+              Weapon.entityId[weaponId] = -1
+              Weapon.isRefresh[weaponId] = this.config.timeRefresh > 0 ? 1 : 0
 
-            addComponent(ecsWorld, Position, weaponId)
-            Position.x[weaponId] = Position.x[this.ecsId]
-            Position.y[weaponId] = Position.y[this.ecsId]
+              addComponent(ecsWorld, Position, weaponId)
+              Position.x[weaponId] = Position.x[this.ecsId]
+              Position.y[weaponId] = Position.y[this.ecsId]
+            } else {
+              console.error(`Not found ecsId: `, weaponId)
+            }
           },
           [],
           this.scene

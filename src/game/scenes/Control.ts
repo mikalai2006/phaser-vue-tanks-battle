@@ -309,11 +309,32 @@ export class Control extends Scene {
         // this.gameData.coin += roundCoin
         // this.gameData.score += roundCoin
         // EventBus.emit('save-data', this.gameData)
+        this.scene.get('Home').stopGame()
+        if (this.scene.get('Home').timerSeconds > GameOptions.timeShowNextAd) {
+          this.scene.pause()
 
-        this.scene.pause()
+          window?.showFullSrcAdv(() => {
+            this.scene.resume()
+            this.moveCoinToWallet(
+              new Phaser.Math.Vector2(fromX, fromY),
+              new Phaser.Math.Vector2(toMoveCoinX, toMoveCoinY),
+              1000,
+              () => {
+                this.gameData.coin += roundCoin
+                EventBus.emit('save-data', this.gameData)
 
-        window?.showFullSrcAdv(() => {
-          this.scene.resume()
+                this.scene.get('Message')?.showNewRank()
+              }
+            )
+            // this.scene.get('Home').stopGame()
+            this.tooglePanel(false)
+
+            this.buttonExitFromRound.setVisible(false)
+            this.buttonSetting.setVisible(true)
+
+            this.scene.get('Home')?.onResetTimer()
+          })
+        } else {
           this.moveCoinToWallet(
             new Phaser.Math.Vector2(fromX, fromY),
             new Phaser.Math.Vector2(toMoveCoinX, toMoveCoinY),
@@ -325,9 +346,12 @@ export class Control extends Scene {
               this.scene.get('Message')?.showNewRank()
             }
           )
-          this.game.scene.getScene('Home').stopGame()
+          // this.scene.get('Home').stopGame()
           this.tooglePanel(false)
-        })
+
+          this.buttonExitFromRound.setVisible(false)
+          this.buttonSetting.setVisible(true)
+        }
       }
     )
 
@@ -347,7 +371,12 @@ export class Control extends Scene {
           wordWrap: { width: 400 }
         },
         () => {
+          let coins = roundCoin
+          this.scene.get('Home').stopGame()
           window?.showRewardedAdv({
+            rewardC: () => {
+              coins = roundCoin * 2
+            },
             successC: () => {
               this.scene.resume()
               this.moveCoinToWallet(
@@ -355,20 +384,34 @@ export class Control extends Scene {
                 new Phaser.Math.Vector2(toMoveCoinX, toMoveCoinY),
                 1000,
                 () => {
-                  this.gameData.coin += roundCoin * 2
+                  this.gameData.coin += coins
                   EventBus.emit('save-data', this.gameData)
 
                   this.scene.get('Message')?.showNewRank()
                 }
               )
-              this.game.scene.getScene('Home').stopGame()
+              // this.scene.get('Home').stopGame()
               this.tooglePanel(false)
+              this.buttonExitFromRound.setVisible(false)
+              this.buttonSetting.setVisible(true)
             },
             errorC: () => {
               this.scene.resume()
-              this.scene.get('Message')?.showNewRank()
-              this.game.scene.getScene('Home').stopGame()
+              this.moveCoinToWallet(
+                new Phaser.Math.Vector2(fromX, fromY),
+                new Phaser.Math.Vector2(toMoveCoinX, toMoveCoinY),
+                1000,
+                () => {
+                  this.gameData.coin += roundCoin
+                  EventBus.emit('save-data', this.gameData)
+
+                  this.scene.get('Message')?.showNewRank()
+                }
+              )
+              // this.scene.get('Home').stopGame()
               this.tooglePanel(false)
+              this.buttonExitFromRound.setVisible(false)
+              this.buttonSetting.setVisible(true)
             }
           })
           this.scene.pause()
@@ -635,9 +678,11 @@ export class Control extends Scene {
     this.scene
       .get('Message')
       .showMessage(this.lang?.exitFromBattleTitle, this.lang?.exitFromBattleDescription, () => {
-        this.game.scene.getScene('Home').stopGame()
+        this.scene.get('Home').stopGame()
         this.tooglePanel(false)
         this.scene.sendToBack('Message')
+        this.buttonExitFromRound.setVisible(false)
+        this.buttonSetting.setVisible(true)
       })
   }
 
@@ -834,13 +879,13 @@ export class Control extends Scene {
     EventBus.emit('toggle-lang')
   }
 
-  onHideLangList() {
-    this.buttonSound.setDepth(100)
-    this.tooglePanel(false)
-    const sceneGame = this.game.scene.getScene('Game')
-    this.sound.play(KeySound.Click)
-    sceneGame?.scene.resume()
-  }
+  // onHideLangList() {
+  //   this.buttonSound.setDepth(100)
+  //   this.tooglePanel(false)
+  //   const sceneGame = this.scene.get('Game')
+  //   this.sound.play(KeySound.Click)
+  //   sceneGame?.scene.resume()
+  // }
 
   onOpenMenu(pointer: Phaser.Input.Pointer) {
     this.sound.play(KeySound.Click)

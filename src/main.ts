@@ -8,7 +8,7 @@ const testLBData = {
   leaderboard: {
     title: [{ lang: 'ru', value: 'Leader Board' }]
   },
-  userRank: 1000,
+  userRank: 5,
   entries: [
     {
       rank: 1,
@@ -20,7 +20,7 @@ const testLBData = {
     },
     {
       rank: 2,
-      score: 500000,
+      score: 9000000,
       name: 'Иванов ива Иванович',
       lang: 'ru',
       photo:
@@ -28,23 +28,23 @@ const testLBData = {
     },
     {
       rank: 3,
-      score: 400000,
+      score: 5000000,
       name: 'Ирина Морозова',
       lang: 'ru',
       photo:
-        'https://games-sdk.yandex.ru/games/api/sdk/v1/player/avatar/LDNSLG226WANKWQFBVCPX2IMMERDSE5W4SVY7VPI2BEAQ4SU6KFQ7U4SNBJF64X5FEVACU5SH3I2DYH6SXCVHNHNFXPYLO66BCRR4NDACGVGA6HEWD37O63RE7M347JPEREMLLW5M6U7RUSVXYXWYZPFPDON3YVNVGRSUYTXRG5ETRTMTCZG7XUZXYVKSL4Y7TMZCOL4D3UYXYALCAR622SCZYXBN7XHFCFH3YA=/islands-retina-medium'
+        'https://avatars.mds.yandex.net/get-yapic/39727/enc-1a5ab4d2f5fff2341cd8929752795e9b1a51dd9cba219b2f8c0d2519977c9ecc/islands-retina-middle'
     },
     {
       rank: 4,
-      score: 200000,
+      score: 2000000,
       name: 'Павел Стрельников',
       lang: 'ru',
       photo:
-        'https://games-sdk.yandex.ru/games/api/sdk/v1/player/avatar/LDNSLG226WANKWQFBVCPX2IMMERDSE5W4SVY7VPI2BEAQ4SU6KFQ7U4SNBJF64X5FEVACU5SH3I2DYH6SXCVHNHNFXPYLO66BCRR4NDACGVGA6HEWD37O63RE7M347JPEREMLLW5M6U7RUSVXYXWYZPFPDON3YVNVGRSUYTXRG5ETRTMTCZG7XUZXYVKSL4Y7TMZCOL4D3UYXYALCAR622SCZYXBN7XHFCFH3YA=/islands-retina-medium'
+        'https://avatars.mds.yandex.net/get-yapic/39727/enc-1a5ab4d2f5fff2341cd8929752795e9b1a51dd9cba219b2f8c0d2519977c9ecc/islands-retina-middle'
     },
     {
       rank: 5,
-      score: 100000,
+      score: 1000000,
       name: 'Иванов ива Иванович',
       lang: 'ru',
       photo:
@@ -101,13 +101,17 @@ const getLBTestData = (count) =>
       resolve(testData)
     }, 500)
   })
-function resolveAfter2Seconds(duration, answer, name) {
+function resolveAfter2Seconds(duration, answer, name, isReject = false) {
   console.group(name)
   console.log('start ', name)
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     setTimeout(() => {
       console.log('end ', name, answer)
-      resolve(answer)
+      if (isReject) {
+        reject(answer)
+      } else {
+        resolve(answer)
+      }
       console.groupEnd()
     }, duration * 1000)
   })
@@ -166,7 +170,7 @@ if (!window.initSDK) {
         0.2,
         {
           uid: '11111',
-          name: 'Mikalai Parakhnevich',
+          name: '',
           photo: 'test',
           mode: 'lite',
           payStatus: false
@@ -289,7 +293,7 @@ if (!window.initSDK) {
   window.hasAdBlocker = async () => {
     return await resolveAfter2Seconds(0.1, false, 'hasAdBlocker') //window.CrazyGames.SDK.ad.hasAdblock();
   }
-  window.showRewardedAdv = async function ({ successC, errorC }) {
+  window.showRewardedAdv = async function ({ successC, errorC, rewardC }) {
     // sdk.adv.showRewardedVideo({
     //   callbacks: {
     //     onOpen: () => {
@@ -308,7 +312,8 @@ if (!window.initSDK) {
     //   }
     // })
     await resolveAfter2Seconds(1, null, 'showRewardedAdv')
-    successC()
+    rewardC && rewardC()
+    successC && successC()
   }
   window.showFullSrcAdv = async function (callback) {
     // sdk.adv.showFullscreenAdv({

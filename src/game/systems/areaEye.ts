@@ -15,6 +15,7 @@ export function createAreaEyeSystem(scene: Phaser.Scene) {
   const query = defineQuery([Tank])
   const onQueryEnter = enterQuery(query)
   const onQueryExit = exitQuery(query)
+
   return defineSystem((world) => {
     const entities = onQueryEnter(world)
 
@@ -47,7 +48,6 @@ export function createAreaEyeSystem(scene: Phaser.Scene) {
     const entitiesExit = onQueryExit(world)
 
     for (const idTank of entitiesExit) {
-      // console.log('Remove areaEye', idTank)
       const removeAreaEye = areaEyeById.get(idTank)
       if (removeAreaEye) {
         Entity.target[Entity.target[idTank]] = -1
@@ -56,6 +56,7 @@ export function createAreaEyeSystem(scene: Phaser.Scene) {
         removeAreaEye.destroy()
         areaEyeById.delete(idTank)
       }
+      // console.log('Remove areaEye', idTank, areaEyeById.size)
     }
 
     return world

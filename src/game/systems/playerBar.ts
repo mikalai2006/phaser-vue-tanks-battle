@@ -148,6 +148,13 @@ export function createPlayerBarSyncSystem(scene) {
 
     const object = playerBarById.get(0)
 
+    // if (!entities.length) {
+    //   object.bar.removeAll(true)
+    //   playerBarById.delete(0)
+    //   // console.log('Remove player Bar', playerBarById.size)
+    //   return
+    // }
+
     const currentHealth = (WIDTH_PROGRESS / Tank.maxHealth[id]) * Tank.health[id]
 
     object.healthImage.displayWidth = currentHealth

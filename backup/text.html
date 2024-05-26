@@ -10,7 +10,8 @@
     <script src="./names_ru.js"></script>
     <script>
       const b = {}
-      for (const obj of en) {
+      const list = ru.filter((x) => x.gender == 'female')
+      for (const obj of list) {
         b[`${obj.name.first} ${obj.name.last}`] = obj
       }
       console.log(ru.length, Object.keys(b))

@@ -1,36 +1,24 @@
 import Phaser from 'phaser'
-import {
-  defineSystem,
-  defineQuery,
-  enterQuery,
-  addComponent,
-  exitQuery,
-  removeEntity
-} from 'bitecs'
+import { defineSystem, defineQuery, exitQuery, removeEntity } from 'bitecs'
 import { Tank } from '../components/Tank'
-import Position from '../components/Position'
-import { EntityBar } from '../components/EntityBar'
-import { Entity } from '../components/Entity'
 import { BonusType, GameOptions } from '../options/gameOptions'
-import { towersById } from './matter'
 import { Bonus } from '../components/Bonus'
-import { groupBy } from 'lodash'
 
 const WIDTH_ITEM = 300
 const HEIGHT_ITEM = 50
 
-export const bonusBarById = new Map<
-  number,
-  {
-    bar: Phaser.GameObjects.Container
-    healthImageBg: Phaser.GameObjects.Rectangle
-    weaponImageBg: Phaser.GameObjects.Rectangle
-    healthImage: Phaser.GameObjects.Rectangle
-    weaponImage: Phaser.GameObjects.Rectangle
-    // imgMaskHealth: Phaser.GameObjects.Image
-    // imgMaskWeapon: Phaser.GameObjects.Image
-  }
->()
+// export const bonusBarById = new Map<
+//   number,
+//   {
+//     bar: Phaser.GameObjects.Container
+//     healthImageBg: Phaser.GameObjects.Rectangle
+//     weaponImageBg: Phaser.GameObjects.Rectangle
+//     healthImage: Phaser.GameObjects.Rectangle
+//     weaponImage: Phaser.GameObjects.Rectangle
+//     // imgMaskHealth: Phaser.GameObjects.Image
+//     // imgMaskWeapon: Phaser.GameObjects.Image
+//   }
+// >()
 
 export function createEntityBarBonusesSystem(scene: Phaser.Scene) {
   const containerBonus = scene.add.container(10, 25, [])

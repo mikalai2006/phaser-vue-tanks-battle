@@ -215,17 +215,20 @@ export class BonusObject extends Phaser.Physics.Matter.Sprite {
             const bonus = GameOptions.bonuses.find((x) => bonusConfig.type == x.type)
 
             const bonusId = addEntity(ecsWorld)
+            if (bonusId) {
+              addComponent(ecsWorld, Bonus, bonusId)
+              Bonus.type[bonusId] = bonus.type
+              Bonus.value[bonusId] =
+                isProbability(0.5) || bonus.value == -1 ? bonus.value : -bonus.value
+              Bonus.duration[bonusId] = bonus.duration
+              Bonus.entityId[bonusId] = -1
 
-            addComponent(ecsWorld, Bonus, bonusId)
-            Bonus.type[bonusId] = bonus.type
-            Bonus.value[bonusId] =
-              isProbability(0.5) || bonus.value == -1 ? bonus.value : -bonus.value
-            Bonus.duration[bonusId] = bonus.duration
-            Bonus.entityId[bonusId] = -1
-
-            addComponent(ecsWorld, Position, bonusId)
-            Position.x[bonusId] = Position.x[this.ecsId]
-            Position.y[bonusId] = Position.y[this.ecsId]
+              addComponent(ecsWorld, Position, bonusId)
+              Position.x[bonusId] = Position.x[this.ecsId]
+              Position.y[bonusId] = Position.y[this.ecsId]
+            } else {
+              console.error(`Not found ecsId: `, bonusId)
+            }
           },
           [],
           this.scene

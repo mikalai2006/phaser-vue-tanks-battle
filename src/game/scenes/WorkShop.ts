@@ -96,7 +96,7 @@ export class WorkShop extends Scene {
       (pointer) => {
         this.tooglePanel(false)
 
-        this.game.scene.getScene('Home')?.tooglePanel(true)
+        this.scene.get('Home')?.tooglePanel(true)
       }
     )
 
@@ -318,7 +318,12 @@ export class WorkShop extends Scene {
       //       return o.game[option]
       //     })
       // )
-      const currentValueProgress = (optionValue * 100) / maximumOptionValue
+      const currentValueProgress = Phaser.Math.Clamp(
+        (optionValue * 100) / maximumOptionValue,
+        0,
+        100
+      )
+      // Phaser.Math.Clamp(currentValueProgress * 300 * 0.01, 0, progressBg.width)
       const currentProgress = this.add
         .rectangle(
           0,
