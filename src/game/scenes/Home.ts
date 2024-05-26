@@ -696,19 +696,19 @@ export class Home extends Scene {
       //   }
       // )
       const item = this.add.container(0, i * 120, []).setDepth(100)
-      if (this.lbData.userRank == itemData.rank) {
-        const bg = this.add
-          .rectangle(
-            0,
-            0,
-            this.widthLeaderPanel - 60,
-            90,
-            Phaser.Display.Color.ValueToColor(GameOptions.colors.accent).color,
-            0.1
-          )
-          .setOrigin(0, 0.5)
-        item.add(bg)
-      }
+      // if (this.lbData.userRank == itemData.rank) {
+      //   const bg = this.add
+      //     .rectangle(
+      //       0,
+      //       0,
+      //       this.widthLeaderPanel - 60,
+      //       90,
+      //       Phaser.Display.Color.ValueToColor(GameOptions.colors.accent).color,
+      //       0.1
+      //     )
+      //     .setOrigin(0, 0.5)
+      //   item.add(bg)
+      // }
       item.add([rankImage, text, img, score])
 
       gridItems.push(item)
