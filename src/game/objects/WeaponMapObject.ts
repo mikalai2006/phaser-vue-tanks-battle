@@ -205,7 +205,7 @@ export class WeaponMapObject extends Phaser.Physics.Matter.Sprite {
               Position.x[weaponId] = Position.x[this.ecsId]
               Position.y[weaponId] = Position.y[this.ecsId]
             } else {
-              console.error(`Not found ecsId: `, weaponId)
+              console.log(`Not found ecsId: `, weaponId)
             }
           },
           [],

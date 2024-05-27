@@ -227,7 +227,7 @@ export class BonusObject extends Phaser.Physics.Matter.Sprite {
               Position.x[bonusId] = Position.x[this.ecsId]
               Position.y[bonusId] = Position.y[this.ecsId]
             } else {
-              console.error(`Not found ecsId: `, bonusId)
+              console.log(`Not found ecsId: `, bonusId)
             }
           },
           [],
