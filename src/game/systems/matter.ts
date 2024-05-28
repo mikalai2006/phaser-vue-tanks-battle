@@ -256,7 +256,7 @@ export function createMatterPhysicsSyncSystem(scene: Phaser.Scene) {
       const tank = tanksById.get(id)
       const muzzle = muzzlesById.get(id)
 
-      if (!tank) {
+      if (!tank || !tank.body) {
         continue
       }
 

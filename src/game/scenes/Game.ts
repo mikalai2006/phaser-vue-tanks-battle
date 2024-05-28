@@ -105,6 +105,7 @@ export default class Game extends Phaser.Scene {
       }
   private joystikMove: VirtualJoyStick
   public buttonFire: Phaser.GameObjects.Sprite
+  public containerHello: Phaser.GameObjects.Container
 
   public configRound: IConfigRound
 
@@ -1023,6 +1024,8 @@ export default class Game extends Phaser.Scene {
     const bg = this.add
       .rectangle(0, 0, GameOptions.screen.width, GameOptions.screen.height, 0x000000, 0.8)
       .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setInteractive()
 
     const title = this.add
       .text(0, -400, this.lang.typeRound[this.configRound.config.type].title, {
@@ -1112,10 +1115,10 @@ export default class Game extends Phaser.Scene {
         }
       })
       .setAlpha(1)
-      .setDepth(1)
+      // .setDepth(1)
       .setAngle(-90)
 
-    const container = this.add
+    this.containerHello = this.add
       .container(GameOptions.screen.width / 2, GameOptions.screen.height / 2, [
         bg,
         title,
@@ -1145,24 +1148,30 @@ export default class Game extends Phaser.Scene {
         const newNumber = (
           Math.round((GameOptions.timeHelloRound - tween.totalElapsed) / 1000) + 1
         ).toString()
-        if (newNumber != text.text && text.text && this.isMute) {
-          this.sound.play(KeySound.Clock, { volume: 0.3 })
-        }
-        text.setText(newNumber)
-        graphics.clear()
+        if (newNumber && text && graphics) {
+          if (newNumber != text.text && text.text && this.isMute) {
+            this.sound.play(KeySound.Clock, { volume: 0.3 })
+          }
+          text?.setText(newNumber)
 
-        graphics.beginPath()
-        graphics.lineStyle(
-          40,
-          Phaser.Display.Color.ValueToColor(GameOptions.colors.lightColor).color
-        )
-        graphics.arc(0, 0, 200, Phaser.Math.DegToRad(0), Phaser.Math.DegToRad(v), true, 0.02)
-        graphics.strokePath()
-        graphics.closePath()
+          if (graphics.clear) {
+            graphics.clear()
+
+            graphics.beginPath()
+            graphics.lineStyle(
+              40,
+              Phaser.Display.Color.ValueToColor(GameOptions.colors.lightColor).color
+            )
+            graphics.arc(0, 0, 200, Phaser.Math.DegToRad(0), Phaser.Math.DegToRad(v), true, 0.02)
+            graphics.strokePath()
+            graphics.closePath()
+          }
+        }
       },
       onComplete: async () => {
         this.scene.bringToTop('Control')
-        container.destroy()
+        this.containerHello.removeAll(true)
+        //this.containerHello.destroy()
         this.isMute = true
         this.isPauseAI = false
         this.input.keyboard.enabled = true
@@ -1370,7 +1379,7 @@ export default class Game extends Phaser.Scene {
 
   update(t: number, dt: number) {
     if (!this.world || !this.pipeline) {
-      //console.log('Not found world!')
+      console.log('Not found world!')
       return
     }
 
@@ -1380,7 +1389,7 @@ export default class Game extends Phaser.Scene {
     this.steerSystem(this.world, dt)
     this.matterSystem(this.world)
 
-    if (!this.sys.game.device.os.desktop) {
+    if (!this.sys.game.device.os.desktop && !this.isPauseAI) {
       if (this.isFire) {
         Input.fire[this.idPlayer] = 1
       } else {
