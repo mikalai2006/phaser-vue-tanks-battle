@@ -277,6 +277,10 @@ export class WorkShop extends Scene {
   }
 
   drawWorkShopContainer() {
+    if (this.gameData.activeTankIndex > this.gameData.tanks.length - 1) {
+      this.gameData.activeTankIndex = 0
+    }
+
     this.updateContainerBody.removeAll(true)
     const optionsForGrid = []
     const tankData = this.gameData.tanks[this.gameData.activeTankIndex]
@@ -837,6 +841,10 @@ export class WorkShop extends Scene {
 
     if (this.gameData.activeTankIndex == tankSellIndex) {
       this.gameData.activeTankIndex = 0
+    } else if (this.gameData.activeTankIndex > tankSellIndex) {
+      this.gameData.activeTankIndex = Math.max(this.gameData.activeTankIndex - 1, 0)
+    } else if (this.gameData.activeTankIndex < tankSellIndex) {
+      // this.gameData.activeTankIndex = Math.max(this.gameData.activeTankIndex-1, 0)
     }
 
     this.gameData.coin += cost

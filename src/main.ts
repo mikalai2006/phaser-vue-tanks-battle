@@ -170,7 +170,7 @@ if (!window.initSDK) {
         0.2,
         {
           uid: '11111',
-          name: '',
+          name: '"/234//"post-title-with-ç-and-õ!!@#@#$#$#$%',
           photo: 'test',
           mode: 'lite',
           payStatus: false

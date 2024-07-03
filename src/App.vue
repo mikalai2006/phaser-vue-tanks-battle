@@ -132,6 +132,10 @@ const setData = (stringData: string) => {
 
     data.lastDay = new Date()
 
+    if (data.activeTankIndex > data.tanks.length - 1) {
+      data.activeTankIndex = 0
+    }
+
     gameData.value = data ? JSON.parse(JSON.stringify(data)) : defaultGameData
   }
 }
