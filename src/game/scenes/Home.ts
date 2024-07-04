@@ -580,13 +580,13 @@ export class Home extends Scene {
     const scene = this
 
     this.leaderBoardList?.removeAll(true)
-    if (!this.lbData.entries.length) {
+    if (!this.lbData?.entries?.length) {
       return
     }
 
-    const title =
-      this.lbData.leaderboard.title.find((x) => x.lang == this.gameData.lang)?.value ||
-      this.lang.leaderboard_title
+    const title = this.lang.leaderboard_title
+    // this.lbData.leaderboard.title.find((x) => x.lang == this.gameData.lang)?.value ||
+    // this.lang.leaderboard_title
 
     const bgLeaderBoard = this.add
       .rectangle(
@@ -872,6 +872,7 @@ export class Home extends Scene {
     // } else {
     //   this.startButtonText.setText(lang.btn_startgame || '#btn_startgame')
     // }
+    this.drawLeaderBoard()
 
     this.buttonBattle?.setText(this.lang.btnToBattle || '#btnToBattle')
     this.buttonWorkShop?.setText(

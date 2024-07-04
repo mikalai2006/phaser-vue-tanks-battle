@@ -216,7 +216,6 @@ export const langs = {
     countBattle: 'Всего боев - %s',
     cancel: 'Нет',
     btnToBattle: 'В бой',
-    leaderboard_title: 'Лидеры в игре',
     langTitle: 'Язык в игре',
     newRankTitle: 'Новое звание',
     newRankDescription: 'Ваш опыт, полученный на поле боя, способствует повышению до звания - %s!',
@@ -231,7 +230,8 @@ export const langs = {
     initPlayer: 'Инициализация пользователя',
     loadingLB: 'Инициализация лидерборда',
     loadingScenes: 'Подготовка игры',
-    coinByDestroy: 'Бонус за уничтожение +%s монет'
+    coinByDestroy: 'Бонус за уничтожение +%s монет',
+    leaderboard_title: 'Лидеры в игре'
   },
   en: {
     code: 'en',
@@ -448,7 +448,6 @@ export const langs = {
     countBattle: 'Total battles - %s',
     cancel: 'No',
     btnToBattle: 'To battle',
-    leaderboard_title: 'Leaders in the game',
     langTitle: 'Language in the game',
     newRankTitle: 'New rank',
     newRankDescription:
@@ -464,7 +463,8 @@ export const langs = {
     initPlayer: 'User initialization',
     loadingLB: 'Leaderboard initialization',
     loadingScenes: 'Game preparation',
-    coinByDestroy: 'Destroy Bonus +%s couns'
+    coinByDestroy: 'Destroy Bonus +%s couns',
+    leaderboard_title: 'Leaders in the game'
   }
   // tr: {
   //   code: 'tr',
