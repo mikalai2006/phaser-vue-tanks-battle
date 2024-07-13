@@ -576,8 +576,8 @@ export class Control extends Scene {
     this.bodyContainer.add([
       bg,
       containerGridOptions,
-      this.createButtonReturn(),
-      this.createButtonsLang()
+      this.createButtonReturn()
+      // this.createButtonsLang()
     ])
   }
 

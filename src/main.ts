@@ -120,7 +120,7 @@ function resolveAfter2Seconds(duration, answer, name, isReject = false) {
 if (!window.initSDK) {
   window.tobData = false
   window.gameLocalStorageName = 'com.mikalai2006.crazytanks.1'
-  window.defaultLang = 'ru'
+  window.defaultLang = 'en'
   // const nameSave = 'crazyt1'
   var lb, player, sdk
 
@@ -170,7 +170,7 @@ if (!window.initSDK) {
         0.2,
         {
           uid: '11111',
-          name: '"/234//"post-title-with-ç-and-õ!!@#@#$#$#$%',
+          name: '',
           photo: 'test',
           mode: 'lite',
           payStatus: false
